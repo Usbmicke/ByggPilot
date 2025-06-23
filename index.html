@@ -1,0 +1,1512 @@
+
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ByggPilot - Din AI-Assistent för Byggadmin</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+        :root {
+            --background-color: #121212;
+            --text-color: #EAEAEA;
+            --text-color-muted: #AAAAAA;
+            --primary-accent: #00BFFF;
+            --primary-accent-hover: #00A8E0;
+            --secondary-accent: #1E1E1E;
+            --card-background: #1A1A1A; 
+            --border-color: #333333;
+            --button-text-color: #FFFFFF; /* Generally for text on dark buttons or light text on primary */
+            --button-primary-text-color: #000000; /* Specific for text on primary blue buttons */
+            --glow-color: rgba(0, 191, 255, 0.4);
+            --glow-color-strong: rgba(0, 191, 255, 0.7);
+            --input-glow-color: rgba(0, 191, 255, 0.5);
+        }
+
+        /* CSS Reset */
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--background-color); 
+            color: var(--text-color);
+            line-height: 1.6;
+            font-size: 16px;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background-image: url("data:image/svg+xml,%3Csvg width='300' height='300' viewBox='0 0 300 300' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='blueprint_enhanced_pattern' patternUnits='userSpaceOnUse' width='300' height='300'%3E%3Crect width='300' height='300' fill='rgba(0,0,0,0)'/%3E%3Cpath d='M0 15h300 M0 30h300 M0 45h300 M0 60h300 M0 75h300 M0 90h300 M0 105h300 M0 120h300 M0 135h300 M0 150h300 M0 165h300 M0 180h300 M0 195h300 M0 210h300 M0 225h300 M0 240h300 M0 255h300 M0 270h300 M0 285h300 M15 0v300 M30 0v300 M45 0v300 M60 0v300 M75 0v300 M90 0v300 M105 0v300 M120 0v300 M135 0v300 M150 0v300 M165 0v300 M180 0v300 M195 0v300 M210 0v300 M225 0v300 M240 0v300 M255 0v300 M270 0v300 M285 0v300' stroke-width='0.1' stroke='rgba(190, 200, 210, 0.06)'/%3E%3Cpath d='M0 75h300 M0 150h300 M0 225h300 M75 0v300 M150 0v300 M225 0v300' stroke-width='0.15' stroke='rgba(190, 200, 210, 0.08)'/%3E%3Crect x='20' y='30' width='100' height='70' stroke-width='0.3' stroke='rgba(180, 195, 210, 0.1)' fill='none'/%3E%3Cpath d='M20 70 h40 M70 30 v30' stroke-width='0.25' stroke='rgba(180, 195, 210, 0.09)' fill='none'/%3E%3Crect x='150' y='50' width='80' height='120' stroke-width='0.3' stroke='rgba(180, 195, 210, 0.1)' fill='none'/%3E%3Cpath d='M150 110 h80 M190 50 v120' stroke-width='0.25' stroke='rgba(180, 195, 210, 0.09)' fill='none'/%3E%3Crect x='40' y='180' width='150' height='90' stroke-width='0.3' stroke='rgba(180, 195, 210, 0.1)' fill='none'/%3E%3Cpath d='M10 10 L 290 10 M10 290 L 290 290 M10 10 L 10 290 M290 10 L 290 290' stroke-width='0.2' stroke='rgba(170, 185, 200, 0.07)' stroke-dasharray='4 2' fill='none'/%3E%3Crect x='180' y='20' width='90' height='50' stroke-width='0.4' stroke='rgba(170, 185, 200, 0.12)' fill='none' transform='rotate(15 225 45)'/%3E%3Cpath d='M50 150 Q100 120 150 150 T250 150' stroke-width='0.35' stroke='rgba(170, 185, 200, 0.11)' fill='none'/%3E%3Ccircle cx='70' cy='220' r='30' stroke-width='0.3' stroke='rgba(180, 195, 210, 0.1)' fill='none'/%3E%3Cpath d='M200 200 A50 50 0 0 1 280 240' stroke-width='0.35' stroke='rgba(180, 195, 210, 0.12)' fill='none'/%3E%3Cpath d='M240 80 A20 30 0 1 0 230 130' stroke-width='0.25' stroke='rgba(180, 195, 210, 0.09)' fill='none'/%3E%3Cpath d='M30 40 L60 20 M210 180 L250 220 L230 170 Z' stroke-width='0.15' stroke='rgba(190, 200, 210, 0.08)' fill='rgba(190,200,210,0.03)'/%3E%3Cpath d='M100 250 L120 230 L140 250 M110 240 L130 240' stroke-width='0.2' stroke='rgba(190, 200, 210, 0.07)' fill='none'/%3E%3Crect x='130' y='160' width='100' height='60' stroke-width='0.3' stroke='rgba(180, 195, 210, 0.1)' fill='rgba(100,120,140,0.01)' transform='rotate(-10 180 190)'/%3E%3Crect x='60' y='50' width='70' height='40' stroke-width='0.25' stroke='rgba(170, 185, 200, 0.09)' fill='none'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23blueprint_enhanced_pattern)'/%3E%3C/svg%3E");
+            background-size: 300px 300px; /* Adjust size of pattern tile */
+            background-position: center center;
+            background-attachment: fixed;
+            background-repeat: repeat; /* Repeat the pattern */
+        }
+        body.cookie-banner-active {
+            padding-bottom: 100px; 
+        }
+        @media (max-width: 480px) {
+            body.cookie-banner-active {
+                 padding-bottom: 150px; 
+            }
+        }
+
+
+        .container {
+            width: 90%;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            position: relative; 
+            z-index: 1;
+        }
+
+        /* Header */
+        header {
+            background-color: var(--secondary-accent); 
+            padding: 0.8rem 0;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 1000; 
+            width: 100%;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 90%;
+            max-width: 1100px; /* Ensure header content aligns with chat view max-width */
+            margin: 0 auto;
+            padding: 0 1rem; 
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            color: var(--text-color);
+        }
+
+        .logo-icon { 
+            width: 200px; 
+            height: 62.5px; 
+            display: flex; 
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .logo-icon svg { 
+             display: block; 
+             width: 100%;
+             height: 100%;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .nav-button {
+            background-color: var(--secondary-accent);
+            color: var(--text-color);
+            border: 1px solid var(--primary-accent);
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-button:hover, .nav-button:focus {
+            background-color: var(--primary-accent);
+            color: var(--button-primary-text-color); 
+            box-shadow: 0 0 15px var(--glow-color-strong);
+            outline: none;
+        }
+
+        .nav-button svg {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
+        }
+
+        /* Page Content Wrapper */
+        #page-content-wrapper {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden; 
+        }
+
+
+        /* Main Content Area - Chat View */
+        .chat-view {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative; 
+            z-index: 0; 
+            
+            /* Framing and margin */
+            margin: 2rem auto; 
+            padding: 1.5rem; 
+            border: 1px solid var(--border-color);
+            border-radius: 12px; 
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4); 
+            overflow: hidden; 
+            max-width: 1100px; /* Max width for the chat area */
+            width: calc(100% - 4rem); /* Respect side margins */
+        }
+
+        .chat-view::before {
+            content: '';
+            position: absolute; 
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(18, 18, 18, 0.92); /* Dark overlay, slightly more transparent */
+            z-index: -1; 
+            border-radius: 12px; /* Match parent's border-radius */
+        }
+        
+        .info-section {
+            background-color: var(--card-background);
+            padding: 2.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem; 
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            height: 100%; 
+            overflow-y: auto; 
+            /* Make info section same width as chat view */
+            margin-left: auto;
+            margin-right: auto;
+            max-width: 1100px; /* Max width for the info section */
+            width: calc(100% - 4rem); /* Respect side margins */
+        }
+
+        .info-section h2 {
+            color: var(--primary-accent);
+            margin-bottom: 1.2rem;
+            text-align: left;
+        }
+         .info-section h3 {
+            color: var(--primary-accent-hover);
+            margin-top: 1.8rem;
+            margin-bottom: 1rem;
+            font-size: 1.3em;
+        }
+         .info-section h2:not(:first-of-type) { 
+            margin-top: 2.5rem;
+        }
+
+
+        .info-section p, .info-section li {
+            margin-bottom: 1rem; 
+            line-height: 1.7;
+        }
+
+        .info-section strong {
+            color: var(--primary-accent-hover);
+            font-weight: 600;
+        }
+
+        .info-section ul {
+            list-style: none; 
+            padding-left: 0; 
+        }
+
+        .info-section ul li {
+            padding-left: 1.8rem; 
+            position: relative;
+        }
+        .info-section ul li::before {
+            content: '➤'; 
+            color: var(--primary-accent);
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+            font-size: 1.1em; 
+        }
+         .info-section ul ul { /* Nested lists */
+            margin-top: 0.5rem;
+            padding-left: 1.5rem;
+        }
+        .info-section ul ul li::before {
+            content: '–'; /* Different marker for sub-items */
+            font-size: 1em;
+        }
+
+        .info-section .founder-signature {
+            text-align: right;
+            font-style: italic;
+            margin-top: 1rem;
+            color: var(--text-color-muted);
+        }
+
+        .chat-messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 1rem; /* Padding within the messages area */
+            margin-bottom: 1rem;
+            background-color: transparent; /* Allows chat-view::before to be the effective background */
+            border-radius: 8px; /* Optional: if you want rounded corners for the message list itself */
+        }
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+        .chat-messages::-webkit-scrollbar-track {
+            background: var(--secondary-accent);
+            border-radius: 4px;
+        }
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: var(--primary-accent);
+            border-radius: 4px;
+        }
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-accent-hover);
+        }
+
+        .chat-message {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+            max-width: 85%;
+            word-wrap: break-word;
+            display: flex;
+            flex-direction: column;
+            line-height: 1.5;
+            position: relative; 
+            z-index: 1;
+        }
+
+        .chat-message.user {
+            background-color: var(--primary-accent);
+            color: var(--button-primary-text-color); 
+            margin-left: auto;
+            border-bottom-right-radius: 0;
+        }
+
+        .chat-message.ai {
+            background-color: var(--card-background); 
+            color: var(--text-color);
+            margin-right: auto;
+            border-bottom-left-radius: 0;
+            position: relative; 
+        }
+        
+        .chat-message strong { 
+             color: var(--primary-accent-hover);
+        }
+
+        .chat-message pre {
+            background-color: rgba(0,0,0,0.2);
+            padding: 0.8rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+            border: 1px solid var(--border-color);
+        }
+        .chat-message code {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9em;
+        }
+
+        .ai-list-card {
+            background-color: #2a2a2a; 
+            border: 1px solid var(--border-color);
+            padding: 1rem;
+            padding-top: 3rem; 
+            border-radius: 6px;
+            margin-top: 0.5rem;
+            position: relative; 
+        }
+        
+        .tooltip {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            display: inline-block; 
+        }
+        
+        .copy-button {
+            background-color: var(--primary-accent);
+            color: var(--button-primary-text-color);
+            border: none;
+            padding: 0.4rem 0.6rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+        }
+        .copy-button:hover {
+            background-color: var(--primary-accent-hover);
+        }
+        .copy-button.copied { 
+            background-color: #28a745; 
+            color: white;
+        }
+
+        .tooltip .tooltiptext { 
+            visibility: hidden;
+            width: 100px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px 0;
+            position: absolute;
+            z-index: 10; 
+            bottom: 125%; 
+            left: 50%;
+            margin-left: -50px; 
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .tooltip .tooltiptext::after {
+            content: "";
+            position: absolute;
+            top: 100%; 
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #555 transparent transparent transparent;
+        }
+
+        .tooltip:hover .tooltiptext { 
+            visibility: visible;
+            opacity: 1;
+        }
+
+
+        .chat-input-area {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem; 
+            padding: 0.8rem;
+            background-color: var(--secondary-accent);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            position: relative; 
+            z-index: 1;
+        }
+
+        .chat-input {
+            flex-grow: 1;
+            background-color: var(--card-background); 
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.8rem 1rem;
+            font-size: 1rem;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: var(--primary-accent);
+            box-shadow: 0 0 8px var(--input-glow-color);
+        }
+        
+        .chat-input::placeholder {
+            color: #888;
+            font-style: italic;
+        }
+
+        .input-icon-button {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+            padding: 0.6rem;
+            border-radius: 50%;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            flex-shrink: 0; 
+        }
+        .input-icon-button svg {
+            width: 22px;
+            height: 22px;
+            fill: currentColor;
+            display: block; 
+        }
+        .input-icon-button:hover, .input-icon-button:focus {
+            background-color: var(--primary-accent);
+            color: var(--button-primary-text-color); 
+            outline: none;
+        }
+        .input-icon-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .input-icon-button.send-button {
+            background-color: var(--primary-accent);
+            color: var(--button-primary-text-color); 
+        }
+        .input-icon-button.send-button:hover, .input-icon-button.send-button:focus {
+            background-color: var(--primary-accent-hover);
+        }
+
+
+        .loading-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem;
+            font-size: 0.9em;
+            color: var(--primary-accent);
+        }
+        .loading-indicator span {
+            margin-left: 0.5rem;
+        }
+        .dot-flashing {
+            position: relative;
+            width: 5px;
+            height: 5px;
+            border-radius: 5px;
+            background-color: var(--primary-accent);
+            color: var(--primary-accent);
+            animation: dotFlashing 1s infinite linear alternate;
+            animation-delay: .5s;
+        }
+        .dot-flashing::before, .dot-flashing::after {
+            content: '';
+            display: inline-block;
+            position: absolute;
+            top: 0;
+        }
+        .dot-flashing::before {
+            left: -10px;
+            width: 5px;
+            height: 5px;
+            border-radius: 5px;
+            background-color: var(--primary-accent);
+            color: var(--primary-accent);
+            animation: dotFlashing 1s infinite alternate;
+            animation-delay: 0s;
+        }
+        .dot-flashing::after {
+            left: 10px;
+            width: 5px;
+            height: 5px;
+            border-radius: 5px;
+            background-color: var(--primary-accent);
+            color: var(--primary-accent);
+            animation: dotFlashing 1s infinite alternate;
+            animation-delay: 1s;
+        }
+
+        @keyframes dotFlashing {
+            0% { background-color: var(--primary-accent); }
+            50%, 100% { background-color: rgba(0, 191, 255, 0.3); }
+        }
+        
+        .error-message {
+            color: #ff6b6b; 
+            background-color: rgba(255, 107, 107, 0.1);
+            padding: 0.8rem;
+            border-radius: 6px;
+            border: 1px solid #ff6b6b;
+            margin-top: 0.5rem;
+        }
+
+        /* Cookie Consent Banner */
+        .cookie-consent-banner {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--secondary-accent);
+            padding: 1rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 2000; 
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
+            flex-wrap: wrap; 
+            gap: 1rem; 
+        }
+        .cookie-consent-banner p {
+            margin: 0;
+            font-size: 0.9em;
+            flex-grow: 1; 
+        }
+        .cookie-actions {
+            display: flex;
+            gap: 0.5rem; 
+            flex-shrink: 0; 
+        }
+        .cookie-consent-banner button {
+            background-color: var(--primary-accent);
+            color: var(--button-primary-text-color);
+            border: none;
+            padding: 0.6rem 1rem; 
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-weight: 600;
+            font-size: 0.85em; 
+        }
+        .cookie-consent-banner button:hover {
+            background-color: var(--primary-accent-hover);
+        }
+        .cookie-consent-banner button.cookie-reject,
+        .cookie-consent-banner button.cookie-preferences {
+            background-color: var(--card-background);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+        .cookie-consent-banner button.cookie-reject:hover,
+        .cookie-consent-banner button.cookie-preferences:hover {
+            background-color: var(--border-color);
+            color: var(--text-color);
+        }
+
+
+        /* Privacy Footer Link */
+        .privacy-footer {
+            text-align: center;
+            padding: 0.8rem 1rem; 
+            font-size: 0.8em;
+            color: var(--text-color-muted);
+            background-color: var(--background-color);
+            border-top: 1px solid var(--border-color);
+            width: 100%;
+        }
+
+        .privacy-link {
+            cursor: pointer;
+            text-decoration: underline;
+            transition: color 0.3s ease;
+        }
+        .privacy-link:hover {
+            color: var(--primary-accent);
+        }
+
+        /* Privacy Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7); 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000; 
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0s 0.3s;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-content {
+            background-color: var(--card-background);
+            padding: 2rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 5px 25px rgba(0,0,0,0.5);
+            max-width: 600px;
+            width: 90%;
+            position: relative;
+            max-height: 80vh; 
+            overflow-y: auto; 
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+         .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-content h3 {
+            color: var(--primary-accent);
+            margin-bottom: 1rem;
+            margin-top: 0;
+        }
+        .modal-content p {
+            margin-bottom: 1rem;
+            font-size: 0.9em;
+            line-height: 1.6;
+            color: var(--text-color);
+        }
+        .modal-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        .modal-close-button {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: var(--text-color-muted);
+            font-size: 1.8rem;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+            padding: 0.2rem 0.5rem;
+            transition: color 0.3s ease;
+        }
+        .modal-close-button:hover {
+            color: var(--primary-accent);
+        }
+
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .container, .header-content {
+                width: 95%;
+                padding: 0 0.5rem;
+            }
+            .chat-view, .info-section {
+                margin: 1rem auto; 
+                padding: 1rem; 
+                width: calc(100% - 2rem);
+            }
+            .logo-icon {
+                width: 160px; 
+                height: 50px; 
+            }
+            .nav-button {
+                padding: 0.5rem 0.8rem;
+                font-size: 0.9em;
+            }
+            .chat-message {
+                max-width: 95%;
+            }
+            .chat-input-area {
+                padding: 0.5rem;
+            }
+             .chat-input {
+                padding: 0.7rem 0.8rem;
+            }
+
+            .input-icon-button svg {
+                width: 20px;
+                height: 20px;
+            }
+            .cookie-consent-banner {
+                flex-direction: column;
+                text-align: center;
+                align-items: stretch; 
+            }
+            .cookie-consent-banner p {
+                margin-bottom: 0.8rem;
+            }
+            .cookie-actions {
+                justify-content: center; 
+                width: 100%;
+            }
+             .info-section {
+                padding: 1.5rem;
+            }
+            .privacy-footer {
+                padding: 0.8rem 0.5rem;
+                font-size: 0.75em;
+            }
+            .modal-content {
+                padding: 1.5rem;
+            }
+            .modal-close-button {
+                font-size: 1.6rem;
+                top: 0.8rem;
+                right: 0.8rem;
+            }
+        }
+         @media (max-width: 480px) {
+            .header-content {
+                flex-direction: column;
+                gap: 0.5rem;
+                padding-bottom: 0.5rem;
+            }
+            .logo-icon { 
+                width: 144px; 
+                height: 45px;
+            }
+            .nav-buttons {
+                width: 100%;
+                justify-content: space-around;
+            }
+            .nav-button {
+                 flex-grow: 1;
+                 justify-content: center;
+            }
+             .chat-input-area {
+                flex-wrap: wrap; 
+                gap: 0.5rem; 
+            }
+            .chat-input {
+                flex-basis: 100%; 
+                order: 1; 
+                min-width: 100px; 
+            }
+            #send-button {
+                 margin-left: auto; 
+                 order: 2;
+            }
+             .chat-view, .info-section {
+                margin: 0.5rem auto; 
+                width: calc(100% - 1rem); 
+                padding: 0.8rem;
+            }
+        }
+
+    </style>
+    <script type="module">
+        import { GoogleGenAI } from "https://esm.sh/@google/genai";
+
+        const BYGGPILOT_LOGO_SVG = `
+<svg viewBox="0 0 280 70" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .bp-icon-element { fill: currentColor; }
+    .bp-text-element { 
+      fill: currentColor; 
+      font-family: 'Poppins', sans-serif; 
+      font-weight: 700; 
+      font-size: 26px;
+      letter-spacing: 1.5px;
+      text-anchor: start;
+    }
+  </style>
+  
+  <!-- Icon Group: Helmet + Wings -->
+  <g transform="translate(10, 8) scale(0.85)"> 
+    <!-- Helmet -->
+    <g class="bp-icon-element" transform="translate(30,0)">
+      <!-- Main dome -->
+      <path d="M32.5,5 C12.3,5 0,20.8 0,39.4 C0,58 12.3,74 32.5,74 C52.7,74 65,58 65,39.4 C65,20.8 52.7,5 32.5,5 Z 
+               M32.5,10 C49.9,10 60,23.1 60,39.4 C60,55.7 49.9,69 32.5,69 C15.1,69 5,55.7 5,39.4 C5,23.1 15.1,10 32.5,10 Z" />
+      <!-- Brim -->
+      <path d="M-5,58 C-5,52.5 7.8,49 32.5,49 C57.2,49 70,52.5 70,58 L65,61 C63.7,56.5 52.2,52 32.5,52 C12.8,52 1.3,56.5 0,61 Z" />
+      <!-- Top ridges/details -->
+      <path d="M18,15 Q32.5,10 47,15" stroke="currentColor" stroke-width="2" fill="none" opacity="0.6"/>
+      <path d="M22,25 Q32.5,20 43,25" stroke="currentColor" stroke-width="2" fill="none" opacity="0.6"/>
+    </g>
+    
+    <!-- Wings -->
+    <g class="bp-icon-element" transform="translate(28, 30)"> 
+      <path d="M0,0 H-30 L-27,5 H-2 L0,0 Z" />
+      <path d="M-1,8 H-28 L-25,13 H-3 L-1,8 Z" />
+      <path d="M-2,16 H-26 L-23,21 H-4 L-2,16 Z" />
+      <path d="M-3,24 H-24 L-21,29 H-5 L-3,24 Z" />
+    </g>
+  </g>
+
+  <!-- Text "BYGGPILOT" -->
+  <text x="105" y="46" class="bp-text-element">BYGGPILOT</text>
+</svg>`;
+        const GOOGLE_ICON_SVG = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" enable-background="new 0 0 48 48"><path fill="#4285F4" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FFC107" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l0.012-0.012l6.19,5.238C39.993,36.625,44,30.639,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path></svg>`;
+        const PAPERCLIP_ICON_SVG = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 6V17.5C16.5 20.2614 14.2614 22.5 11.5 22.5C8.73858 22.5 6.5 20.2614 6.5 17.5V5C6.5 3.067 8.067 1.5 10 1.5C11.933 1.5 13.5 3.067 13.5 5V15.5C13.5 16.3284 12.8284 17 12 17C11.1716 17 10.5 16.3284 10.5 15.5V6H8.5V15.5C8.5 17.433 10.067 19 12 19C13.933 19 15.5 17.433 15.5 15.5V5C15.5 2.001 13 0 10 0C7 0 4.5 2.001 4.5 5V17.5C4.5 21.366 7.63401 24.5 11.5 24.5C15.366 24.5 18.5 21.366 18.5 17.5V6H16.5Z"></path></svg>`;
+        const MICROPHONE_ICON_SVG = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 14C13.6569 14 15 12.6569 15 11V5C15 3.34315 13.6569 2 12 2C10.3431 2 9 3.34315 9 5V11C9 12.6569 10.3431 14 12 14ZM10.5 5C10.5 4.17157 11.1716 3.5 12 3.5C12.8284 3.5 13.5 4.17157 13.5 5V11C13.5 11.8284 12.8284 12.5 12 12.5C11.1716 12.5 10.5 11.8284 10.5 11V5Z"></path><path d="M19 10C19 10.5128 18.7863 10.9839 18.4226 11.3197C18.4226 11.3197 18.4226 11.3197 18.4226 11.3197C18.0497 11.6613 17.5503 11.8611 17 11.8611C16.4872 11.8611 16.0161 11.6474 15.6803 11.2837L15.6803 11.2837C15.3446 10.92 15.1587 10.4872 15.1587 10H15C15 10 15 10 15 10C15 13.5323 17.5817 16.3989 21 16.8914V17V20H3V17V16.8914C6.41835 16.3989 9.00001 13.5323 9 10H8.84133C8.84133 10.4872 8.65543 10.92 8.31969 11.2837C7.98394 11.6474 7.51285 11.8611 7 11.8611C6.44966 11.8611 5.95033 11.6613 5.57739 11.3197L5.57739 11.3197C5.21371 10.9839 5 10.5128 5 10H4C4 13.866 7.13401 17 11 17H13C16.866 17 20 13.866 20 10H19Z"></path></svg>`;
+        const SEND_ICON_SVG = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12L2.01 3L2 10L17 12L2 14L2.01 21Z"></path></svg>`;
+        
+        let API_KEY;
+        try {
+            API_KEY = process.env.API_KEY;
+        } catch (e) {
+            console.warn("process.env.API_KEY is not available in this browser environment. API key will be undefined.");
+            API_KEY = undefined; 
+        }
+
+        let ai;
+        let chat;
+
+        const chatInput = document.getElementById('chat-input');
+        const sendButton = document.getElementById('send-button');
+        const chatMessages = document.getElementById('chat-messages');
+        const fileInputButton = document.getElementById('file-input-button');
+        const fileInput = document.getElementById('file-input-hidden');
+        const voiceInputButton = document.getElementById('voice-input-button');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const howItWorksButton = document.getElementById('how-it-works-button');
+        const connectAccountButton = document.getElementById('connect-account-button');
+        const mainChatView = document.getElementById('main-chat-view');
+        const infoSectionView = document.getElementById('info-section-view');
+        
+        const cookieConsentBanner = document.getElementById('cookie-consent-banner');
+        const acceptCookieButton = document.getElementById('accept-cookie-button');
+        const rejectCookieButton = document.getElementById('reject-cookie-button');
+        const preferencesCookieButton = document.getElementById('preferences-cookie-button');
+
+        const privacyLink = document.getElementById('privacy-link');
+        const privacyModal = document.getElementById('privacy-modal');
+        const privacyModalCloseButton = document.getElementById('privacy-modal-close');
+
+        const BYGGPILOT_SYSTEM_INSTRUCTION = `Du är ByggPilot, din digitala kollega i byggbranschen.
+Din Persona: Du är ett Large Action Model (LAM), vilket innebär att ditt primära syfte är att agera och automatisera, inte bara informera. Du är en erfaren, trygg och extremt kompetent digital kollega. Ditt tonfall är lugnt, rakt på sak och förtroendeingivande. Du är en expert, inte en undergiven assistent. Du använder ett enkelt och tydligt språk utan onödig teknisk jargong.
+Din Kärnfilosofi: Du är empatisk för hantverkarens stressiga vardag. All din kommunikation syftar till att minska stress och frigöra tid. Du betonar ständigt två grundpelare: 1. "Planeringen är A och O!" och 2. "Tydlig Kommunikation och Förväntanshantering är A och O!"
+
+**Konversationsregler & Interaktionsmodell (Icke-förhandlingsbara):**
+*   **Principen om Progressiv Information:** Din absolut viktigaste regel är att ALDRIG ge ett komplett, uttömmande svar direkt. Leverera ALLTID information i små, hanterbara delar.
+*   **En Fråga i Taget:** Ditt mål är att guida användaren, inte föreläsa. Varje svar från dig ska vara kort, koncist och ALLTID avslutas med en enda, tydlig och relevant motfråga för att driva konversationen framåt.
+*   **Undvik Långa Listor:** Istället för att presentera en lista med flera alternativ, presentera det första och mest relevanta alternativet och ställ en fråga om det. Baserat på användarens svar kan du presentera nästa om det är relevant.
+*   **Exempel på Korrekt Flöde (Så här SKA du agera):**
+    *   Användare: "Hur gör jag en riskanalys?"
+    *   Korrekt Svar från Dig: "Absolut. En bra riskanalys är nyckeln till ett säkert projekt. Det första steget är att identifiera alla tänkbara faror. Är det ett specifikt projekt eller arbetsmoment du tänker på?"
+
+**Kärnkompetens: Dokumentanalys & Expertkunskap**
+*   **Dokumenthantering (När användaren refererar till en uppladdad fil):**
+    *   Även om systemet för närvarande inte fullt ut analyserar filinnehåll, när användaren indikerar att en fil har laddats upp och kanske beskriver dess typ, ska du agera som följer:
+    *   **Bekräfta och Identifiera (baserat på användarens info):** Bekräfta mottagandet: "Tack, jag har noterat filen [eventuellt filnamn om användaren nämner det]." Försök att 'förstå' dokumenttypen baserat på användarens beskrivning.
+    *   **Agera Proaktivt (med frågor):** Baserat på den förmodade dokumenttypen, föreslå en konkret, värdeskapande åtgärd (i form av en diskussion eller informationsgivning) och ställ en fråga.
+        *   Om Förfrågningsunderlag (FU) nämns: "Jag förstår, det låter som ett förfrågningsunderlag. Vill du att vi diskuterar hur man typiskt extraherar en materiallista och skapar ett kalkylunderlag från ett sådant?"
+        *   Om Kontrollplan (enligt PBL) nämns: "En kontrollplan, noterat. Skulle du vilja att jag hjälper dig att gå igenom vilka punkter som är viktiga att granska i en kontrollplan enligt PBL för att se om några kritiska aspekter kan behöva extra uppmärksamhet?"
+        *   Om Arbetsmiljöplan (AMP) nämns: "Tack, en arbetsmiljöplan. Ett vanligt första steg är att jämföra den mot de 13 riskfyllda momenten i AFS (Arbetsmiljöverkets föreskrifter). Ska vi titta närmare på det?"
+*   **Djupgående Branschkunskap:** Du är expert på den svenska bygg- och installationsbranschen och hela byggprocessen. Din kunskap omfattar:
+    *   Regelverk: PBL, BBR, alla relevanta AFS:er, Elsäkerhetsverkets föreskrifter, Säker Vatten, AMA, och du håller dig uppdaterad om kommande lagändringar.
+    *   Standardavtal: AB 04, ABT 06, ABK 09, ABS 18, ABM 07, ABTU 07, Hantverkarformuläret 17.
+    *   Praktiskt Arbete: Du kan hjälpa till att diskutera och skapa underlag för specifika checklistor, egenkontroller, riskanalyser (SWOT, Minirisk), och KMA-planer. Du förstår fallgropar, IoT och Lean-principer (PDCA, 5S).
+
+**Server-baserade Integrationer (LAM-funktionalitet - Hur du kommunicerar om dem):**
+*   **Statusmedvetenhet (Simulerad):** För närvarande, utgå från att servern för Google-integrationer är OFFLINE om inte användaren explicit säger att de har kopplat sitt konto.
+*   **Om Servern är (eller antas vara) OFFLINE:** Om användaren frågar efter en funktion som kräver servern (t.ex. läsa mail, skapa kalenderhändelser), svara tydligt: "Just nu är servern för avancerade Google-integrationer inte aktiv. När den är online kan jag hjälpa dig att automatiskt läsa dina mail och skapa kalenderhändelser. Säg till om du vill att jag meddelar dig när den är tillgänglig igen."
+*   **Om Servern är (eller antas vara) ONLINE (t.ex. användaren säger 'kontot är kopplat'):** Meddela professionellt: "Dina Google Workspace-integrationer är nu aktiva. Jag kan nu hjälpa dig att automatisera uppgifter mellan dina system." Kom ihåg: "Du måste ALLTID fråga om lov innan du agerar, t.ex. 'Jag har sammanfattat mailet. Ska jag skapa en kalenderbokning för mötet imorgon kl 10?'"
+    *   Funktioner att nämna vid ONLINE status: Gmail (läsa, sammanfatta), Google Kalender (skapa, läsa, uppdatera), Google Keep (skapa, uppdatera listor), Google Maps (förståelse för geofencing-potential för tidloggning, hämta platsinfo).
+
+**Etik & Begränsningar:**
+*   Du ger aldrig finansiell, juridisk eller skatteteknisk rådgivning. Du presenterar information baserat på gällande regler men uppmanar alltid användaren att konsultera en mänsklig expert (revisor, jurist) för slutgiltiga beslut.
+*   Du hanterar all data med högsta sekretess och agerar aldrig på data utan en explicit instruktion från användaren.
+
+**Formatera för läsbarhet:**
+*   Använd markdown för att formatera dina svar (fetstil, kursiv, listor, kodblock för t.ex. exempel på avtalstext).
+*   **Identifiera listor för kopiering:** Om du genererar en checklista, en steg-för-steg guide, eller en annan typ av lista som användaren troligen vill kopiera, se till att varje listobjekt separeras av dubbla radbrytningar (\\n\\n). Detta hjälper systemet att identifiera och formatera det korrekt för användaren. Exempel:
+    "Här är en checklista:\\n\\n1. Första punkten.\\n\\n2. Andra punkten.\\n\\n3. Tredje punkten."
+
+**Starta konversationen:**
+*   (Original instruction: Vänta på användarens första meddelande.) Nu modifierad för att tillåta en initial hälsning från klienten. AI:n kommer fortfarande att följa sina svarsregler efter användarens första *faktiska* fråga.
+`;
+
+        const placeholderTexts = [
+            "Skapa en KMA-plan för ett stambytesprojekt...",
+            "Ge mig en checklista för egenkontroll av tätskikt...",
+            "Vad säger ABT 06 om vite vid försening?",
+            "Förklara skillnaden mellan fast och rörligt á-pris...",
+            "Jag behöver hjälp att formulera ett mail om en ÄTA-anmälan."
+        ];
+        let placeholderIndex = 0;
+        let typingTimeout;
+
+        function typePlaceholder() {
+            if (document.activeElement === chatInput || !chatInput) return; 
+
+            const currentPlaceholder = placeholderTexts[placeholderIndex];
+            let charIndex = 0;
+            chatInput.placeholder = "";
+
+            function typeChar() {
+                if (charIndex < currentPlaceholder.length) {
+                    chatInput.placeholder += currentPlaceholder.charAt(charIndex);
+                    charIndex++;
+                    typingTimeout = setTimeout(typeChar, 70);
+                } else {
+                    typingTimeout = setTimeout(erasePlaceholder, 2000); 
+                }
+            }
+            typeChar();
+        }
+
+        function erasePlaceholder() {
+            if (document.activeElement === chatInput || !chatInput) return;
+
+            let currentText = chatInput.placeholder;
+            let charIndex = currentText.length;
+
+            function eraseChar() {
+                if (charIndex > 0) {
+                    chatInput.placeholder = currentText.substring(0, charIndex - 1);
+                    charIndex--;
+                    typingTimeout = setTimeout(eraseChar, 40);
+                } else {
+                    placeholderIndex = (placeholderIndex + 1) % placeholderTexts.length;
+                    typingTimeout = setTimeout(typePlaceholder, 500); 
+                }
+            }
+            eraseChar();
+        }
+        
+        if (chatInput) {
+            chatInput.addEventListener('focus', () => {
+                clearTimeout(typingTimeout);
+                chatInput.placeholder = "Ställ din fråga eller beskriv ditt ärende här...";
+            });
+
+            chatInput.addEventListener('blur', () => {
+                if (!chatInput.value) { 
+                    typePlaceholder();
+                }
+            });
+        }
+
+
+        function setChatLoading(isLoading) {
+            if (loadingIndicator) loadingIndicator.style.display = isLoading ? 'flex' : 'none';
+            if (sendButton) sendButton.disabled = isLoading;
+            if (chatInput) chatInput.disabled = isLoading;
+            if (fileInputButton) fileInputButton.disabled = isLoading;
+            if (voiceInputButton) voiceInputButton.disabled = isLoading;
+            
+            if (!isLoading && chatInput) {
+                chatInput.focus();
+            }
+        }
+
+        function displayMessage(message, sender, isHtml = false, isList = false) {
+            if (!chatMessages) return;
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('chat-message');
+            if (sender) {
+                sender.split(' ').forEach(cls => {
+                    if (cls) messageElement.classList.add(cls);
+                });
+            }
+
+            if (isHtml) {
+                if (isList) {
+                    const listCard = document.createElement('div');
+                    listCard.classList.add('ai-list-card');
+                    
+                    const contentDiv = document.createElement('div');
+                    contentDiv.innerHTML = message; 
+                    listCard.appendChild(contentDiv);
+
+                    const tooltipWrapper = document.createElement('div');
+                    tooltipWrapper.classList.add('tooltip'); 
+
+                    const copyButton = document.createElement('button');
+                    copyButton.classList.add('copy-button');
+                    copyButton.textContent = 'Kopiera';
+                    copyButton.setAttribute('aria-label', 'Kopiera listan');
+                    
+                    const tooltipTextSpan = document.createElement('span');
+                    tooltipTextSpan.classList.add('tooltiptext');
+                    tooltipTextSpan.textContent = 'Kopierat!';
+                    
+                    tooltipWrapper.appendChild(copyButton);
+                    tooltipWrapper.appendChild(tooltipTextSpan);
+
+                    copyButton.onclick = () => {
+                        let textToCopy = "";
+                        const listItems = contentDiv.querySelectorAll('li');
+                        if (listItems.length > 0) {
+                            listItems.forEach(li => textToCopy += li.textContent + "\\n");
+                        } else { 
+                            textToCopy = contentDiv.innerText || contentDiv.textContent;
+                        }
+
+                        navigator.clipboard.writeText(textToCopy.trim()).then(() => {
+                            tooltipTextSpan.style.visibility = 'visible';
+                            tooltipTextSpan.style.opacity = '1';
+                            setTimeout(() => {
+                                tooltipTextSpan.style.visibility = 'hidden';
+                                tooltipTextSpan.style.opacity = '0';
+                            }, 2000);
+                        }).catch(err => console.error('Kunde inte kopiera text: ', err));
+                    };
+                    listCard.appendChild(tooltipWrapper); 
+                    messageElement.appendChild(listCard);
+                } else {
+                    const contentDiv = document.createElement('div');
+                    contentDiv.innerHTML = message;
+                    messageElement.appendChild(contentDiv);
+                }
+            } else {
+                const textNode = document.createTextNode(message);
+                messageElement.appendChild(textNode);
+            }
+            chatMessages.appendChild(messageElement);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        function formatAIResponse(text) {
+            text = text.replace(/\*\*(.*?)\*\*|__(.*?)__/g, '<strong>$1$2</strong>');
+            text = text.replace(/\*(.*?)\*|_(.*?)_/g, '<em>$1$2</em>');
+            text = text.replace(/~~(.*?)~~/g, '<del>$1</del>');
+            
+            text = text.replace(/```(\w*)\n([\s\S]*?)```|```([\s\S]*?)```/g, (match, lang, code1, code2) => {
+                const code = code1 || code2;
+                return `<pre><code>${code.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code></pre>`;
+            });
+            text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+            const parts = text.split(/(<pre>[\s\S]*?<\/pre>)/);
+            for (let i = 0; i < parts.length; i++) {
+                if (!parts[i].startsWith('<pre>')) {
+                    parts[i] = parts[i].replace(/\n/g, '<br>');
+                }
+            }
+            text = parts.join('');
+            
+            const doubleBrPattern = /<br>\s*<br>/;
+            if (text.includes('<li>') || (text.includes('1.') && doubleBrPattern.test(text)) || (text.includes('* ') && doubleBrPattern.test(text)) || (text.includes('- ') && doubleBrPattern.test(text)) ) {
+                if (!text.includes('<ul>') && !text.includes('<ol>')) {
+                    text = text.replace(/^\s*(\d+\.)\s*(.*?)(\s*(?:<br>\s*){2}|$)/gm, '<li>$2</li>');
+                    text = text.replace(/^\s*([*-])\s*(.*?)(\s*(?:<br>\s*){2}|$)/gm, '<li>$2</li>');
+                    
+                    if (text.includes('<li>')) {
+                        const firstLiContent = text.match(/<li>(.*?)<\/li>/);
+                        if (firstLiContent && /^\d+\s*\.?/.test(firstLiContent[1].trim())) {
+                           text = `<ol>${text.replace(/<br>/g, '')}</ol>`;
+                        } else {
+                           text = `<ul>${text.replace(/<br>/g, '')}</ul>`;
+                        }
+                    }
+                }
+                displayMessage(text, 'ai', true, true); 
+            } else {
+                displayMessage(text, 'ai', true, false); 
+            }
+        }
+
+
+        async function getAIResponse(prompt, history) {
+            if (!ai) {
+                 displayMessage('API-nyckel saknas eller är ogiltig. AI-funktioner är inaktiverade. Kontrollera din konfiguration.', 'ai error-message');
+                 setChatLoading(false);
+                 if (chatInput) chatInput.disabled = true; 
+                 if (sendButton) sendButton.disabled = true;
+                 return;
+            }
+
+            try {
+                if (!chat) { 
+                     chat = ai.chats.create({
+                        model: 'gemini-2.5-flash-preview-04-17',
+                        config: { systemInstruction: BYGGPILOT_SYSTEM_INSTRUCTION },
+                        history: history || [] 
+                    });
+                }
+                
+                if (typeof prompt === 'string' && prompt.trim() !== "") {
+                    const response = await chat.sendMessage({ message: prompt });
+                    formatAIResponse(response.text);
+                } else {
+                    console.warn("getAIResponse called with invalid or empty prompt:", prompt);
+                    displayMessage("Jag fick en tom eller ogiltig fråga. Försök formulera om dig.", 'ai error-message');
+                }
+
+            } catch (error) {
+                console.error("Fel vid kommunikation med Gemini API:", error);
+                let userFriendlyError = "Ett oväntat fel inträffade när svar skulle hämtas från AI-assistenten. Försök igen senare.";
+                if (error.message) {
+                    if (error.message.includes("API key not valid")) {
+                        userFriendlyError = "API-nyckeln är ogiltig. Kontrollera att du har angett en korrekt API-nyckel.";
+                        if (chatInput) chatInput.disabled = true; 
+                        if (sendButton) sendButton.disabled = true;
+                    } else if (error.message.includes("quota")) {
+                        userFriendlyError = "Din användningskvot för API:et har överskridits. Försök igen senare eller kontrollera din kvot hos Google.";
+                    } else if (error.message.toLowerCase().includes("model_not_found") || error.message.toLowerCase().includes("resource_exhausted")) {
+                         userFriendlyError = "AI-modellen är för närvarande inte tillgänglig eller överbelastad. Försök igen om en liten stund.";
+                    }  else if (error.message.includes("ContentUnion") || (error.response && error.response.data && error.response.data.error && error.response.data.error.message.includes("ContentUnion")) ) {
+                        userFriendlyError = "Ett fel uppstod med meddelandeformatet till AI:n. Försök formulera om din fråga.";
+                    }
+                }
+                displayMessage(userFriendlyError, 'ai error-message');
+            } finally {
+                setChatLoading(false);
+            }
+        }
+
+        async function handleSendMessage() {
+            if(!chatInput || !sendButton) return;
+            const userMessage = chatInput.value.trim();
+            if (!userMessage) return;
+
+            displayMessage(userMessage, 'user');
+            chatInput.value = '';
+            setChatLoading(true);
+
+            const currentHistory = [];
+            if (chatMessages) {
+                const messageElements = chatMessages.querySelectorAll('.chat-message');
+                messageElements.forEach(el => {
+                    let textContent = '';
+                    const listCardContent = el.querySelector('.ai-list-card > div:first-child'); 
+                    if (listCardContent) {
+                         textContent = listCardContent.innerText || listCardContent.textContent; 
+                    } else {
+                        textContent = el.innerText || el.textContent;
+                    }
+                    
+                    if (el.classList.contains('user')) {
+                        currentHistory.push({ role: 'user', parts: [{ text: textContent.trim() }] });
+                    } else if (el.classList.contains('ai') && !el.classList.contains('error-message')) {
+                        currentHistory.push({ role: 'model', parts: [{ text: textContent.trim() }] });
+                    }
+                });
+            }
+            
+            await getAIResponse(userMessage, currentHistory);
+             if (chatInput && document.activeElement !== chatInput && !chatInput.value) {
+                typePlaceholder(); 
+            }
+        }
+
+        if (sendButton) sendButton.addEventListener('click', handleSendMessage);
+        if (chatInput) {
+            chatInput.addEventListener('keypress', (event) => {
+                if (event.key === 'Enter' && !event.shiftKey) {
+                    event.preventDefault();
+                    handleSendMessage();
+                }
+            });
+        }
+
+        if (fileInputButton) fileInputButton.addEventListener('click', () => fileInput.click());
+        if (fileInput) {
+            fileInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    displayMessage(`Vald fil: ${file.name}. (Du kan nu beskriva filen för mig eller ställa frågor om den. Faktisk filanalys är under utveckling.)`, 'user');
+                    fileInput.value = ''; 
+                }
+            });
+        }
+        
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition && voiceInputButton) {
+            const recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.lang = 'sv-SE';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            voiceInputButton.addEventListener('click', () => {
+                try {
+                    recognition.start();
+                    voiceInputButton.style.color = 'var(--primary-accent)'; 
+                    voiceInputButton.disabled = true;
+                } catch(e) {
+                    console.warn("Speech recognition error on start:", e.message);
+                    displayMessage("Kunde inte starta röstigenkänning.", "ai error-message");
+                    voiceInputButton.style.color = 'var(--text-color)';
+                    voiceInputButton.disabled = false;
+                }
+            });
+
+            recognition.onresult = (event) => {
+                const speechResult = event.results[0][0].transcript;
+                if(chatInput) chatInput.value += (chatInput.value.length ? ' ' : '') + speechResult; 
+            };
+
+            recognition.onspeechend = () => {
+                recognition.stop();
+            };
+            
+            recognition.onend = () => {
+                if(voiceInputButton) {
+                    voiceInputButton.style.color = 'var(--text-color)';
+                    voiceInputButton.disabled = false;
+                }
+                 if (chatInput && document.activeElement !== chatInput && !chatInput.value) {
+                    typePlaceholder(); 
+                }
+            };
+
+            recognition.onerror = (event) => {
+                let errorMsg = "Ett fel inträffade med röstigenkänningen: " + event.error;
+                displayMessage(errorMsg, 'ai error-message');
+                console.error("Speech recognition error:", event.error);
+            };
+        } else if (voiceInputButton) {
+            voiceInputButton.disabled = true;
+            voiceInputButton.title = "Röstinmatning stöds inte i din webbläsare.";
+            console.warn("Web Speech API stöds inte i denna webbläsare.");
+        }
+        
+        if (howItWorksButton) {
+            howItWorksButton.addEventListener('click', () => {
+                if(mainChatView) mainChatView.style.display = 'none';
+                if(infoSectionView) infoSectionView.style.display = 'block';
+            });
+        }
+        
+        if (chatInput) {
+            chatInput.addEventListener('focus', () => {
+                if (infoSectionView && infoSectionView.style.display === 'block') {
+                    if(mainChatView) mainChatView.style.display = 'flex'; 
+                    if(infoSectionView) infoSectionView.style.display = 'none';
+                }
+            });
+        }
+        const logoLink = document.getElementById('logo-link');
+        if (logoLink) {
+            logoLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                if(mainChatView) mainChatView.style.display = 'flex';
+                if(infoSectionView) infoSectionView.style.display = 'none';
+                if(chatInput) chatInput.focus(); 
+            });
+        }
+
+        if (connectAccountButton) {
+            connectAccountButton.addEventListener('click', () => {
+                displayMessage("Jag vill koppla mitt Google-konto.", 'user');
+                 const userMessage = "Jag vill koppla mitt Google-konto."; 
+                 setChatLoading(true);
+                 const currentHistory = [];
+                 if (chatMessages) {
+                    const messageElements = chatMessages.querySelectorAll('.chat-message');
+                    messageElements.forEach(el => {
+                        let textContent = '';
+                        const listCardContent = el.querySelector('.ai-list-card > div:first-child'); 
+                        if (listCardContent) {
+                             textContent = listCardContent.innerText || listCardContent.textContent; 
+                        } else {
+                            textContent = el.innerText || el.textContent;
+                        }
+                        if (el.classList.contains('user')) {
+                            currentHistory.push({ role: 'user', parts: [{ text: textContent.trim() }] });
+                        } else if (el.classList.contains('ai') && !el.classList.contains('error-message')) {
+                            currentHistory.push({ role: 'model', parts: [{ text: textContent.trim() }] });
+                        }
+                    });
+                 }
+                 currentHistory.push({ role: 'user', parts: [{ text: userMessage }] });
+                 getAIResponse(userMessage, currentHistory.slice(0, -1)); 
+            });
+        }
+
+        function handleCookieConsent() {
+            const consentStatus = localStorage.getItem('cookieConsent');
+            if (consentStatus === 'accepted' || consentStatus === 'rejected') {
+                if (cookieConsentBanner) cookieConsentBanner.style.display = 'none';
+                document.body.classList.remove('cookie-banner-active');
+            } else {
+                if (cookieConsentBanner) cookieConsentBanner.style.display = 'flex';
+                document.body.classList.add('cookie-banner-active');
+            }
+
+            if (acceptCookieButton) {
+                acceptCookieButton.addEventListener('click', () => {
+                    localStorage.setItem('cookieConsent', 'accepted');
+                    if (cookieConsentBanner) cookieConsentBanner.style.display = 'none';
+                    document.body.classList.remove('cookie-banner-active');
+                });
+            }
+            if (rejectCookieButton) {
+                rejectCookieButton.addEventListener('click', () => {
+                    localStorage.setItem('cookieConsent', 'rejected');
+                    if (cookieConsentBanner) cookieConsentBanner.style.display = 'none';
+                    document.body.classList.remove('cookie-banner-active');
+                });
+            }
+            if (preferencesCookieButton) {
+                preferencesCookieButton.addEventListener('click', () => {
+                    // For simplicity, treat "Anpassa" as "Rejected" for now if no further UI is built
+                    localStorage.setItem('cookieConsent', 'rejected'); 
+                    if (cookieConsentBanner) cookieConsentBanner.style.display = 'none';
+                    document.body.classList.remove('cookie-banner-active');
+                });
+            }
+        }
+
+        function setupModalEventListeners() {
+            if (privacyLink && privacyModal) {
+                privacyLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    privacyModal.classList.add('active');
+                });
+            }
+            if (privacyModalCloseButton && privacyModal) {
+                privacyModalCloseButton.addEventListener('click', () => {
+                    privacyModal.classList.remove('active');
+                });
+            }
+            if (privacyModal) {
+                privacyModal.addEventListener('click', (e) => {
+                    if (e.target === privacyModal) { 
+                        privacyModal.classList.remove('active');
+                    }
+                });
+            }
+        }
+
+        function displayInitialGreeting() {
+            if (!chatMessages) return;
+            // Check if there are already messages (e.g. from a previous session if we implement persistence later)
+            if (chatMessages.children.length === 0) {
+                const greetingText = "Välkommen till ByggPilot! Jag är din digitala kollega, redo att hjälpa dig med administration och planering i byggbranschen. Vad kan jag assistera dig med idag?";
+                displayMessage(greetingText, 'ai', false); // isHtml = false for simple text
+            }
+        }
+
+        async function initializeApp() {
+            handleCookieConsent(); 
+            setupModalEventListeners(); 
+
+            const logoIconEl = document.querySelector('.logo-icon');
+            if (logoIconEl) logoIconEl.innerHTML = BYGGPILOT_LOGO_SVG;
+            
+            const googleButtonIconEl = document.getElementById('google-button-icon');
+            if (googleButtonIconEl) googleButtonIconEl.innerHTML = GOOGLE_ICON_SVG;
+            
+            if (fileInputButton) fileInputButton.innerHTML = PAPERCLIP_ICON_SVG;
+            if (voiceInputButton) voiceInputButton.innerHTML = MICROPHONE_ICON_SVG;
+            if (sendButton) sendButton.innerHTML = SEND_ICON_SVG;
+            
+            if(mainChatView) mainChatView.style.display = 'flex';
+            if(infoSectionView) infoSectionView.style.display = 'none';
+
+            if (!API_KEY) {
+                displayMessage('VARNING: API-nyckel för Gemini är inte konfigurerad. AI-funktioner kommer inte att fungera.', 'ai error-message');
+                setChatLoading(false); 
+                 if (chatInput) chatInput.disabled = true; 
+                 if (sendButton) sendButton.disabled = true;
+            } else {
+                try {
+                    ai = new GoogleGenAI({ apiKey: API_KEY });
+                    setChatLoading(false); 
+                    displayInitialGreeting(); // Display greeting after AI is potentially ready
+                } catch (error) {
+                    console.error("Initialization error during GoogleGenAI setup:", error);
+                    displayMessage(`Ett fel uppstod vid initialisering av AI-tjänsten: ${error.message}.`, 'ai error-message');
+                    setChatLoading(false);
+                }
+            }
+            if (chatInput && !chatInput.disabled) typePlaceholder(); 
+        }
+
+        initializeApp();
+
+    </script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body>
+    <header>
+        <div class="header-content container">
+            <a href="#" id="logo-link" class="logo-container">
+                <span class="logo-icon"><!-- SVG will be injected here --></span>
+            </a>
+            <div class="nav-buttons">
+                <button id="how-it-works-button" class="nav-button" aria-label="Så funkar ByggPilot">Så funkar ByggPilot</button>
+                <button id="connect-account-button" class="nav-button" aria-label="Koppla Google konto">
+                    <span id="google-button-icon" class="google-icon"><!-- SVG will be injected here --></span>
+                    Koppla konto
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div id="page-content-wrapper">
+        <main class="chat-view container" id="main-chat-view">
+            <div class="chat-messages" id="chat-messages" aria-live="polite">
+                <!-- Chat messages will be appended here -->
+            </div>
+            <div id="loading-indicator" class="loading-indicator" style="display: none;">
+                <div class="dot-flashing"></div>
+                <span>ByggPilot tänker...</span>
+            </div>
+            <div class="chat-input-area">
+                <button id="file-input-button" class="input-icon-button" aria-label="Bifoga fil" title="Bifoga fil (under utveckling)">
+                    <!-- Paperclip SVG -->
+                </button>
+                <input type="file" id="file-input-hidden" style="display: none;" accept=".pdf,.doc,.docx,.txt,.jpg,.png">
+                
+                <button id="voice-input-button" class="input-icon-button" aria-label="Röstinmatning" title="Använd mikrofonen för att skriva">
+                    <!-- Microphone SVG -->
+                </button>
+                
+                <input type="text" id="chat-input" class="chat-input" placeholder="Ställ din fråga eller beskriv ditt ärende här..." aria-label="Chattinmatning">
+                
+                <button id="send-button" class="input-icon-button send-button" aria-label="Skicka meddelande">
+                    <!-- Send SVG -->
+                </button>
+            </div>
+        </main>
+
+        <section class="info-section container" id="info-section-view" style="display: none;">
+            <h2>Så Förenklar ByggPilot Din Byggvardag – Steg för Steg!</h2>
+            <p>ByggPilot är mer än bara en chatt – det är din proaktiva digitala kollega, designad för att minska stress och frigöra värdefull tid. Vi fokuserar på att göra komplexa administrativa uppgifter enkla och hanterbara.</p>
+            
+            <h3>Ditt Stöd Genom Hela Projektet:</h3>
+            <ul>
+                <li>
+                    <strong>Expertkunskap Direkt Tillgänglig:</strong> Behöver du snabbt förstå ett avtal (AB04, ABT06), en byggregel (PBL, BBR) eller en AFS? Fråga ByggPilot! Vi hjälper dig att tolka och förstå komplex information.
+                </li>
+                <li>
+                    <strong>Smart Dokumentgenomgång:</strong> Ladda upp (eller beskriv) ett förfrågningsunderlag, en kontrollplan eller en arbetsmiljöplan. ByggPilot hjälper dig att identifiera kritiska punkter, extrahera viktiga data och föreslår nästa steg – som att skapa en materiallista eller granska riskmoment. <em>(Faktisk filanalys är under utveckling, just nu guidar vi dig baserat på din beskrivning.)</em>
+                </li>
+                <li>
+                    <strong>Effektiv Planering & Administration:</strong>
+                    <ul>
+                        <li><strong>Checklistor & Egenkontroller:</strong> Behöver du en checklista för tätskikt eller en mall för egenkontroll? ByggPilot hjälper dig att skapa anpassade underlag.</li>
+                        <li><strong>Riskanalyser (Minirisk, SWOT):</strong> Få hjälp att strukturera och genomföra effektiva riskanalyser för dina projekt.</li>
+                        <li><strong>KMA-Planer:</strong> ByggPilot guidar dig i framtagandet av kvalitets-, miljö- och arbetsmiljöplaner.</li>
+                    </ul>
+                </li>
+                <li>
+                    <strong>Automatiserade Uppgifter (Med Google Workspace):</strong> Koppla ditt Google-konto (funktion under utveckling) och låt ByggPilot:
+                    <ul>
+                        <li>Läsa och sammanfatta dina Gmail.</li>
+                        <li>Skapa och hantera möten i Google Kalender.</li>
+                        <li>Uppdatera dina listor i Google Keep.</li>
+                    </ul>
+                    ByggPilot kommer alltid be om lov innan någon åtgärd vidtas i dina system.
+                </li>
+            </ul>
+        
+            <h3>Grundarens Vision: Ett Verktyg Av och För Hantverkare</h3>
+            <p>"Efter 20 år i byggbranschen, både på golvet och i ledande roller, har en insikt etsat sig fast: vi sliter oerhört mycket med administrativt arbete. Tid som kunde lagts på hantverket, på problemlösning ute på fältet, eller på att utveckla våra företag, äts istället upp av pappersarbete och komplexa digitala system."</p>
+            <p>"Min drivkraft med ByggPilot är inte att ersätta de fantastiska människor och verktyg som redan finns, utan att räcka ut en hjälpande hand. Att avlasta er från de tidskrävande administrativa momenten så att ni kan återfå fokus på er kärnverksamhet. Jag har själv känt frustrationen och är fast besluten att vända på varje sten för att hitta lösningar som verkligen gör skillnad."</p>
+            <p>"Detta är särskilt viktigt i Sverige, där hela 87% av byggmarknaden består av små och medelstora företag. För er är varje sparad timme guld värd. ByggPilot är mitt bidrag till en effektivare och mindre stressfylld byggvardag för oss alla."</p>
+            <p class="founder-signature">– Michael Fogelström Ekengren</p>
+        
+            <p style="text-align: center; margin-top: 2.5rem;">
+                <button onclick="document.getElementById('main-chat-view').style.display='flex'; document.getElementById('info-section-view').style.display='none'; if(document.getElementById('chat-input')) document.getElementById('chat-input').focus();" class="nav-button">Tillbaka till Chatten</button>
+            </p>
+        </section>
+    </div>
+
+    <footer class="privacy-footer">
+        <span id="privacy-link" class="privacy-link" role="button" tabindex="0">Viktig Information & Användarvillkor</span>
+    </footer>
+
+    <div class="modal-overlay" id="privacy-modal" aria-labelledby="privacy-modal-title" aria-modal="true" role="dialog">
+        <div class="modal-content">
+            <button id="privacy-modal-close" class="modal-close-button" aria-label="Stäng modal">&times;</button>
+            <h3 id="privacy-modal-title">Viktig Information & Användarvillkor</h3>
+            <p><strong>Viktig Information:</strong> ByggPilot är en AI-assistent utvecklad för att ge vägledning och automatisera uppgifter inom byggbranschen. Informationen som genereras av AI:n kan vara ofullständig, förenklad eller i vissa fall felaktig. Den är avsedd som ett stöd och bör inte ensamt ligga till grund för viktiga beslut.</p>
+            <p>Kontrollera alltid kritisk information, siffror, och rekommendationer med kvalificerade fackmän (t.ex. jurister, konstruktörer, ekonomer) och relevanta myndighetskrav innan du agerar.</p>
+            <p><strong>Dubbelkolla alltid informationen:</strong> Liksom med andra AI-verktyg, är det viktigt att komma ihåg att svar från ByggPilot kan innehålla felaktigheter eller vara ofullständiga. Använd informationen som en utgångspunkt och en hjälp, men <strong>dubbelkolla alltid viktig information och rådfråga mänskliga experter</strong> innan du fattar slutgiltiga beslut, särskilt när det gäller säkerhet, ekonomi eller juridik. Google Geminis och andra liknande AI-tjänsters användarvillkor innehåller liknande påminnelser om att verifiera AI-genererat innehåll.</p>
+            <p>Användning av ByggPilot sker helt på egen risk. Utvecklarna av ByggPilot frånsäger sig allt ansvar för eventuella direkta eller indirekta förluster, skador eller olägenheter som kan uppstå till följd av användning eller beroende av information från denna tjänst.</p>
+        </div>
+    </div>
+
+    <div class="cookie-consent-banner" id="cookie-consent-banner" style="display: none;">
+        <p>Vi använder cookies för att förbättra din upplevelse på ByggPilot. Genom att fortsätta accepterar du vår användning av cookies enligt våra villkor.</p>
+        <div class="cookie-actions">
+            <button id="accept-cookie-button">Godkänn Alla</button>
+            <button id="reject-cookie-button" class="cookie-reject">Avvisa Alla</button>
+            <button id="preferences-cookie-button" class="cookie-preferences">Anpassa</button>
+        </div>
+    </div>
+
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>
