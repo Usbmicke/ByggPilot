@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-
+    "google-auth-library": "^10.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
