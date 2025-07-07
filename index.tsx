@@ -1,4 +1,3 @@
-import { GoogleGenAI, Chat, GenerateContentResponse } from "@google/genai";
 import { FirebaseApp, initializeApp } from "firebase/app";
 import { Auth, getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut, User } from "firebase/auth";
 import { 
@@ -304,19 +303,7 @@ class ByggPilotApp {
     this.setupEventListeners();
     this.setupSpeechRecognition();
 
-    try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      this.chat = ai.chats.create({
-        model: 'gemini-2.5-flash-preview-04-17',
-        config: {
-          systemInstruction: SYSTEM_PROMPT,
-        }
-      });
-    } catch (error) {
-      console.error("Failed to initialize Gemini AI:", error);
-      this.addMessage("Kunde inte initiera AI-assistenten. Kontrollera din API-nyckel och ladda om sidan.", 'ai', true);
-    }
-
+    // --- REMOVE Gemini AI from frontend, use Netlify Function instead ---
     onAuthStateChanged(this.auth, async (user) => {
         if (user) {
             await this.handleUserLogin(user);
@@ -1069,7 +1056,7 @@ class ByggPilotApp {
 
   private async sendMessage() {
     const userInput = this.chatInput.value.trim();
-    if (!userInput || !this.chat) return;
+    if (!userInput) return;
 
     if (this.currentView !== 'main-chat-view') this.showView('main-chat-view');
     await new Promise(resolve => setTimeout(resolve, 0));
@@ -1092,8 +1079,14 @@ class ByggPilotApp {
     this.chatInput.disabled = true;
 
     try {
-      const response: GenerateContentResponse = await this.chat.sendMessage({ message: userInput });
-      this.addMessage(response.text, 'ai');
+      // --- Use Netlify Function for AI ---
+      const res = await fetch('/.netlify/functions/gemini', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userInput }),
+      });
+      const data = await res.json();
+      this.addMessage(data.text, 'ai');
     } catch (error) {
       console.error("Gemini API error:", error);
       this.addMessage("Ursäkta, något gick fel med anslutningen till AI:n.", 'ai', true);
