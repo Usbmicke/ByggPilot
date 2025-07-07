@@ -8,7 +8,7 @@ import {
 // --- START OF FIREBASE CONFIG ---
 // NOTE: Replace this with your actual Firebase project configuration.
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: "YOUR_AUTH_DOMAIN",
   projectId: "YOUR_PROJECT_ID",
   storageBucket: "YOUR_STORAGE_BUCKET",
