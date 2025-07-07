@@ -15,7 +15,35 @@ const firebaseConfig = {
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
   appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
+console.log('Firebase config:', firebaseConfig);
+if (!firebaseConfig.authDomain) {
+  const msg = '[ByggPilot] Fel: VITE_FIREBASE_AUTH_DOMAIN saknas! Kontrollera .env och Netlify env-variabler.';
+  alert(msg);
+  throw new Error(msg);
+}
 // --- END OF FIREBASE CONFIG ---
+
+// --- FAVICON FALLBACK ---
+(function ensureFavicon() {
+  if (!document.querySelector('link[rel="icon"]')) {
+    const link = document.createElement('link');
+    link.rel = 'icon';
+    link.type = 'image/svg+xml';
+    link.href = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="%234285F4"/><text x="16" y="22" font-size="16" text-anchor="middle" fill="white">BP</text></svg>';
+    document.head.appendChild(link);
+  }
+})();
+// --- END FAVICON FALLBACK ---
+
+// --- SUPPRESS feature_collector.js DEPRECATION WARNING ---
+(function suppressFeatureCollectorWarning() {
+  const origWarn = console.warn;
+  console.warn = function(...args) {
+    if (typeof args[0] === 'string' && args[0].includes('feature_collector.js') && args[0].includes('deprecated')) return;
+    origWarn.apply(console, args);
+  };
+})();
+// --- END SUPPRESS ---
 
 // --- START OF SYSTEM PROMPT ---
 const SYSTEM_PROMPT = `ByggPilot v2.0 - Den Intelligenta Byggpartnern
