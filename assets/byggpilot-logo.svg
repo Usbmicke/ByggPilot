@@ -1,0 +1,11 @@
+<svg width="554" height="223" viewBox="0 0 554 223" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="554" height="223" fill="white"/>
+<g>
+<path d="M 60 160 Q 80 120 120 120 Q 160 120 180 160" stroke="black" stroke-width="10" fill="none"/>
+<ellipse cx="140" cy="100" rx="40" ry="30" fill="white" stroke="black" stroke-width="10"/>
+<rect x="100" y="100" width="80" height="40" fill="white" stroke="black" stroke-width="10"/>
+<path d="M 60 160 Q 80 200 120 200 Q 160 200 180 160" stroke="black" stroke-width="10" fill="none"/>
+<rect x="200" y="80" width="300" height="60" fill="white"/>
+<text x="210" y="130" font-family="Arial, sans-serif" font-size="60" fill="black">BYGGPILOT</text>
+</g>
+</svg>

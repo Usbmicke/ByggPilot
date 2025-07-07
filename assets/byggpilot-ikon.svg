@@ -1,0 +1,14 @@
+<svg width="60" height="40" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Vingar -->
+  <path d="M2 18 H28 Q30 18 30 20 Q30 22 28 22 H2" fill="#000"/>
+  <path d="M4 14 H26 Q28 14 28 16 Q28 18 26 18 H4" fill="#000"/>
+  <path d="M6 10 H24 Q26 10 26 12 Q26 14 24 14 H6" fill="#000"/>
+  <!-- Hjälm -->
+  <ellipse cx="38" cy="16" rx="10" ry="10" fill="#000"/>
+  <path d="M28 16 Q30 6 38 6 Q46 6 48 16" stroke="#fff" stroke-width="1.5" fill="none"/>
+  <path d="M28 16 Q30 26 38 26 Q46 26 48 16" stroke="#fff" stroke-width="1.5" fill="none"/>
+  <ellipse cx="38" cy="16" rx="8" ry="8" fill="#fff"/>
+  <ellipse cx="38" cy="16" rx="6" ry="6" fill="#000"/>
+  <!-- Skärm på hjälmen -->
+  <path d="M48 16 Q54 18 54 22 Q54 26 48 26" stroke="#000" stroke-width="2" fill="none"/>
+</svg>

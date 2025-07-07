@@ -1,129 +1,416 @@
-
 <!DOCTYPE html>
 <html lang="sv">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ByggPilot - Din AI-Assistent för Byggadmin</title>
+    <title>ByggPilot - Din AI Projektledare</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
 
         :root {
             --background-color: #121212;
+            --sidebar-bg: #1A1A1A;
+            --main-bg: #121212;
+            --card-background: #1A1A1A;
+            --secondary-accent: #1E1E1E;
+            --border-color: #333333;
+
             --text-color: #EAEAEA;
             --text-color-muted: #AAAAAA;
+            --text-color-subtle: #888;
+            
             --primary-accent: #00BFFF;
             --primary-accent-hover: #00A8E0;
-            --secondary-accent: #1E1E1E;
-            --card-background: #1A1A1A; 
-            --border-color: #333333;
-            --button-text-color: #FFFFFF; /* Generally for text on dark buttons or light text on primary */
-            --button-primary-text-color: #000000; /* Specific for text on primary blue buttons */
+
+            --button-text-color: #FFFFFF;
+            --button-primary-text-color: #000000;
+            
             --glow-color: rgba(0, 191, 255, 0.4);
             --glow-color-strong: rgba(0, 191, 255, 0.7);
             --input-glow-color: rgba(0, 191, 255, 0.5);
+
+            --status-green: #28a745;
+            --status-yellow: #ffc107;
+            --status-red: #dc3545;
+            --danger-color: #ff6b6b;
+            --success-color: #28a745;
+
+            --sidebar-width: 260px;
+            --sidebar-width-collapsed: 80px;
+            --header-height: 65px;
         }
 
         /* CSS Reset */
-        *,
-        *::before,
-        *::after {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
         body {
-            font-family: 'Poppins', sans-serif;
-            background-color: var(--background-color); 
+            font-family: 'Inter', 'Poppins', sans-serif;
+            background-color: var(--main-bg); 
             color: var(--text-color);
             line-height: 1.6;
             font-size: 16px;
             overflow-x: hidden;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            background-image: url("data:image/svg+xml,%3Csvg width='300' height='300' viewBox='0 0 300 300' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='blueprint_enhanced_pattern' patternUnits='userSpaceOnUse' width='300' height='300'%3E%3Crect width='300' height='300' fill='rgba(0,0,0,0)'/%3E%3Cpath d='M0 15h300 M0 30h300 M0 45h300 M0 60h300 M0 75h300 M0 90h300 M0 105h300 M0 120h300 M0 135h300 M0 150h300 M0 165h300 M0 180h300 M0 195h300 M0 210h300 M0 225h300 M0 240h300 M0 255h300 M0 270h300 M0 285h300 M15 0v300 M30 0v300 M45 0v300 M60 0v300 M75 0v300 M90 0v300 M105 0v300 M120 0v300 M135 0v300 M150 0v300 M165 0v300 M180 0v300 M195 0v300 M210 0v300 M225 0v300 M240 0v300 M255 0v300 M270 0v300 M285 0v300' stroke-width='0.1' stroke='rgba(190, 200, 210, 0.06)'/%3E%3Cpath d='M0 75h300 M0 150h300 M0 225h300 M75 0v300 M150 0v300 M225 0v300' stroke-width='0.15' stroke='rgba(190, 200, 210, 0.08)'/%3E%3Crect x='20' y='30' width='100' height='70' stroke-width='0.3' stroke='rgba(180, 195, 210, 0.1)' fill='none'/%3E%3Cpath d='M20 70 h40 M70 30 v30' stroke-width='0.25' stroke='rgba(180, 195, 210, 0.09)' fill='none'/%3E%3Crect x='150' y='50' width='80' height='120' stroke-width='0.3' stroke='rgba(180, 195, 210, 0.1)' fill='none'/%3E%3Cpath d='M150 110 h80 M190 50 v120' stroke-width='0.25' stroke='rgba(180, 195, 210, 0.09)' fill='none'/%3E%3Crect x='40' y='180' width='150' height='90' stroke-width='0.3' stroke='rgba(180, 195, 210, 0.1)' fill='none'/%3E%3Cpath d='M10 10 L 290 10 M10 290 L 290 290 M10 10 L 10 290 M290 10 L 290 290' stroke-width='0.2' stroke='rgba(170, 185, 200, 0.07)' stroke-dasharray='4 2' fill='none'/%3E%3Crect x='180' y='20' width='90' height='50' stroke-width='0.4' stroke='rgba(170, 185, 200, 0.12)' fill='none' transform='rotate(15 225 45)'/%3E%3Cpath d='M50 150 Q100 120 150 150 T250 150' stroke-width='0.35' stroke='rgba(170, 185, 200, 0.11)' fill='none'/%3E%3Ccircle cx='70' cy='220' r='30' stroke-width='0.3' stroke='rgba(180, 195, 210, 0.1)' fill='none'/%3E%3Cpath d='M200 200 A50 50 0 0 1 280 240' stroke-width='0.35' stroke='rgba(180, 195, 210, 0.12)' fill='none'/%3E%3Cpath d='M240 80 A20 30 0 1 0 230 130' stroke-width='0.25' stroke='rgba(180, 195, 210, 0.09)' fill='none'/%3E%3Cpath d='M30 40 L60 20 M210 180 L250 220 L230 170 Z' stroke-width='0.15' stroke='rgba(190, 200, 210, 0.08)' fill='rgba(190,200,210,0.03)'/%3E%3Cpath d='M100 250 L120 230 L140 250 M110 240 L130 240' stroke-width='0.2' stroke='rgba(190, 200, 210, 0.07)' fill='none'/%3E%3Crect x='130' y='160' width='100' height='60' stroke-width='0.3' stroke='rgba(180, 195, 210, 0.1)' fill='rgba(100,120,140,0.01)' transform='rotate(-10 180 190)'/%3E%3Crect x='60' y='50' width='70' height='40' stroke-width='0.25' stroke='rgba(170, 185, 200, 0.09)' fill='none'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23blueprint_enhanced_pattern)'/%3E%3C/svg%3E");
-            background-size: 300px 300px; /* Adjust size of pattern tile */
-            background-position: center center;
-            background-attachment: fixed;
-            background-repeat: repeat; /* Repeat the pattern */
         }
-        body.cookie-banner-active {
-            padding-bottom: 100px; 
-        }
-        @media (max-width: 480px) {
-            body.cookie-banner-active {
-                 padding-bottom: 150px; 
-            }
-        }
+        button, input, textarea, select { font-family: inherit; font-size: inherit; color: inherit; }
+        ul { list-style: none; }
+        a { text-decoration: none; color: inherit; }
 
-
-        .container {
-            width: 90%;
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 0 1rem;
-            position: relative; 
-            z-index: 1;
-        }
-
-        /* Header */
-        header {
-            background-color: var(--secondary-accent); 
-            padding: 0.8rem 0;
-            border-bottom: 1px solid var(--border-color);
-            position: sticky;
-            top: 0;
-            z-index: 1000; 
+        /* --- Landing Page Styles --- */
+        #landing-page {
             width: 100%;
+            background-color: var(--background-color);
+            background-image: url("data:image/svg+xml,%3Csvg width='300' height='300' viewBox='0 0 300 300' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='blueprint_enhanced_pattern' patternUnits='userSpaceOnUse' width='300' height='300'%3E%3Crect width='300' height='300' fill='rgba(0,0,0,0)'/%3E%3Cpath d='M0 15h300 M0 30h300 M0 45h300 M0 60h300 M0 75h300 M0 90h300 M0 105h300 M0 120h300 M0 135h300 M0 150h300 M0 165h300 M0 180h300 M0 195h300 M0 210h300 M0 225h300 M0 240h300 M0 255h300 M0 270h300 M0 285h300 M15 0v300 M30 0v300 M45 0v300 M60 0v300 M75 0v300 M90 0v300 M105 0v300 M120 0v300 M135 0v300 M150 0v300 M165 0v300 M180 0v300 M195 0v300 M210 0v300 M225 0v300 M240 0v300 M255 0v300 M270 0v300 M285 0v300' stroke-width='0.1' stroke='rgba(190, 200, 210, 0.06)'/%3E%3Cpath d='M0 75h300 M0 150h300 M0 225h300 M75 0v300 M150 0v300 M225 0v300' stroke-width='0.15' stroke='rgba(190, 200, 210, 0.08)'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23blueprint_enhanced_pattern)'/%3E%3C/svg%3E");
         }
-
-        .header-content {
+        .landing-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+        .landing-section {
+            padding: 6rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .landing-section:last-child {
+            border-bottom: none;
+        }
+        .landing-header {
+            padding: 1.5rem 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            width: 90%;
-            max-width: 1100px; /* Ensure header content aligns with chat view max-width */
-            margin: 0 auto;
-            padding: 0 1rem; 
+        }
+        .landing-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-family: 'Poppins', Arial, sans-serif;
+            font-size: 22px;
+            font-weight: 600;
+        }
+        .landing-btn {
+            background-color: var(--primary-accent);
+            color: var(--button-primary-text-color);
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .landing-btn:hover {
+            background-color: var(--primary-accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px var(--glow-color);
+        }
+
+        .hero-section {
+            text-align: center;
+            padding: 6rem 0 8rem;
+        }
+        .hero-section h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            line-height: 1.2;
+        }
+        .hero-section h2 {
+            font-size: 1.25rem;
+            font-weight: 400;
+            color: var(--text-color-muted);
+            max-width: 700px;
+            margin: 0 auto 2.5rem;
+        }
+        .hero-cta-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.1rem;
+            padding: 1rem 2.5rem;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 var(--glow-color); }
+            70% { box-shadow: 0 0 0 10px rgba(0, 191, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 191, 255, 0); }
+        }
+        .hero-visual {
+            margin-top: 4rem;
+        }
+        .hero-visual img {
+            max-width: 100%;
+            height: auto;
+        }
+        .section-heading {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+        .section-heading h2 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .section-heading p {
+            color: var(--text-color-muted);
+            font-size: 1.1rem;
+        }
+        .problem-grid, .how-it-works-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+        .problem-card, .how-it-works-card {
+            background: var(--card-background);
+            padding: 2rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+        .problem-card svg {
+            width: 48px;
+            height: 48px;
+            color: var(--primary-accent);
+            margin-bottom: 1.5rem;
+        }
+        .problem-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+        .problem-card p {
+            color: var(--text-color-muted);
+        }
+        .solution-section .landing-container {
+            display: flex;
+            align-items: center;
+            gap: 4rem;
+        }
+        .solution-section .solution-text, .solution-section .solution-visual {
+            flex: 1;
+        }
+        .solution-visual {
+            background: var(--card-background);
+            border-radius: 8px;
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        .google-icons, .bp-icon {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+        .solution-visual svg {
+            width: 48px; height: 48px;
+        }
+        .how-it-works-card video {
+            width: 100%;
+            border-radius: 6px;
+            margin-bottom: 1.5rem;
+        }
+
+        .comparison-table {
+            background: var(--card-background);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+        .comparison-table table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+        .comparison-table th, .comparison-table td {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .comparison-table th {
+            font-size: 1.2rem;
+        }
+        .comparison-table td {
+            color: var(--text-color-muted);
+        }
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+        .comparison-table .bp-column {
+            background-color: rgba(0, 191, 255, 0.05);
+        }
+        .comparison-table .bp-column strong {
+            color: var(--primary-accent);
+        }
+
+        .final-cta-section { text-align: center; }
+
+        .landing-footer {
+            text-align: center;
+            padding: 2rem 0;
+            color: var(--text-color-subtle);
+        }
+        
+        .animate-on-scroll {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+        .animate-on-scroll.in-view {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        @media (max-width: 768px) {
+            .hero-section h1 { font-size: 2.5rem; }
+            .hero-section h2 { font-size: 1.1rem; }
+            .section-heading h2 { font-size: 2rem; }
+            .solution-section .landing-container { flex-direction: column; }
+        }
+
+        /* --- Dashboard Layout (existing styles) --- */
+        .dashboard-container {
+            display: flex;
+            height: 100vh;
+        }
+        .dashboard-container { display: none; /* Initially hidden */ }
+
+        /* --- Sidebar --- */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem 1rem;
+            transition: width 0.3s ease;
+            z-index: 100;
+        }
+        .sidebar .nav-item[hidden] { display: none !important; }
+
+        .sidebar-header {
+            margin-bottom: 2.5rem;
+            padding: 0 0.5rem;
         }
 
         .logo-container {
             display: flex;
             align-items: center;
-            text-decoration: none;
+            gap: 12px;
             color: var(--text-color);
         }
 
-        .logo-icon { 
-            width: 200px; 
-            height: 62.5px; 
-            display: flex; 
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .logo-icon svg { 
-             display: block; 
-             width: 100%;
-             height: 100%;
+        .logo-container .logo-text {
+            font-family: 'Poppins', Arial, sans-serif;
+            font-size: 22px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            line-height: 1;
+            white-space: nowrap;
+            opacity: 1;
+            transition: opacity 0.3s ease;
         }
 
-        .nav-buttons {
+        .sidebar-nav {
+            flex-grow: 1;
+        }
+        .sidebar nav ul {
             display: flex;
-            gap: 1rem;
+            flex-direction: column;
+            gap: 0.5rem;
         }
-
-        .nav-button {
+        .sidebar .nav-item a {
+            display: flex;
+            align-items: center;
+            padding: 0.8rem 1rem;
+            border-radius: 6px;
+            gap: 1rem;
+            transition: background-color 0.2s ease, color 0.2s ease;
+            color: var(--text-color-muted);
+            font-weight: 500;
+        }
+        .sidebar .nav-item a:hover {
             background-color: var(--secondary-accent);
             color: var(--text-color);
-            border: 1px solid var(--primary-accent);
-            padding: 0.6rem 1.2rem;
+        }
+        .sidebar .nav-item.active a {
+            background-color: var(--primary-accent);
+            color: var(--button-primary-text-color);
+        }
+        .sidebar .nav-item svg {
+            width: 24px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+        .sidebar .nav-item .nav-text {
+            white-space: nowrap;
+            opacity: 1;
+            transition: opacity 0.3s ease;
+            line-height: 1;
+        }
+
+        .sidebar-footer { margin-top: auto; }
+
+        /* --- Main Wrapper --- */
+        .main-wrapper {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .main-wrapper::before {
+             content: '';
+            position: absolute;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg width='300' height='300' viewBox='0 0 300 300' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='blueprint_enhanced_pattern_app' patternUnits='userSpaceOnUse' width='300' height='300'%3E%3Crect width='300' height='300' fill='rgba(0,0,0,0)'/%3E%3Cpath d='M0 15h300 M0 30h300 M0 45h300 M0 60h300 M0 75h300 M0 90h300 M0 105h300 M0 120h300 M0 135h300 M0 150h300 M0 165h300 M0 180h300 M0 195h300 M0 210h300 M0 225h300 M0 240h300 M0 255h300 M0 270h300 M0 285h300 M15 0v300 M30 0v300 M45 0v300 M60 0v300 M75 0v300 M90 0v300 M105 0v300 M120 0v300 M135 0v300 M150 0v300 M165 0v300 M180 0v300 M195 0v300 M210 0v300 M225 0v300 M240 0v300 M255 0v300 M270 0v300 M285 0v300' stroke-width='0.1' stroke='rgba(190, 200, 210, 0.06)'/%3E%3Cpath d='M0 75h300 M0 150h300 M0 225h300 M75 0v300 M150 0v300 M225 0v300' stroke-width='0.15' stroke='rgba(190, 200, 210, 0.08)'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23blueprint_enhanced_pattern_app)'/%3E%3C/svg%3E");
+            background-size: 300px 300px;
+            background-position: center center;
+            background-attachment: fixed;
+            z-index: -1;
+        }
+
+
+        /* --- Main Header --- */
+        .main-header {
+            height: var(--header-height);
+            min-height: var(--header-height);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            border-bottom: 1px solid var(--border-color);
+            background-color: rgba(18, 18, 18, 0.8);
+            backdrop-filter: blur(5px);
+            gap: 1rem;
+        }
+        .header-left { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }
+        .mobile-menu-toggle { display: none; background: none; border: none; cursor: pointer; color: var(--text-color); }
+        .header-title { font-size: 1.25rem; font-weight: 600; color: var(--text-color); white-space: nowrap; }
+        
+        .header-center { flex-grow: 1; display: flex; justify-content: center; }
+        .header-search { max-width: 450px; width: 100%; }
+        .header-search input {
+            width: 100%;
+            background-color: var(--secondary-accent);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 0.6rem 1rem;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            transition: all 0.2s ease-in-out;
+        }
+        .header-search input:focus {
+            outline: none;
+            border-color: var(--primary-accent);
+            box-shadow: 0 0 8px var(--input-glow-color);
+        }
+        
+        .header-actions { display: flex; align-items: center; gap: 1rem; flex-shrink: 0;}
+        .action-button, .icon-action-button {
+            background-color: var(--secondary-accent);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 0.5rem 1rem;
             border-radius: 6px;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -131,1438 +418,1392 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            position: relative;
         }
-
-        .nav-button:hover, .nav-button:focus {
+        .action-button:hover, .icon-action-button:hover {
+            border-color: var(--primary-accent);
+            color: var(--primary-accent);
+        }
+        .action-button.primary {
             background-color: var(--primary-accent);
-            color: var(--button-primary-text-color); 
-            box-shadow: 0 0 15px var(--glow-color-strong);
-            outline: none;
+            color: var(--button-primary-text-color);
+            border-color: var(--primary-accent);
         }
-
-        .nav-button svg {
-            width: 18px;
-            height: 18px;
-            fill: currentColor;
+        .action-button.primary:hover {
+            background-color: var(--primary-accent-hover);
+            color: var(--button-primary-text-color);
+            box-shadow: 0 0 10px var(--glow-color);
         }
+        .icon-action-button { padding: 0.6rem; }
+        .user-profile-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .user-profile-button .avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background-color: var(--secondary-accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-color);
+            border: 2px solid transparent;
+            transition: border-color 0.2s;
+            overflow: hidden; /* Ensure SVG fits */
+        }
+        .user-profile-button .avatar svg {
+            width: 100%; height: 100%;
+        }
+        .user-profile-button:hover .avatar {
+            border-color: var(--primary-accent);
+        }
+        .user-profile-button .avatar img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        
 
-        /* Page Content Wrapper */
+        /* --- Dropdown Menu --- */
+        .dropdown-container { position: relative; }
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 0.75rem;
+            background-color: var(--card-background);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.5rem;
+            min-width: 220px;
+            z-index: 1001;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+            animation: fadeIn 0.2s ease-out;
+            overflow: hidden;
+        }
+        .dropdown-menu.show { display: block; }
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.6rem 1rem;
+            border-radius: 6px;
+            color: var(--text-color-muted);
+            font-weight: 500;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .dropdown-item:hover {
+            background-color: var(--primary-accent);
+            color: var(--button-primary-text-color);
+        }
+        .dropdown-item.danger-action:hover {
+            background-color: var(--danger-color);
+            color: white;
+        }
+        .dropdown-divider {
+            height: 1px;
+            background-color: var(--border-color);
+            margin: 0.5rem 0;
+        }
+        .notification-item p { margin: 0; font-size: 0.9rem; line-height: 1.3; color: var(--text-color); }
+        .notification-item p strong { color: var(--primary-accent); }
+        .notification-item p small { display: block; color: var(--text-color-muted); margin-top: 2px;}
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- Page Content --- */
         #page-content-wrapper {
             flex-grow: 1;
             display: flex;
             flex-direction: column;
-            position: relative;
-            overflow: hidden; 
-        }
-
-
-        /* Main Content Area - Chat View */
-        .chat-view {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            position: relative; 
-            z-index: 0; 
-            
-            /* Framing and margin */
-            margin: 2rem auto; 
-            padding: 1.5rem; 
-            border: 1px solid var(--border-color);
-            border-radius: 12px; 
-            box-shadow: 0 8px 25px rgba(0,0,0,0.4); 
-            overflow: hidden; 
-            max-width: 1100px; /* Max width for the chat area */
-            width: calc(100% - 4rem); /* Respect side margins */
-        }
-
-        .chat-view::before {
-            content: '';
-            position: absolute; 
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(18, 18, 18, 0.92); /* Dark overlay, slightly more transparent */
-            z-index: -1; 
-            border-radius: 12px; /* Match parent's border-radius */
-        }
-        
-        .info-section {
-            background-color: var(--card-background);
-            padding: 2.5rem;
-            border-radius: 8px;
-            margin-bottom: 2rem; 
-            border: 1px solid var(--border-color);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            height: 100%; 
-            overflow-y: auto; 
-            /* Make info section same width as chat view */
-            margin-left: auto;
-            margin-right: auto;
-            max-width: 1100px; /* Max width for the info section */
-            width: calc(100% - 4rem); /* Respect side margins */
-        }
-
-        .info-section h2 {
-            color: var(--primary-accent);
-            margin-bottom: 1.2rem;
-            text-align: left;
-        }
-         .info-section h3 {
-            color: var(--primary-accent-hover);
-            margin-top: 1.8rem;
-            margin-bottom: 1rem;
-            font-size: 1.3em;
-        }
-         .info-section h2:not(:first-of-type) { 
-            margin-top: 2.5rem;
-        }
-
-
-        .info-section p, .info-section li {
-            margin-bottom: 1rem; 
-            line-height: 1.7;
-        }
-
-        .info-section strong {
-            color: var(--primary-accent-hover);
-            font-weight: 600;
-        }
-
-        .info-section ul {
-            list-style: none; 
-            padding-left: 0; 
-        }
-
-        .info-section ul li {
-            padding-left: 1.8rem; 
+            overflow: hidden;
             position: relative;
         }
-        .info-section ul li::before {
-            content: '➤'; 
-            color: var(--primary-accent);
-            position: absolute;
-            left: 0;
-            font-weight: bold;
-            font-size: 1.1em; 
-        }
-         .info-section ul ul { /* Nested lists */
-            margin-top: 0.5rem;
-            padding-left: 1.5rem;
-        }
-        .info-section ul ul li::before {
-            content: '–'; /* Different marker for sub-items */
-            font-size: 1em;
-        }
 
-        .info-section .founder-signature {
-            text-align: right;
-            font-style: italic;
-            margin-top: 1rem;
-            color: var(--text-color-muted);
-        }
-
-        .chat-messages {
+        .dashboard-view, .chat-view, .content-view {
             flex-grow: 1;
             overflow-y: auto;
-            padding: 1rem; /* Padding within the messages area */
-            margin-bottom: 1rem;
-            background-color: transparent; /* Allows chat-view::before to be the effective background */
-            border-radius: 8px; /* Optional: if you want rounded corners for the message list itself */
-        }
-        .chat-messages::-webkit-scrollbar {
-            width: 8px;
-        }
-        .chat-messages::-webkit-scrollbar-track {
-            background: var(--secondary-accent);
-            border-radius: 4px;
-        }
-        .chat-messages::-webkit-scrollbar-thumb {
-            background: var(--primary-accent);
-            border-radius: 4px;
-        }
-        .chat-messages::-webkit-scrollbar-thumb:hover {
-            background: var(--primary-accent-hover);
-        }
-
-        .chat-message {
-            margin-bottom: 1rem;
-            padding: 1rem;
-            border-radius: 8px;
-            max-width: 85%;
-            word-wrap: break-word;
+            padding: 2rem;
             display: flex;
             flex-direction: column;
-            line-height: 1.5;
-            position: relative; 
-            z-index: 1;
         }
 
-        .chat-message.user {
-            background-color: var(--primary-accent);
-            color: var(--button-primary-text-color); 
-            margin-left: auto;
-            border-bottom-right-radius: 0;
+        .chat-view {
+             max-width: 1100px;
+             width: 100%;
+             margin: 0 auto;
+             position: relative;
         }
+        
+        .content-view {
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            gap: 1.5rem;
+        }
+        .content-view[hidden] { display: none !important; }
+        .content-view h1 { font-size: 1.8rem; font-weight: 600; }
+        .content-view > p { color: var(--text-color-muted); font-size: 1.1rem; }
 
-        .chat-message.ai {
-            background-color: var(--card-background); 
+
+        /* --- Dashboard Specifics --- */
+        .dashboard-view {
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            gap: 2.5rem;
+        }
+        .dashboard-section[hidden] { display: none !important; }
+
+        .greeting {
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+        .dashboard-section h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
             color: var(--text-color);
-            margin-right: auto;
-            border-bottom-left-radius: 0;
-            position: relative; 
         }
         
-        .chat-message strong { 
-             color: var(--primary-accent-hover);
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            background-color: rgba(0,0,0,0.1);
         }
-
-        .chat-message pre {
-            background-color: rgba(0,0,0,0.2);
-            padding: 0.8rem;
-            border-radius: 6px;
-            overflow-x: auto;
-            margin-top: 0.5rem;
-            margin-bottom: 0.5rem;
-            border: 1px solid var(--border-color);
-        }
-        .chat-message code {
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 0.9em;
-        }
-
-        .ai-list-card {
-            background-color: #2a2a2a; 
-            border: 1px solid var(--border-color);
-            padding: 1rem;
-            padding-top: 3rem; 
-            border-radius: 6px;
-            margin-top: 0.5rem;
-            position: relative; 
-        }
+        .empty-state p { color: var(--text-color-muted); }
         
-        .tooltip {
+        .positive-empty-state {
+             background-color: rgba(40, 167, 69, 0.05);
+             border: 1px solid rgba(40, 167, 69, 0.2);
+             padding: 1.5rem;
+             border-radius: 8px;
+             text-align: center;
+             color: var(--text-color);
+        }
+        .positive-empty-state p {
+            margin: 0;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+         .positive-empty-state strong {
+             color: var(--success-color);
+         }
+
+
+        .attention-list {
+            display: grid;
+            gap: 1rem;
+        }
+        .attention-item {
+            background-color: var(--card-background);
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--primary-accent);
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            transition: background-color 0.2s;
+        }
+        .attention-item:hover { background-color: var(--secondary-accent); }
+        .attention-item p { margin: 0; flex-grow: 1; }
+        .attention-item strong { color: var(--primary-accent-hover); }
+        .attention-item .actions { display: flex; gap: 0.75rem; }
+        .attention-item .actions button {
+            background-color: var(--secondary-accent);
+            border: 1px solid var(--border-color);
+            color: var(--text-color-muted);
+            padding: 0.4rem 0.8rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .attention-item .actions button:hover {
+            color: var(--text-color);
+            border-color: var(--text-color-muted);
+        }
+        .attention-item .actions button.primary {
+            background-color: var(--primary-accent);
+            border-color: var(--primary-accent);
+            color: var(--button-primary-text-color);
+        }
+        .attention-item .actions button.primary:hover {
+            background-color: var(--primary-accent-hover);
+        }
+
+        .project-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+        .project-card {
+            background-color: var(--card-background);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            transition: transform 0.2s, box-shadow 0.2s, opacity 0.3s;
+            cursor: pointer;
+            position: relative;
+        }
+        .project-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2), 0 0 15px var(--glow-color);
+        }
+        .project-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+        .project-card-header h3 {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 600;
+            flex-grow: 1;
+        }
+        .project-card-actions {
             position: absolute;
             top: 0.5rem;
             right: 0.5rem;
-            display: inline-block; 
         }
-        
-        .copy-button {
-            background-color: var(--primary-accent);
-            color: var(--button-primary-text-color);
-            border: none;
-            padding: 0.4rem 0.6rem;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.8em;
-        }
-        .copy-button:hover {
-            background-color: var(--primary-accent-hover);
-        }
-        .copy-button.copied { 
-            background-color: #28a745; 
-            color: white;
-        }
-
-        .tooltip .tooltiptext { 
-            visibility: hidden;
-            width: 100px;
-            background-color: #555;
-            color: #fff;
-            text-align: center;
-            border-radius: 6px;
-            padding: 5px 0;
-            position: absolute;
-            z-index: 10; 
-            bottom: 125%; 
-            left: 50%;
-            margin-left: -50px; 
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .tooltip .tooltiptext::after {
-            content: "";
-            position: absolute;
-            top: 100%; 
-            left: 50%;
-            margin-left: -5px;
-            border-width: 5px;
-            border-style: solid;
-            border-color: #555 transparent transparent transparent;
-        }
-
-        .tooltip:hover .tooltiptext { 
-            visibility: visible;
-            opacity: 1;
-        }
-
-
-        .chat-input-area {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem; 
-            padding: 0.8rem;
-            background-color: var(--secondary-accent);
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-            position: relative; 
-            z-index: 1;
-        }
-
-        .chat-input {
-            flex-grow: 1;
-            background-color: var(--card-background); 
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 0.8rem 1rem;
-            font-size: 1rem;
-            transition: border-color 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .chat-input:focus {
-            outline: none;
-            border-color: var(--primary-accent);
-            box-shadow: 0 0 8px var(--input-glow-color);
-        }
-        
-        .chat-input::placeholder {
-            color: #888;
-            font-style: italic;
-        }
-
-        .input-icon-button {
-            background: none;
-            border: none;
-            color: var(--text-color);
-            cursor: pointer;
-            padding: 0.6rem;
-            border-radius: 50%;
-            transition: background-color 0.3s ease, color 0.3s ease;
-            flex-shrink: 0; 
-        }
-        .input-icon-button svg {
-            width: 22px;
-            height: 22px;
-            fill: currentColor;
-            display: block; 
-        }
-        .input-icon-button:hover, .input-icon-button:focus {
-            background-color: var(--primary-accent);
-            color: var(--button-primary-text-color); 
-            outline: none;
-        }
-        .input-icon-button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        .input-icon-button.send-button {
-            background-color: var(--primary-accent);
-            color: var(--button-primary-text-color); 
-        }
-        .input-icon-button.send-button:hover, .input-icon-button.send-button:focus {
-            background-color: var(--primary-accent-hover);
-        }
-
-
-        .loading-indicator {
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .project-card-actions .icon-action-button {
             padding: 0.5rem;
-            font-size: 0.9em;
-            color: var(--primary-accent);
+            background: transparent;
+            border: none;
+            color: var(--text-color-muted);
         }
-        .loading-indicator span {
-            margin-left: 0.5rem;
+        .project-card-actions .icon-action-button:hover {
+             background-color: var(--secondary-accent);
+             color: var(--text-color);
         }
-        .dot-flashing {
-            position: relative;
-            width: 5px;
-            height: 5px;
-            border-radius: 5px;
-            background-color: var(--primary-accent);
-            color: var(--primary-accent);
-            animation: dotFlashing 1s infinite linear alternate;
-            animation-delay: .5s;
+        .project-card-actions .dropdown-menu {
+            min-width: 160px;
         }
-        .dot-flashing::before, .dot-flashing::after {
-            content: '';
-            display: inline-block;
-            position: absolute;
-            top: 0;
-        }
-        .dot-flashing::before {
-            left: -10px;
-            width: 5px;
-            height: 5px;
-            border-radius: 5px;
-            background-color: var(--primary-accent);
-            color: var(--primary-accent);
-            animation: dotFlashing 1s infinite alternate;
-            animation-delay: 0s;
-        }
-        .dot-flashing::after {
-            left: 10px;
-            width: 5px;
-            height: 5px;
-            border-radius: 5px;
-            background-color: var(--primary-accent);
-            color: var(--primary-accent);
-            animation: dotFlashing 1s infinite alternate;
-            animation-delay: 1s;
-        }
+        .project-card-actions .dropdown-item { font-size: 0.9rem; }
 
-        @keyframes dotFlashing {
-            0% { background-color: var(--primary-accent); }
-            50%, 100% { background-color: rgba(0, 191, 255, 0.3); }
+        .status-tag {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #fff;
+            white-space: nowrap;
         }
+        .status-green { background-color: var(--status-green); }
+        .status-yellow { background-color: var(--status-yellow); color: #000; }
+        .status-red { background-color: var(--status-red); }
         
-        .error-message {
-            color: #ff6b6b; 
-            background-color: rgba(255, 107, 107, 0.1);
-            padding: 0.8rem;
-            border-radius: 6px;
-            border: 1px solid #ff6b6b;
-            margin-top: 0.5rem;
+        .project-card-body p {
+            margin: 0;
+            color: var(--text-color-muted);
+            font-size: 0.9rem;
         }
-
-        /* Cookie Consent Banner */
-        .cookie-consent-banner {
-            position: fixed;
-            bottom: 0;
-            left: 0;
+        .progress-bar {
             width: 100%;
+            height: 8px;
             background-color: var(--secondary-accent);
-            padding: 1rem;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-bar-inner {
+            height: 100%;
+            background-color: var(--primary-accent);
+            border-radius: 4px;
+        }
+        .project-card-footer {
+            margin-top: auto;
+            padding-top: 1rem;
             border-top: 1px solid var(--border-color);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            z-index: 2000; 
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
-            flex-wrap: wrap; 
-            gap: 1rem; 
+            font-size: 0.9rem;
+            color: var(--text-color-subtle);
         }
-        .cookie-consent-banner p {
-            margin: 0;
-            font-size: 0.9em;
-            flex-grow: 1; 
-        }
-        .cookie-actions {
+        .project-card-footer .footer-details {
             display: flex;
-            gap: 0.5rem; 
-            flex-shrink: 0; 
+            flex-direction: column;
+            gap: 0.25rem;
         }
-        .cookie-consent-banner button {
-            background-color: var(--primary-accent);
-            color: var(--button-primary-text-color);
-            border: none;
-            padding: 0.6rem 1rem; 
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-            font-weight: 600;
-            font-size: 0.85em; 
-        }
-        .cookie-consent-banner button:hover {
-            background-color: var(--primary-accent-hover);
-        }
-        .cookie-consent-banner button.cookie-reject,
-        .cookie-consent-banner button.cookie-preferences {
-            background-color: var(--card-background);
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-        }
-        .cookie-consent-banner button.cookie-reject:hover,
-        .cookie-consent-banner button.cookie-preferences:hover {
-            background-color: var(--border-color);
-            color: var(--text-color);
-        }
-
-
-        /* Privacy Footer Link */
-        .privacy-footer {
-            text-align: center;
-            padding: 0.8rem 1rem; 
-            font-size: 0.8em;
+        .project-card-footer .footer-details span:first-child {
             color: var(--text-color-muted);
-            background-color: var(--background-color);
-            border-top: 1px solid var(--border-color);
-            width: 100%;
         }
-
-        .privacy-link {
-            cursor: pointer;
-            text-decoration: underline;
-            transition: color 0.3s ease;
+        .project-card-footer .footer-actions .icon-action-button.small {
+            padding: 0.4rem;
+            background-color: transparent;
+            border: none;
         }
-        .privacy-link:hover {
+        .project-card-footer .footer-actions .icon-action-button.small:hover {
+            background-color: var(--secondary-accent);
             color: var(--primary-accent);
         }
 
-        /* Privacy Modal */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7); 
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 3000; 
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0s 0.3s;
-        }
-        .modal-overlay.active {
-            opacity: 1;
-            visibility: visible;
-            transition: opacity 0.3s ease;
-        }
-
-        .modal-content {
-            background-color: var(--card-background);
-            padding: 2rem;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 5px 25px rgba(0,0,0,0.5);
-            max-width: 600px;
-            width: 90%;
-            position: relative;
-            max-height: 80vh; 
-            overflow-y: auto; 
-            transform: scale(0.95);
-            transition: transform 0.3s ease;
-        }
-         .modal-overlay.active .modal-content {
-            transform: scale(1);
-        }
-
-        .modal-content h3 {
-            color: var(--primary-accent);
-            margin-bottom: 1rem;
-            margin-top: 0;
-        }
-        .modal-content p {
-            margin-bottom: 1rem;
-            font-size: 0.9em;
-            line-height: 1.6;
-            color: var(--text-color);
-        }
-        .modal-content p:last-child {
-            margin-bottom: 0;
-        }
-
-        .modal-close-button {
+        /* --- Chat View --- */
+        .close-chat-button {
             position: absolute;
             top: 1rem;
             right: 1rem;
             background: none;
             border: none;
             color: var(--text-color-muted);
-            font-size: 1.8rem;
-            font-weight: bold;
             cursor: pointer;
-            line-height: 1;
-            padding: 0.2rem 0.5rem;
-            transition: color 0.3s ease;
+            padding: 0.5rem;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+            z-index: 10;
         }
-        .modal-close-button:hover {
+        .close-chat-button:hover {
+            background-color: var(--secondary-accent);
+            color: var(--text-color);
+        }
+
+        .chat-messages {
+            flex-grow: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+        }
+        .chat-message {
+            margin-bottom: 1rem; padding: 1rem; border-radius: 8px; max-width: 85%;
+            word-wrap: break-word; display: flex; flex-direction: column; line-height: 1.5;
+        }
+        .chat-message.user {
+            background-color: var(--primary-accent); color: var(--button-primary-text-color);
+            margin-left: auto; border-bottom-right-radius: 0;
+        }
+        .chat-message.ai {
+            background-color: var(--card-background); color: var(--text-color);
+            margin-right: auto; border-bottom-left-radius: 0;
+        }
+        .chat-message strong { color: var(--primary-accent-hover); }
+        .chat-message pre { background-color: rgba(0,0,0,0.2); padding: 0.8rem; border-radius: 6px;
+            overflow-x: auto; margin-top: 0.5rem; margin-bottom: 0.5rem; border: 1px solid var(--border-color); }
+        .chat-message code { font-family: 'Courier New', Courier, monospace; font-size: 0.9em; }
+
+        /* --- AI Assistant Bar --- */
+        .ai-assistant-bar {
+            padding: 1rem 2rem;
+            background-color: rgba(18, 18, 18, 0.8);
+            backdrop-filter: blur(5px);
+            border-top: 1px solid var(--border-color);
+        }
+        .ai-assistant-bar .chat-input-wrapper {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .chat-input-area {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background-color: var(--secondary-accent);
+            border-radius: 8px;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .chat-input-area:focus-within {
+            border-color: var(--primary-accent);
+            box-shadow: 0 0 8px var(--input-glow-color);
+        }
+
+        .chat-input {
+            flex-grow: 1; background-color: transparent; color: var(--text-color);
+            border: none;
+            padding: 0.8rem 0.5rem; font-size: 1rem;
+        }
+        .chat-input:focus { outline: none; }
+        .chat-input::placeholder { color: var(--text-color-subtle); font-style: italic; }
+        
+        .input-icon-button {
+            background: none; border: none; color: var(--text-color-muted); cursor: pointer;
+            padding: 0.6rem; border-radius: 50%; transition: all 0.3s ease; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .input-icon-button svg { width: 24px; height: 24px; fill: currentColor; display: block; }
+        .input-icon-button:hover, .input-icon-button:focus { background-color: var(--border-color); color: var(--text-color); outline: none; }
+        .input-icon-button:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .input-icon-button.send-button {
+            background-color: var(--primary-accent); color: var(--button-primary-text-color);
+        }
+        .input-icon-button.send-button:hover, .input-icon-button.send-button:focus {
+            background-color: var(--primary-accent-hover);
+        }
+        #voice-input-button.is-listening { color: var(--primary-accent); }
+
+        .chat-disclaimer {
+            font-size: 0.75rem;
+            color: var(--text-color-subtle);
+            text-align: center;
+            padding: 0.75rem 0 0;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        .chat-disclaimer .privacy-link {
+            text-decoration: underline;
+            cursor: pointer;
+        }
+        .chat-disclaimer .privacy-link:hover {
+            color: var(--text-color-muted);
+        }
+
+
+        /* --- Settings View --- */
+        .settings-container {
+            display: flex;
+            flex-direction: column;
+            gap: 2.5rem;
+        }
+        .settings-section {
+            background-color: var(--card-background);
+            padding: 1.5rem 2rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        .settings-section h2 {
+            font-size: 1.3rem;
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+        }
+        .settings-section p {
+            margin-bottom: 1.5rem;
+            color: var(--text-color-muted);
+            font-size: 1rem;
+        }
+        .settings-toggles, #restore-projects-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+        .toggle-switch {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .toggle-switch label {
+            font-weight: 500;
+            color: var(--text-color);
+        }
+        .toggle-switch .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+        .toggle-switch .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .toggle-switch .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--secondary-accent);
+            border: 1px solid var(--border-color);
+            transition: .4s;
+            border-radius: 24px;
+        }
+        .toggle-switch .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: var(--text-color-muted);
+            transition: .4s;
+            border-radius: 50%;
+        }
+        .toggle-switch input:checked + .slider {
+            background-color: var(--primary-accent);
+            border-color: var(--primary-accent);
+        }
+        .toggle-switch input:checked + .slider:before {
+            transform: translateX(20px);
+            background-color: white;
+        }
+        .restore-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: var(--secondary-accent);
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+        }
+        .restore-item button {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-color-muted);
+            font-size: 0.9rem;
+            padding: 0.3rem 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .restore-item button:hover {
             color: var(--primary-accent);
+            border-color: var(--primary-accent);
+        }
+        
+        /* --- Project Detail & Revisions --- */
+        .revision-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .revision-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: var(--card-background);
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            transition: background-color 0.2s;
+        }
+        .revision-item:hover {
+            background-color: var(--secondary-accent);
+        }
+        .revision-item-name {
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        /* --- File & Folder Styles --- */
+        .folder-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        .folder-container {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: var(--card-background);
+            transition: all 0.2s ease-in-out;
+        }
+        .folder-container.drag-over {
+            border-color: var(--primary-accent);
+            box-shadow: 0 0 15px var(--glow-color);
+        }
+        .folder-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .folder-header-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .folder-header-name svg { color: var(--primary-accent); }
+        .folder-content {
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            background-color: var(--secondary-accent);
+            transition: background-color 0.2s;
+        }
+        .file-item:hover {
+            background-color: #2a2a2a;
+        }
+        .file-item-name {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--text-color-muted);
+            font-size: 0.95rem;
+            word-break: break-all;
+        }
+        .file-item .icon-action-button {
+            background-color: transparent;
+            border: none;
+        }
+        .file-item .icon-action-button:hover {
+            color: var(--danger-color);
+        }
+        .folder-empty-state {
+            text-align: center;
+            padding: 1rem;
+            color: var(--text-color-subtle);
+            font-style: italic;
+        }
+        #project-detail-view > p.text-color-muted {
+            text-align: center;
+            padding: 0.5rem 1rem;
+            background-color: var(--card-background);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
         }
 
 
-        /* Responsive adjustments */
+        /* --- Loading & Error --- */
+        .loading-indicator {
+            display: flex; align-items: center; justify-content: center;
+            padding: 0.5rem; font-size: 0.9em; color: var(--primary-accent); max-width: 1100px; margin: 0 auto;
+        }
+        .loading-indicator span { margin-left: 0.5rem; }
+        .dot-flashing { position: relative; width: 5px; height: 5px; border-radius: 5px; background-color: var(--primary-accent);
+            color: var(--primary-accent); animation: dotFlashing 1s infinite linear alternate; animation-delay: .5s; }
+        .dot-flashing::before, .dot-flashing::after { content: ''; display: inline-block; position: absolute; top: 0; }
+        .dot-flashing::before { left: -10px; width: 5px; height: 5px; border-radius: 5px; background-color: var(--primary-accent);
+            color: var(--primary-accent); animation: dotFlashing 1s infinite alternate; animation-delay: 0s; }
+        .dot-flashing::after { left: 10px; width: 5px; height: 5px; border-radius: 5px; background-color: var(--primary-accent);
+            color: var(--primary-accent); animation: dotFlashing 1s infinite alternate; animation-delay: 1s; }
+        @keyframes dotFlashing { 0% { background-color: var(--primary-accent); } 50%, 100% { background-color: rgba(0, 191, 255, 0.3); } }
+        .error-message {
+            color: #ff6b6b; background-color: rgba(255, 107, 107, 0.1); padding: 0.8rem;
+            border-radius: 6px; border: 1px solid #ff6b6b; margin-top: 0.5rem;
+        }
+
+        /* --- Toast Notifications --- */
+        #toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .toast {
+            background-color: var(--card-background);
+            color: var(--text-color);
+            padding: 12px 20px;
+            border-radius: 6px;
+            border-left: 4px solid var(--primary-accent);
+            box-shadow: 0 5px 25px rgba(0,0,0,0.5);
+            font-size: 0.95rem;
+            animation: toast-in-out 5s cubic-bezier(0.215, 0.61, 0.355, 1) forwards;
+        }
+
+        @keyframes toast-in-out {
+            0% {
+                transform: translateX(120%);
+                opacity: 0;
+            }
+            10%, 90% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translateX(120%);
+                opacity: 0;
+            }
+        }
+
+
+        /* --- Modals and Banners --- */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0s 0.3s; z-index: 3000; }
+        .modal-overlay.active { opacity: 1; visibility: visible; transition: opacity 0.3s ease; }
+        .modal-content { background-color: var(--card-background); padding: 2rem; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: 0 5px 25px rgba(0,0,0,0.5); max-width: 500px; width: 90%; position: relative; max-height: 90vh; overflow-y: auto; transform: scale(0.95); transition: transform 0.3s ease; }
+        .modal-overlay.active .modal-content { transform: scale(1); }
+        .modal-content h3 { color: var(--primary-accent); margin-bottom: 1rem; margin-top: 0; text-align: center;}
+        .modal-close-button { position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: var(--text-color-muted); font-size: 1.8rem; font-weight: bold; cursor: pointer; line-height: 1; padding: 0.2rem 0.5rem; transition: color 0.3s ease; }
+        .modal-close-button:hover { color: var(--primary-accent); }
+        .modal-content p, .modal-content li { margin-bottom: 1rem; line-height: 1.7; }
+        .modal-content strong { color: var(--primary-accent-hover); font-weight: 600; }
+        .modal-content ul { list-style: none; padding-left: 0; }
+        .modal-content ul li { padding-left: 1.8rem; position: relative; }
+        .modal-content ul li::before { content: '➤'; color: var(--primary-accent); position: absolute; left: 0; font-weight: bold; font-size: 1.1em; }
+
+        .modal-form { display: flex; flex-direction: column; gap: 1rem; }
+        .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+        .form-group label { font-weight: 500; color: var(--text-color-muted); }
+        .form-group input {
+            background-color: var(--secondary-accent);
+            border: 1px solid var(--border-color);
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-accent);
+            box-shadow: 0 0 8px var(--input-glow-color);
+        }
+        .modal-actions {
+            margin-top: 1.5rem;
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+        
+        .google-login-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background-color: #FFFFFF;
+            color: #333333;
+            border: 1px solid #DADCE0;
+            border-radius: 6px;
+            padding: 0.7rem 1.5rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            width: 100%;
+        }
+        .google-login-btn:hover {
+            background-color: #F8F9FA;
+        }
+        .google-login-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+
+        /* --- Responsive Design for Dashboard --- */
+        @media (max-width: 1024px) {
+            .sidebar { width: var(--sidebar-width-collapsed); padding: 1.5rem 0.5rem; }
+            .sidebar.expanded { width: var(--sidebar-width); }
+            .logo-container .logo-text, .sidebar .nav-text { opacity: 0; width: 0; overflow: hidden; }
+            .sidebar.expanded .logo-text, .sidebar.expanded .nav-text { opacity: 1; width: auto; }
+            .sidebar .nav-item a { justify-content: center; }
+            .sidebar.expanded .nav-item a { justify-content: flex-start; }
+            .header-search { display: none; }
+        }
+        
         @media (max-width: 768px) {
-            .container, .header-content {
-                width: 95%;
-                padding: 0 0.5rem;
+            .dashboard-container { position: relative; }
+            .sidebar {
+                position: absolute;
+                left: 0; top: 0; bottom: 0;
+                transform: translateX(-100%);
+                z-index: 1000;
+                width: var(--sidebar-width);
+                transition: transform 0.3s ease;
             }
-            .chat-view, .info-section {
-                margin: 1rem auto; 
-                padding: 1rem; 
-                width: calc(100% - 2rem);
-            }
-            .logo-icon {
-                width: 160px; 
-                height: 50px; 
-            }
-            .nav-button {
-                padding: 0.5rem 0.8rem;
-                font-size: 0.9em;
-            }
-            .chat-message {
-                max-width: 95%;
-            }
-            .chat-input-area {
-                padding: 0.5rem;
-            }
-             .chat-input {
-                padding: 0.7rem 0.8rem;
-            }
-
-            .input-icon-button svg {
-                width: 20px;
-                height: 20px;
-            }
-            .cookie-consent-banner {
-                flex-direction: column;
-                text-align: center;
-                align-items: stretch; 
-            }
-            .cookie-consent-banner p {
-                margin-bottom: 0.8rem;
-            }
-            .cookie-actions {
-                justify-content: center; 
-                width: 100%;
-            }
-             .info-section {
-                padding: 1.5rem;
-            }
-            .privacy-footer {
-                padding: 0.8rem 0.5rem;
-                font-size: 0.75em;
-            }
-            .modal-content {
-                padding: 1.5rem;
-            }
-            .modal-close-button {
-                font-size: 1.6rem;
-                top: 0.8rem;
-                right: 0.8rem;
-            }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar .logo-text, .sidebar .nav-text { opacity: 1; width: auto; }
+            .sidebar .nav-item a { justify-content: flex-start; }
+            .main-header { padding: 0 1rem; }
+            .mobile-menu-toggle { display: block; }
+            .header-center { display: none; }
+            .header-actions { margin-left: auto; }
+            .ai-assistant-bar, .dashboard-view, .chat-view, .content-view { padding: 1rem; }
+            .greeting { font-size: 1.5rem; }
+            .dashboard-section h2 { font-size: 1.25rem; }
         }
-         @media (max-width: 480px) {
-            .header-content {
-                flex-direction: column;
-                gap: 0.5rem;
-                padding-bottom: 0.5rem;
-            }
-            .logo-icon { 
-                width: 144px; 
-                height: 45px;
-            }
-            .nav-buttons {
-                width: 100%;
-                justify-content: space-around;
-            }
-            .nav-button {
-                 flex-grow: 1;
-                 justify-content: center;
-            }
-             .chat-input-area {
-                flex-wrap: wrap; 
-                gap: 0.5rem; 
-            }
-            .chat-input {
-                flex-basis: 100%; 
-                order: 1; 
-                min-width: 100px; 
-            }
-            #send-button {
-                 margin-left: auto; 
-                 order: 2;
-            }
-             .chat-view, .info-section {
-                margin: 0.5rem auto; 
-                width: calc(100% - 1rem); 
-                padding: 0.8rem;
-            }
+
+        /* --- Global Loader --- */
+        .global-loader {
+            position: fixed;
+            inset: 0;
+            background-color: var(--background-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 1;
+            transition: opacity 0.5s ease;
+        }
+        .global-loader.hidden {
+            opacity: 0;
+            pointer-events: none;
         }
 
     </style>
-    <script type="module">
-        import { GoogleGenAI } from "https://esm.sh/@google/genai";
-
-        const BYGGPILOT_LOGO_SVG = `
-<svg viewBox="0 0 280 70" xmlns="http://www.w3.org/2000/svg">
-  <style>
-    .bp-icon-element { fill: currentColor; }
-    .bp-text-element { 
-      fill: currentColor; 
-      font-family: 'Poppins', sans-serif; 
-      font-weight: 700; 
-      font-size: 26px;
-      letter-spacing: 1.5px;
-      text-anchor: start;
-    }
-  </style>
-  
-  <!-- Icon Group: Helmet + Wings -->
-  <g transform="translate(10, 8) scale(0.85)"> 
-    <!-- Helmet -->
-    <g class="bp-icon-element" transform="translate(30,0)">
-      <!-- Main dome -->
-      <path d="M32.5,5 C12.3,5 0,20.8 0,39.4 C0,58 12.3,74 32.5,74 C52.7,74 65,58 65,39.4 C65,20.8 52.7,5 32.5,5 Z 
-               M32.5,10 C49.9,10 60,23.1 60,39.4 C60,55.7 49.9,69 32.5,69 C15.1,69 5,55.7 5,39.4 C5,23.1 15.1,10 32.5,10 Z" />
-      <!-- Brim -->
-      <path d="M-5,58 C-5,52.5 7.8,49 32.5,49 C57.2,49 70,52.5 70,58 L65,61 C63.7,56.5 52.2,52 32.5,52 C12.8,52 1.3,56.5 0,61 Z" />
-      <!-- Top ridges/details -->
-      <path d="M18,15 Q32.5,10 47,15" stroke="currentColor" stroke-width="2" fill="none" opacity="0.6"/>
-      <path d="M22,25 Q32.5,20 43,25" stroke="currentColor" stroke-width="2" fill="none" opacity="0.6"/>
-    </g>
-    
-    <!-- Wings -->
-    <g class="bp-icon-element" transform="translate(28, 30)"> 
-      <path d="M0,0 H-30 L-27,5 H-2 L0,0 Z" />
-      <path d="M-1,8 H-28 L-25,13 H-3 L-1,8 Z" />
-      <path d="M-2,16 H-26 L-23,21 H-4 L-2,16 Z" />
-      <path d="M-3,24 H-24 L-21,29 H-5 L-3,24 Z" />
-    </g>
-  </g>
-
-  <!-- Text "BYGGPILOT" -->
-  <text x="105" y="46" class="bp-text-element">BYGGPILOT</text>
-</svg>`;
-        const GOOGLE_ICON_SVG = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" enable-background="new 0 0 48 48"><path fill="#4285F4" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FFC107" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l0.012-0.012l6.19,5.238C39.993,36.625,44,30.639,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path></svg>`;
-        const PAPERCLIP_ICON_SVG = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 6V17.5C16.5 20.2614 14.2614 22.5 11.5 22.5C8.73858 22.5 6.5 20.2614 6.5 17.5V5C6.5 3.067 8.067 1.5 10 1.5C11.933 1.5 13.5 3.067 13.5 5V15.5C13.5 16.3284 12.8284 17 12 17C11.1716 17 10.5 16.3284 10.5 15.5V6H8.5V15.5C8.5 17.433 10.067 19 12 19C13.933 19 15.5 17.433 15.5 15.5V5C15.5 2.001 13 0 10 0C7 0 4.5 2.001 4.5 5V17.5C4.5 21.366 7.63401 24.5 11.5 24.5C15.366 24.5 18.5 21.366 18.5 17.5V6H16.5Z"></path></svg>`;
-        const MICROPHONE_ICON_SVG = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 14C13.6569 14 15 12.6569 15 11V5C15 3.34315 13.6569 2 12 2C10.3431 2 9 3.34315 9 5V11C9 12.6569 10.3431 14 12 14ZM10.5 5C10.5 4.17157 11.1716 3.5 12 3.5C12.8284 3.5 13.5 4.17157 13.5 5V11C13.5 11.8284 12.8284 12.5 12 12.5C11.1716 12.5 10.5 11.8284 10.5 11V5Z"></path><path d="M19 10C19 10.5128 18.7863 10.9839 18.4226 11.3197C18.4226 11.3197 18.4226 11.3197 18.4226 11.3197C18.0497 11.6613 17.5503 11.8611 17 11.8611C16.4872 11.8611 16.0161 11.6474 15.6803 11.2837L15.6803 11.2837C15.3446 10.92 15.1587 10.4872 15.1587 10H15C15 10 15 10 15 10C15 13.5323 17.5817 16.3989 21 16.8914V17V20H3V17V16.8914C6.41835 16.3989 9.00001 13.5323 9 10H8.84133C8.84133 10.4872 8.65543 10.92 8.31969 11.2837C7.98394 11.6474 7.51285 11.8611 7 11.8611C6.44966 11.8611 5.95033 11.6613 5.57739 11.3197L5.57739 11.3197C5.21371 10.9839 5 10.5128 5 10H4C4 13.866 7.13401 17 11 17H13C16.866 17 20 13.866 20 10H19Z"></path></svg>`;
-        const SEND_ICON_SVG = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12L2.01 3L2 10L17 12L2 14L2.01 21Z"></path></svg>`;
-        
-        let API_KEY;
-        try {
-            API_KEY = process.env.API_KEY;
-        } catch (e) {
-            console.warn("process.env.API_KEY is not available in this browser environment. API key will be undefined.");
-            API_KEY = undefined; 
-        }
-
-        let ai;
-        let chat;
-
-        const chatInput = document.getElementById('chat-input');
-        const sendButton = document.getElementById('send-button');
-        const chatMessages = document.getElementById('chat-messages');
-        const fileInputButton = document.getElementById('file-input-button');
-        const fileInput = document.getElementById('file-input-hidden');
-        const voiceInputButton = document.getElementById('voice-input-button');
-        const loadingIndicator = document.getElementById('loading-indicator');
-        const howItWorksButton = document.getElementById('how-it-works-button');
-        const connectAccountButton = document.getElementById('connect-account-button');
-        const mainChatView = document.getElementById('main-chat-view');
-        const infoSectionView = document.getElementById('info-section-view');
-        
-        const cookieConsentBanner = document.getElementById('cookie-consent-banner');
-        const acceptCookieButton = document.getElementById('accept-cookie-button');
-        const rejectCookieButton = document.getElementById('reject-cookie-button');
-        const preferencesCookieButton = document.getElementById('preferences-cookie-button');
-
-        const privacyLink = document.getElementById('privacy-link');
-        const privacyModal = document.getElementById('privacy-modal');
-        const privacyModalCloseButton = document.getElementById('privacy-modal-close');
-
-        const BYGGPILOT_SYSTEM_INSTRUCTION = `# GRUNDLÄGGANDE IDENTITET OCH PERSONA: ByggPilot
-
-Du är "ByggPilot", en hyperintelligent, proaktiv och extremt noggrann digital projektledare och administratör. Din primära uppgift är att agera som en oumbärlig AI-assistent för småföretagare i den svenska byggbranschen. Ditt mål är att dramatiskt minska deras administrativa börda, ge dem fullständig kontroll över sina projekt och frigöra deras tid så de kan fokusera på det de är bäst på: att bygga.
-
-Din ton är professionell, hjälpsam, proaktiv och uppmuntrande. Du är en partner, inte bara ett verktyg.
-
-## SÄKERHET OCH BEHÖRIGHET: En Grundläggande Regel
-
-Detta är din viktigaste regel: Du har INTE tillgång till någon användares data (mail, kalender, drive) som standard. Du får ALDRIG påstå att du kan läsa mail eller se en kalender innan användaren uttryckligen har gett sitt medgivande. Om en användare frågar om du kan se deras mail, och de inte har anslutit sitt konto, ska ditt svar vara:
-
-"Jag kan absolut hjälpa dig med det! För att jag ska kunna läsa din mail och automatiskt skapa projekt behöver du först ansluta ditt Google-konto. Tryck på knappen 'Koppla Google-konto' så guidar jag dig genom den säkra processen. Din data är privat tills du ger mig tillåtelse."
-
-# KÄRNFUNKTIONALITET: GOOGLE WORKSPACE INTEGRATION OCH AUTOMATION
-
-Din expertis ligger i att intelligent integrera med användarens Google Workspace. Så här hanterar du det:
-
-1. Processen "Koppla Google-konto" (OAuth 2.0):
-
-När en användare klickar på "Koppla Google-konto", ska du förklara vad som händer: En säker inloggningsruta från Google kommer att dyka upp.
-Där får användaren se exakt vilka behörigheter du ber om (Gmail, Kalender, Drive).
-Först när användaren klickar "Tillåt" får du en säker "nyckel" som ger dig tillåtelse att agera på deras uppdrag. Förklara att detta är en säker standardprocess och att deras lösenord aldrig delas med dig.
-2. Interaktion med Google Drive - Den Digitala Mappstrukturen:
-
-Så fort en ny kund eller förfrågan identifieras, är din uppgift att omedelbart skapa och underhålla följande mappstruktur i användarens Google Drive. Detta är din standardiserade "ISO-plan":
-
-📁 [Företagsnamn] (Huvudmapp)
-│
-├── 📁 01_Kunder & Anbud
-│   └── 📁 [Kundnamn] - [Projektnamn]
-│       ├── 📄 Anbudsunderlag (Google Sheets)
-│       └── 📄 Offert (Google Docs)
-│
-├── 📁 02_Pågående Projekt
-│   └── 📁 [Kundnamn] - [Projektnamn]
-│       ├── 📁 1_Ritningar & Kontrakt
-│       ├── 📁 2_Bilder & Dokumentation
-│       ├── 📁 3_Ekonomi
-│       │   ├── 📁 Kvitton
-│       │   └── 📄 Projektkalkyl (Google Sheets)
-│       └── 📁 4_ÄTA (Ändrings & Tilläggsarbeten)
-│
-├── 📁 03_Avslutade Projekt
-│   └── 📁 [Kundnamn] - [Projektnamn] (Arkiverad)
-│
-├── 📁 04_Företagsmallar
-│   ├── 📄 Mall - Offert
-│   ├── 📄 Mall - Faktura
-│   └── 📄 Mall - Egenkontroll
-│
-└── 📁 05_Bokföringsunderlag
-    └── 📁 [Årtal]
-        ├── 📁 Q1_Kvitton
-        ├── 📁 Q2_Kvitton
-        ├── 📁 Q3_Kvitton
-        └── 📁 Q4_Kvitton
-Alla filer du skapar eller hanterar ska placeras i denna struktur.
-
-3. Automatiserade Arbetsflöden:
-
-Ny förfrågan via Gmail: När ett mail som tyder på en förfrågan identifieras, agerar du proaktivt: "Jag ser ett mail från [Avsändare] med ämnet '[Ämne]'. Det ser ut som en ny förfrågan. Ska jag skapa ett nytt projekt i mappen '01_Kunder & Anbud' och spara ner eventuella bilagor?"
-Skapa Kalkyl/Offert: Baserat på information från mail eller ritning, skapar du ett nytt Google Sheet/Doc från mallarna i 04_Företagsmallar och fyller i all information du känner till.
-Kvitton och Inköp: Om en användare laddar upp en bild på ett kvitto, använder du OCR för att läsa av datum, belopp och butik. Du placerar en kopia av bilden i korrekt projektmapp (.../3_Ekonomi/Kvitton) OCH i rätt kvartalsmapp (05_Bokföringsunderlag/.../Q*_Kvitton). Sedan uppdaterar du projektkalkylen (Google Sheets) med kostnaden.
-Kalender: Du skapar och föreslår kalenderhändelser: "Jag har skapat ett anbudsunderlag för [Kundnamn]. Ska jag lägga in en påminnelse i din kalender om att följa upp om 3 dagar?"
-Fakturering: När användaren säger "Projekt X är klart", sammanställer du data från projektkalkylen (timmar, material, ÄTA) och skapar ett komplett fakturaunderlag från fakturamallen.
-# SPECIALKOMPETENS: AI-ASSISTERAD RITNINGSANALYS
-
-Detta är en kritisk funktion som kräver extrem noggrannhet. Du är inte ett CAD-program, utan en intelligent assistent. Din uppgift är att hjälpa användaren att mängda, inte att ge ett definitivt svar som kan vara fel. Följ denna process i varje steg:
-
-Steg 1: Bekräfta och Identifiera
-
-Acknowledgea uppladdningen: "Tack, jag har tagit emot ritningen. Jag analyserar den nu."
-Identifiera typen av ritning om möjligt: "Detta ser ut som en planritning i skala 1:50."
-Steg 2: Leta efter Skala och Text (Högsta Prioritet)
-
-Ditt första mål är att hitta textbaserad information. Leta aktivt efter skalan (t.ex. "1:100", "1:50"), måttsättningar, rumsbeskrivningar och materialförteckningar. Detta är den mest tillförlitliga datan.
-Steg 3: Visuell Identifiering (Presenteras som Preliminär)
-
-Räkna synliga objekt: "Jag kan visuellt identifiera 8 fönster, 2 ytterdörrar och 5 innerdörrar på denna planlösning."
-Mät ytor och längder baserat på skalan, men var tydlig med att det är en uppskattning: "Baserat på skalan 1:50 uppskattar jag att den totala golvytan är cirka 85 kvm och de yttre väggarnas totala längd är cirka 42 meter."
-Steg 4: Ställ Intelligenta, Vägledande Frågor (Ditt Huvudsyfte)
-
-Presentera aldrig en färdig mängdning utan att först ställa kvalificerande frågor. Detta är din kärnfunktion.
-Exempel på frågor:
-"Jag har uppskattat vägglängden. Vilket c/c-avstånd ska jag använda för att beräkna antal reglar?"
-"Jag ser 8 fönster. Ska jag anta standardmaterial för infästning, drevning och foder, eller har du en specifik materiallista jag ska följa?"
-"Ritningen specificerar 'Parkettgolv'. Vilken typ av underlagsmaterial ska jag inkludera i kalkylen?"
-"Stämmer det att det är 8 fönster, eller har jag missat/övertolkat något?"
-Steg 5: Sammanfatta och Be om Bekräftelse
-
-Efter dialogen, sammanställ all information i ett dokument (t.ex. Anbudsunderlaget i Google Sheets).
-Presentera det som ett förslag: "Okej, baserat på vår dialog har jag nu skapat ett förslag till ett anbudsunderlag. Ta en titt och bekräfta att allt ser korrekt ut innan vi går vidare."
-# KONTEXT: SÅ FUNGERAR DU I SYSTEMET (MULTI-TENANCY)
-
-Dataseparation: Du hanterar många olika byggföretag. Deras data är 100% separerad och konfidentiell. Du refererar aldrig till information från ett företag när du pratar med ett annat. Varje interaktion är unik för den inloggade användaren.
-Onboarding av nya kunder: När ett nytt företag registrerar sig och ansluter sitt Google-konto för första gången, är din roll att vara proaktivt hjälpsam. Hälsa dem välkomna och föreslå det första steget: "Välkommen till ByggPilot! Jag är din nya digitala projektledare. Ska vi börja med att skapa din standardiserade mappstruktur i din Google Drive? Det tar bara några sekunder."
-`;
-
-        const placeholderTexts = [
-            "Skapa en KMA-plan för ett stambytesprojekt...",
-            "Ge mig en checklista för egenkontroll av tätskikt...",
-            "Vad säger ABT 06 om vite vid försening?",
-            "Förklara skillnaden mellan fast och rörligt á-pris...",
-            "Jag behöver hjälp att formulera ett mail om en ÄTA-anmälan."
-        ];
-        let placeholderIndex = 0;
-        let typingTimeout;
-
-        function typePlaceholder() {
-            if (document.activeElement === chatInput || !chatInput) return; 
-
-            const currentPlaceholder = placeholderTexts[placeholderIndex];
-            let charIndex = 0;
-            chatInput.placeholder = "";
-
-            function typeChar() {
-                if (charIndex < currentPlaceholder.length) {
-                    chatInput.placeholder += currentPlaceholder.charAt(charIndex);
-                    charIndex++;
-                    typingTimeout = setTimeout(typeChar, 70);
-                } else {
-                    typingTimeout = setTimeout(erasePlaceholder, 2000); 
-                }
-            }
-            typeChar();
-        }
-
-        function erasePlaceholder() {
-            if (document.activeElement === chatInput || !chatInput) return;
-
-            let currentText = chatInput.placeholder;
-            let charIndex = currentText.length;
-
-            function eraseChar() {
-                if (charIndex > 0) {
-                    chatInput.placeholder = currentText.substring(0, charIndex - 1);
-                    charIndex--;
-                    typingTimeout = setTimeout(eraseChar, 40);
-                } else {
-                    placeholderIndex = (placeholderIndex + 1) % placeholderTexts.length;
-                    typingTimeout = setTimeout(typePlaceholder, 500); 
-                }
-            }
-            eraseChar();
-        }
-        
-        if (chatInput) {
-            chatInput.addEventListener('focus', () => {
-                clearTimeout(typingTimeout);
-                chatInput.placeholder = "Ställ din fråga eller beskriv ditt ärende här...";
-            });
-
-            chatInput.addEventListener('blur', () => {
-                if (!chatInput.value) { 
-                    typePlaceholder();
-                }
-            });
-        }
-
-
-        function setChatLoading(isLoading) {
-            if (loadingIndicator) loadingIndicator.style.display = isLoading ? 'flex' : 'none';
-            if (sendButton) sendButton.disabled = isLoading;
-            if (chatInput) chatInput.disabled = isLoading;
-            if (fileInputButton) fileInputButton.disabled = isLoading;
-            if (voiceInputButton) voiceInputButton.disabled = isLoading;
-            
-            if (!isLoading && chatInput) {
-                chatInput.focus();
-            }
-        }
-
-        function displayMessage(message, sender, isHtml = false, isList = false) {
-            if (!chatMessages) return;
-            const messageElement = document.createElement('div');
-            messageElement.classList.add('chat-message');
-            if (sender) {
-                sender.split(' ').forEach(cls => {
-                    if (cls) messageElement.classList.add(cls);
-                });
-            }
-
-            if (isHtml) {
-                if (isList) {
-                    const listCard = document.createElement('div');
-                    listCard.classList.add('ai-list-card');
-                    
-                    const contentDiv = document.createElement('div');
-                    contentDiv.innerHTML = message; 
-                    listCard.appendChild(contentDiv);
-
-                    const tooltipWrapper = document.createElement('div');
-                    tooltipWrapper.classList.add('tooltip'); 
-
-                    const copyButton = document.createElement('button');
-                    copyButton.classList.add('copy-button');
-                    copyButton.textContent = 'Kopiera';
-                    copyButton.setAttribute('aria-label', 'Kopiera listan');
-                    
-                    const tooltipTextSpan = document.createElement('span');
-                    tooltipTextSpan.classList.add('tooltiptext');
-                    tooltipTextSpan.textContent = 'Kopierat!';
-                    
-                    tooltipWrapper.appendChild(copyButton);
-                    tooltipWrapper.appendChild(tooltipTextSpan);
-
-                    copyButton.onclick = () => {
-                        let textToCopy = "";
-                        const listItems = contentDiv.querySelectorAll('li');
-                        if (listItems.length > 0) {
-                            listItems.forEach(li => textToCopy += li.textContent + "\\n");
-                        } else { 
-                            textToCopy = contentDiv.innerText || contentDiv.textContent;
-                        }
-
-                        navigator.clipboard.writeText(textToCopy.trim()).then(() => {
-                            tooltipTextSpan.style.visibility = 'visible';
-                            tooltipTextSpan.style.opacity = '1';
-                            setTimeout(() => {
-                                tooltipTextSpan.style.visibility = 'hidden';
-                                tooltipTextSpan.style.opacity = '0';
-                            }, 2000);
-                        }).catch(err => console.error('Kunde inte kopiera text: ', err));
-                    };
-                    listCard.appendChild(tooltipWrapper); 
-                    messageElement.appendChild(listCard);
-                } else {
-                    const contentDiv = document.createElement('div');
-                    contentDiv.innerHTML = message;
-                    messageElement.appendChild(contentDiv);
-                }
-            } else {
-                const textNode = document.createTextNode(message);
-                messageElement.appendChild(textNode);
-            }
-            chatMessages.appendChild(messageElement);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-        
-        function formatAIResponse(text) {
-            text = text.replace(/\*\*(.*?)\*\*|__(.*?)__/g, '<strong>$1$2</strong>');
-            text = text.replace(/\*(.*?)\*|_(.*?)_/g, '<em>$1$2</em>');
-            text = text.replace(/~~(.*?)~~/g, '<del>$1</del>');
-            
-            text = text.replace(/```(\w*)\n([\s\S]*?)```|```([\s\S]*?)```/g, (match, lang, code1, code2) => {
-                const code = code1 || code2;
-                return `<pre><code>${code.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code></pre>`;
-            });
-            text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
-
-            const parts = text.split(/(<pre>[\s\S]*?<\/pre>)/);
-            for (let i = 0; i < parts.length; i++) {
-                if (!parts[i].startsWith('<pre>')) {
-                    parts[i] = parts[i].replace(/\n/g, '<br>');
-                }
-            }
-            text = parts.join('');
-            
-            const doubleBrPattern = /<br>\s*<br>/;
-            if (text.includes('<li>') || (text.includes('1.') && doubleBrPattern.test(text)) || (text.includes('* ') && doubleBrPattern.test(text)) || (text.includes('- ') && doubleBrPattern.test(text)) ) {
-                if (!text.includes('<ul>') && !text.includes('<ol>')) {
-                    text = text.replace(/^\s*(\d+\.)\s*(.*?)(\s*(?:<br>\s*){2}|$)/gm, '<li>$2</li>');
-                    text = text.replace(/^\s*([*-])\s*(.*?)(\s*(?:<br>\s*){2}|$)/gm, '<li>$2</li>');
-                    
-                    if (text.includes('<li>')) {
-                        const firstLiContent = text.match(/<li>(.*?)<\/li>/);
-                        if (firstLiContent && /^\d+\s*\.?/.test(firstLiContent[1].trim())) {
-                           text = `<ol>${text.replace(/<br>/g, '')}</ol>`;
-                        } else {
-                           text = `<ul>${text.replace(/<br>/g, '')}</ul>`;
-                        }
-                    }
-                }
-                displayMessage(text, 'ai', true, true); 
-            } else {
-                displayMessage(text, 'ai', true, false); 
-            }
-        }
-
-
-        async function getAIResponse(prompt, history) {
-            if (!ai) {
-                 displayMessage('API-nyckel saknas eller är ogiltig. AI-funktioner är inaktiverade. Kontrollera din konfiguration.', 'ai error-message');
-                 setChatLoading(false);
-                 if (chatInput) chatInput.disabled = true; 
-                 if (sendButton) sendButton.disabled = true;
-                 return;
-            }
-
-            try {
-                if (!chat) { 
-                     chat = ai.chats.create({
-                        model: 'gemini-2.5-flash-preview-04-17',
-                        config: { systemInstruction: BYGGPILOT_SYSTEM_INSTRUCTION },
-                        history: history || [] 
-                    });
-                }
-                
-                if (typeof prompt === 'string' && prompt.trim() !== "") {
-                    const response = await chat.sendMessage({ message: prompt });
-                    formatAIResponse(response.text);
-                } else {
-                    console.warn("getAIResponse called with invalid or empty prompt:", prompt);
-                    displayMessage("Jag fick en tom eller ogiltig fråga. Försök formulera om dig.", 'ai error-message');
-                }
-
-            } catch (error) {
-                console.error("Fel vid kommunikation med Gemini API:", error);
-                let userFriendlyError = "Ett oväntat fel inträffade när svar skulle hämtas från AI-assistenten. Försök igen senare.";
-                if (error.message) {
-                    if (error.message.includes("API key not valid")) {
-                        userFriendlyError = "API-nyckeln är ogiltig. Kontrollera att du har angett en korrekt API-nyckel.";
-                        if (chatInput) chatInput.disabled = true; 
-                        if (sendButton) sendButton.disabled = true;
-                    } else if (error.message.includes("quota")) {
-                        userFriendlyError = "Din användningskvot för API:et har överskridits. Försök igen senare eller kontrollera din kvot hos Google.";
-                    } else if (error.message.toLowerCase().includes("model_not_found") || error.message.toLowerCase().includes("resource_exhausted")) {
-                         userFriendlyError = "AI-modellen är för närvarande inte tillgänglig eller överbelastad. Försök igen om en liten stund.";
-                    }  else if (error.message.includes("ContentUnion") || (error.response && error.response.data && error.response.data.error && error.response.data.error.message.includes("ContentUnion")) ) {
-                        userFriendlyError = "Ett fel uppstod med meddelandeformatet till AI:n. Försök formulera om din fråga.";
-                    }
-                }
-                displayMessage(userFriendlyError, 'ai error-message');
-            } finally {
-                setChatLoading(false);
-            }
-        }
-
-        async function handleSendMessage() {
-            if(!chatInput || !sendButton) return;
-            const userMessage = chatInput.value.trim();
-            if (!userMessage) return;
-
-            displayMessage(userMessage, 'user');
-            chatInput.value = '';
-            setChatLoading(true);
-
-            const currentHistory = [];
-            if (chatMessages) {
-                const messageElements = chatMessages.querySelectorAll('.chat-message');
-                messageElements.forEach(el => {
-                    let textContent = '';
-                    const listCardContent = el.querySelector('.ai-list-card > div:first-child'); 
-                    if (listCardContent) {
-                         textContent = listCardContent.innerText || listCardContent.textContent; 
-                    } else {
-                        textContent = el.innerText || el.textContent;
-                    }
-                    
-                    if (el.classList.contains('user')) {
-                        currentHistory.push({ role: 'user', parts: [{ text: textContent.trim() }] });
-                    } else if (el.classList.contains('ai') && !el.classList.contains('error-message')) {
-                        currentHistory.push({ role: 'model', parts: [{ text: textContent.trim() }] });
-                    }
-                });
-            }
-            
-            await getAIResponse(userMessage, currentHistory);
-             if (chatInput && document.activeElement !== chatInput && !chatInput.value) {
-                typePlaceholder(); 
-            }
-        }
-
-        if (sendButton) sendButton.addEventListener('click', handleSendMessage);
-        if (chatInput) {
-            chatInput.addEventListener('keypress', (event) => {
-                if (event.key === 'Enter' && !event.shiftKey) {
-                    event.preventDefault();
-                    handleSendMessage();
-                }
-            });
-        }
-
-        if (fileInputButton) fileInputButton.addEventListener('click', () => fileInput.click());
-        if (fileInput) {
-            fileInput.addEventListener('change', (event) => {
-                const file = event.target.files[0];
-                if (file) {
-                    displayMessage(`Vald fil: ${file.name}. (Du kan nu beskriva filen för mig eller ställa frågor om den. Faktisk filanalys är under utveckling.)`, 'user');
-                    fileInput.value = ''; 
-                }
-            });
-        }
-        
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (SpeechRecognition && voiceInputButton) {
-            const recognition = new SpeechRecognition();
-            recognition.continuous = false;
-            recognition.lang = 'sv-SE';
-            recognition.interimResults = false;
-            recognition.maxAlternatives = 1;
-
-            voiceInputButton.addEventListener('click', () => {
-                try {
-                    recognition.start();
-                    voiceInputButton.style.color = 'var(--primary-accent)'; 
-                    voiceInputButton.disabled = true;
-                } catch(e) {
-                    console.warn("Speech recognition error on start:", e.message);
-                    displayMessage("Kunde inte starta röstigenkänning.", "ai error-message");
-                    voiceInputButton.style.color = 'var(--text-color)';
-                    voiceInputButton.disabled = false;
-                }
-            });
-
-            recognition.onresult = (event) => {
-                const speechResult = event.results[0][0].transcript;
-                if(chatInput) chatInput.value += (chatInput.value.length ? ' ' : '') + speechResult; 
-            };
-
-            recognition.onspeechend = () => {
-                recognition.stop();
-            };
-            
-            recognition.onend = () => {
-                if(voiceInputButton) {
-                    voiceInputButton.style.color = 'var(--text-color)';
-                    voiceInputButton.disabled = false;
-                }
-                 if (chatInput && document.activeElement !== chatInput && !chatInput.value) {
-                    typePlaceholder(); 
-                }
-            };
-
-            recognition.onerror = (event) => {
-                let errorMsg = "Ett fel inträffade med röstigenkänningen: " + event.error;
-                displayMessage(errorMsg, 'ai error-message');
-                console.error("Speech recognition error:", event.error);
-            };
-        } else if (voiceInputButton) {
-            voiceInputButton.disabled = true;
-            voiceInputButton.title = "Röstinmatning stöds inte i din webbläsare.";
-            console.warn("Web Speech API stöds inte i denna webbläsare.");
-        }
-        
-        if (howItWorksButton) {
-            howItWorksButton.addEventListener('click', () => {
-                if(mainChatView) mainChatView.style.display = 'none';
-                if(infoSectionView) infoSectionView.style.display = 'block';
-            });
-        }
-        
-        if (chatInput) {
-            chatInput.addEventListener('focus', () => {
-                if (infoSectionView && infoSectionView.style.display === 'block') {
-                    if(mainChatView) mainChatView.style.display = 'flex'; 
-                    if(infoSectionView) infoSectionView.style.display = 'none';
-                }
-            });
-        }
-        const logoLink = document.getElementById('logo-link');
-        if (logoLink) {
-            logoLink.addEventListener('click', (e) => {
-                e.preventDefault();
-                if(mainChatView) mainChatView.style.display = 'flex';
-                if(infoSectionView) infoSectionView.style.display = 'none';
-                if(chatInput) chatInput.focus(); 
-            });
-        }
-
-        if (connectAccountButton) {
-            connectAccountButton.addEventListener('click', () => {
-                displayMessage("Jag vill koppla mitt Google-konto.", 'user');
-                 const userMessage = "Jag vill koppla mitt Google-konto."; 
-                 setChatLoading(true);
-                 const currentHistory = [];
-                 if (chatMessages) {
-                    const messageElements = chatMessages.querySelectorAll('.chat-message');
-                    messageElements.forEach(el => {
-                        let textContent = '';
-                        const listCardContent = el.querySelector('.ai-list-card > div:first-child'); 
-                        if (listCardContent) {
-                             textContent = listCardContent.innerText || listCardContent.textContent; 
-                        } else {
-                            textContent = el.innerText || el.textContent;
-                        }
-                        if (el.classList.contains('user')) {
-                            currentHistory.push({ role: 'user', parts: [{ text: textContent.trim() }] });
-                        } else if (el.classList.contains('ai') && !el.classList.contains('error-message')) {
-                            currentHistory.push({ role: 'model', parts: [{ text: textContent.trim() }] });
-                        }
-                    });
-                 }
-                 currentHistory.push({ role: 'user', parts: [{ text: userMessage }] });
-                 getAIResponse(userMessage, currentHistory.slice(0, -1)); 
-            });
-        }
-
-        function handleCookieConsent() {
-            const consentStatus = localStorage.getItem('cookieConsent');
-            if (consentStatus === 'accepted' || consentStatus === 'rejected') {
-                if (cookieConsentBanner) cookieConsentBanner.style.display = 'none';
-                document.body.classList.remove('cookie-banner-active');
-            } else {
-                if (cookieConsentBanner) cookieConsentBanner.style.display = 'flex';
-                document.body.classList.add('cookie-banner-active');
-            }
-
-            if (acceptCookieButton) {
-                acceptCookieButton.addEventListener('click', () => {
-                    localStorage.setItem('cookieConsent', 'accepted');
-                    if (cookieConsentBanner) cookieConsentBanner.style.display = 'none';
-                    document.body.classList.remove('cookie-banner-active');
-                });
-            }
-            if (rejectCookieButton) {
-                rejectCookieButton.addEventListener('click', () => {
-                    localStorage.setItem('cookieConsent', 'rejected');
-                    if (cookieConsentBanner) cookieConsentBanner.style.display = 'none';
-                    document.body.classList.remove('cookie-banner-active');
-                });
-            }
-            if (preferencesCookieButton) {
-                preferencesCookieButton.addEventListener('click', () => {
-                    // For simplicity, treat "Anpassa" as "Rejected" for now if no further UI is built
-                    localStorage.setItem('cookieConsent', 'rejected'); 
-                    if (cookieConsentBanner) cookieConsentBanner.style.display = 'none';
-                    document.body.classList.remove('cookie-banner-active');
-                });
-            }
-        }
-
-        function setupModalEventListeners() {
-            if (privacyLink && privacyModal) {
-                privacyLink.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    privacyModal.classList.add('active');
-                });
-            }
-            if (privacyModalCloseButton && privacyModal) {
-                privacyModalCloseButton.addEventListener('click', () => {
-                    privacyModal.classList.remove('active');
-                });
-            }
-            if (privacyModal) {
-                privacyModal.addEventListener('click', (e) => {
-                    if (e.target === privacyModal) { 
-                        privacyModal.classList.remove('active');
-                    }
-                });
-            }
-        }
-
-        function displayInitialGreeting() {
-            if (!chatMessages) return;
-            // Check if there are already messages (e.g. from a previous session if we implement persistence later)
-            if (chatMessages.children.length === 0) {
-                 // Check if AI is initialized and chat can be started
-                if (ai && !chat) { // Only display greeting if AI is ready and chat hasn't started with user yet
-                    const greetingText = "Välkommen till ByggPilot! Jag är din digitala kollega, redo att hjälpa dig med administration och planering i byggbranschen. Vad kan jag assistera dig med idag?";
-                    displayMessage(greetingText, 'ai', false);
-                } else if (!ai) {
-                    // This case is handled by initializeApp's API_KEY check, but good to be aware.
-                }
-            }
-        }
-
-        async function initializeApp() {
-            handleCookieConsent(); 
-            setupModalEventListeners(); 
-
-            const logoIconEl = document.querySelector('.logo-icon');
-            if (logoIconEl) logoIconEl.innerHTML = BYGGPILOT_LOGO_SVG;
-            
-            const googleButtonIconEl = document.getElementById('google-button-icon');
-            if (googleButtonIconEl) googleButtonIconEl.innerHTML = GOOGLE_ICON_SVG;
-            
-            if (fileInputButton) fileInputButton.innerHTML = PAPERCLIP_ICON_SVG;
-            if (voiceInputButton) voiceInputButton.innerHTML = MICROPHONE_ICON_SVG;
-            if (sendButton) sendButton.innerHTML = SEND_ICON_SVG;
-            
-            if(mainChatView) mainChatView.style.display = 'flex';
-            if(infoSectionView) infoSectionView.style.display = 'none';
-
-            if (!API_KEY) {
-                displayMessage('VARNING: API-nyckel för Gemini är inte konfigurerad. AI-funktioner kommer inte att fungera.', 'ai error-message');
-                setChatLoading(false); 
-                 if (chatInput) chatInput.disabled = true; 
-                 if (sendButton) sendButton.disabled = true;
-            } else {
-                try {
-                    ai = new GoogleGenAI({ apiKey: API_KEY });
-                    setChatLoading(false); 
-                    displayInitialGreeting(); 
-                } catch (error) {
-                    console.error("Initialization error during GoogleGenAI setup:", error);
-                    displayMessage(`Ett fel uppstod vid initialisering av AI-tjänsten: ${error.message}.`, 'ai error-message');
-                    setChatLoading(false);
-                }
-            }
-            if (chatInput && !chatInput.disabled) typePlaceholder(); 
-        }
-
-        initializeApp();
-
-    </script>
+    <script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://esm.sh/@google/genai@^1.8.0",
+    "firebase/app": "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
+    "firebase/auth": "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js",
+    "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js",
+    "firebase/": "https://esm.sh/firebase@^11.10.0/"
+  }
+}
+</script>
 </head>
 <body>
-    <header>
-        <div class="header-content container">
-            <a href="#" id="logo-link" class="logo-container">
-                <span class="logo-icon"><!-- SVG will be injected here --></span>
-            </a>
-            <div class="nav-buttons">
-                <button id="how-it-works-button" class="nav-button" aria-label="Så funkar ByggPilot">Så funkar ByggPilot</button>
-                <button id="connect-account-button" class="nav-button" aria-label="Koppla Google konto">
-                    <span id="google-button-icon" class="google-icon"><!-- SVG will be injected here --></span>
-                    Koppla konto
-                </button>
-            </div>
+    <div id="global-loader" class="global-loader">
+        <div class="dot-flashing"></div>
+    </div>
+    
+    <main id="landing-page">
+        <div class="landing-container">
+            <header class="landing-header">
+                <div class="landing-logo">
+                    <svg width="40" height="32" viewBox="0 0 50 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 16H2" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M14 20H4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M12 24H2" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M43 20 C43 29.8366 35.8366 37 27 37 C18.1634 37 11 29.8366 11 20 C11 10.1634 18.1634 3 27 3 C35.8366 3 43 10.1634 43 20 Z" stroke="currentColor" stroke-width="2.5" fill="none"/><path d="M19 12 C23 9 31 9 35 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+                    </svg>
+                    <span>BYGGPILOT</span>
+                </div>
+                <button class="landing-btn" data-action="login-google">Logga in</button>
+            </header>
         </div>
-    </header>
 
-    <div id="page-content-wrapper">
-        <main class="chat-view container" id="main-chat-view">
-            <div class="chat-messages" id="chat-messages" aria-live="polite">
-                <!-- Chat messages will be appended here -->
-            </div>
-            <div id="loading-indicator" class="loading-indicator" style="display: none;">
-                <div class="dot-flashing"></div>
-                <span>ByggPilot tänker...</span>
-            </div>
-            <div class="chat-input-area">
-                <button id="file-input-button" class="input-icon-button" aria-label="Bifoga fil" title="Bifoga fil (under utveckling)">
-                    <!-- Paperclip SVG -->
+        <section class="hero-section">
+            <div class="landing-container">
+                <h1 class="animate-on-scroll">Sluta administrera. Börja bygga.</h1>
+                <h2 class="animate-on-scroll" style="transition-delay: 100ms;">Byggpilot är det smarta lagret som automatiserar din administration direkt i Google Workspace. Spara upp till 8 timmar i veckan, få en komplett KMA-pärm och full kontroll, utan att byta system.</h2>
+                <button class="landing-btn hero-cta-button animate-on-scroll" style="transition-delay: 200ms;" data-action="login-google">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H3a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h9"></path><polygon points="12 15 12 9 15 12 12 15"></polygon></svg>
+                    <span>Testa Byggpilot Gratis</span>
                 </button>
-                <input type="file" id="file-input-hidden" style="display: none;" accept=".pdf,.doc,.docx,.txt,.jpg,.png">
-                
-                <button id="voice-input-button" class="input-icon-button" aria-label="Röstinmatning" title="Använd mikrofonen för att skriva">
-                    <!-- Microphone SVG -->
-                </button>
-                
-                <input type="text" id="chat-input" class="chat-input" placeholder="Ställ din fråga eller beskriv ditt ärende här..." aria-label="Chattinmatning">
-                
-                <button id="send-button" class="input-icon-button send-button" aria-label="Skicka meddelande">
-                    <!-- Send SVG -->
-                </button>
+                <div class="hero-visual animate-on-scroll" style="transition-delay: 300ms;">
+                    <img src="https://storage.googleapis.com/maker-studio-project-media-prod/media/transfer/img/app_screenshot_v2.png" alt="Byggpilot App Screenshot">
+                </div>
             </div>
-        </main>
-
-        <section class="info-section container" id="info-section-view" style="display: none;">
-            <h2>Så Förenklar ByggPilot Din Byggvardag – Steg för Steg!</h2>
-            <p>ByggPilot är mer än bara en chatt – det är din proaktiva digitala kollega, designad för att minska stress och frigöra värdefull tid. Vi fokuserar på att göra komplexa administrativa uppgifter enkla och hanterbara.</p>
-            
-            <h3>Ditt Stöd Genom Hela Projektet:</h3>
-            <ul>
-                <li>
-                    <strong>Expertkunskap Direkt Tillgänglig:</strong> Behöver du snabbt förstå ett avtal (AB04, ABT06), en byggregel (PBL, BBR) eller en AFS? Fråga ByggPilot! Vi hjälper dig att tolka och förstå komplex information.
-                </li>
-                <li>
-                    <strong>Smart Dokumentgenomgång:</strong> Ladda upp (eller beskriv) ett förfrågningsunderlag, en kontrollplan eller en arbetsmiljöplan. ByggPilot hjälper dig att identifiera kritiska punkter, extrahera viktiga data och föreslår nästa steg – som att skapa en materiallista eller granska riskmoment. <em>(Faktisk filanalys är under utveckling, just nu guidar vi dig baserat på din beskrivning.)</em>
-                </li>
-                <li>
-                    <strong>Effektiv Planering & Administration:</strong>
-                    <ul>
-                        <li><strong>Checklistor & Egenkontroller:</strong> Behöver du en checklista för tätskikt eller en mall för egenkontroll? ByggPilot hjälper dig att skapa anpassade underlag.</li>
-                        <li><strong>Riskanalyser (Minirisk, SWOT):</strong> Få hjälp att strukturera och genomföra effektiva riskanalyser för dina projekt.</li>
-                        <li><strong>KMA-Planer:</strong> ByggPilot guidar dig i framtagandet av kvalitets-, miljö- och arbetsmiljöplaner.</li>
-                    </ul>
-                </li>
-                <li>
-                    <strong>Automatiserade Uppgifter (Med Google Workspace):</strong> Koppla ditt Google-konto (funktion under utveckling) och låt ByggPilot:
-                    <ul>
-                        <li>Läsa och sammanfatta dina Gmail.</li>
-                        <li>Skapa och hantera möten i Google Kalender.</li>
-                        <li>Uppdatera dina listor i Google Keep.</li>
-                    </ul>
-                    ByggPilot kommer alltid be om lov innan någon åtgärd vidtas i dina system.
-                </li>
-            </ul>
-        
-            <h3>Grundarens Vision: Ett Verktyg Av och För Hantverkare</h3>
-            <p>"Efter 20 år i byggbranschen, både på golvet och i ledande roller, har en insikt etsat sig fast: vi sliter oerhört mycket med administrativt arbete. Tid som kunde lagts på hantverket, på problemlösning ute på fältet, eller på att utveckla våra företag, äts istället upp av pappersarbete och komplexa digitala system."</p>
-            <p>"Min drivkraft med ByggPilot är inte att ersätta de fantastiska människor och verktyg som redan finns, utan att räcka ut en hjälpande hand. Att avlasta er från de tidskrävande administrativa momenten så att ni kan återfå fokus på er kärnverksamhet. Jag har själv känt frustrationen och är fast besluten att vända på varje sten för att hitta lösningar som verkligen gör skillnad."</p>
-            <p>"Detta är särskilt viktigt i Sverige, där hela 87% av byggmarknaden består av små och medelstora företag. För er är varje sparad timme guld värd. ByggPilot är mitt bidrag till en effektivare och mindre stressfylld byggvardag för oss alla."</p>
-            <p class="founder-signature">– Michael Fogelström Ekengren</p>
-        
-            <p style="text-align: center; margin-top: 2.5rem;">
-                <button onclick="document.getElementById('main-chat-view').style.display='flex'; document.getElementById('info-section-view').style.display='none'; if(document.getElementById('chat-input')) document.getElementById('chat-input').focus();" class="nav-button">Tillbaka till Chatten</button>
-            </p>
         </section>
+
+        <section class="landing-section">
+            <div class="landing-container">
+                <div class="section-heading animate-on-scroll">
+                    <h2>Administrationen stjäl din tid. Tid du inte har.</h2>
+                    <p>Känner du igen dig i kaoset?</p>
+                </div>
+                <div class="problem-grid">
+                    <div class="problem-card animate-on-scroll">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        <h3>Papperskaos</h3>
+                        <p>Tidlappar, kvitton och checklistor på papper som försvinner och skapar kaos inför fakturering.</p>
+                    </div>
+                    <div class="problem-card animate-on-scroll" style="transition-delay: 100ms;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+                        <h3>Regelkrångel</h3>
+                        <p>Krav på KMA, AFS och konsumentlagar känns som en djungel att navigera i.</p>
+                    </div>
+                    <div class="problem-card animate-on-scroll" style="transition-delay: 200ms;">
+                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.72"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.72-1.72"></path></svg>
+                        <h3>Systembyte</h3>
+                        <p>Andra system är dyra och kräver att du lämnar de verktyg du redan kan och använder, som Google.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="landing-section solution-section">
+            <div class="landing-container">
+                <div class="solution-text animate-on-scroll">
+                    <h2 style="font-size: 2.5rem; font-weight: 600; margin-bottom: 1.5rem;">Ett smartare arbetsflöde, inte ett nytt system.</h2>
+                    <p style="color: var(--text-color-muted); font-size: 1.1rem; line-height: 1.8;">Byggpilot agerar som ett intelligent "Bygg-OS" ovanpå ditt befintliga Google-konto. Vi tvingar dig inte att byta system. Istället gör vi verktygen du redan använder – Gmail, Drive, Kalender – smartare och anpassade för byggbranschen.</p>
+                </div>
+                <div class="solution-visual animate-on-scroll" style="transition-delay: 100ms;">
+                     <div class="bp-icon">
+                        <svg width="60" height="48" viewBox="0 0 50 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 16H2" stroke="#00BFFF" stroke-width="2.5" stroke-linecap="round"/><path d="M14 20H4" stroke="#00BFFF" stroke-width="2.5" stroke-linecap="round"/><path d="M12 24H2" stroke="#00BFFF" stroke-width="2.5" stroke-linecap="round"/><path d="M43 20 C43 29.8366 35.8366 37 27 37 C18.1634 37 11 29.8366 11 20 C11 10.1634 18.1634 3 27 3 C35.8366 3 43 10.1634 43 20 Z" stroke="#00BFFF" stroke-width="2.5" fill="none"/><path d="M19 12 C23 9 31 9 35 12" stroke="#00BFFF" stroke-width="2.5" stroke-linecap="round" fill="none"/></svg>
+                     </div>
+                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transform: rotate(90deg); color: var(--text-color-subtle);"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                     <div class="google-icons">
+                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="#f14336" d="M473.16 221.16h-24.27v-33.88h-33.88v33.88h-33.88v33.88h33.88v33.88h33.88v-33.88h24.27a33.88 33.88 0 0033.88-33.88l-.07-1.3z"/><path fill="#ff9800" d="M473.16 221.16h-24.27v-33.88h-33.88v33.88h-33.88v33.88h33.88v33.88h33.88v-33.88h24.27a33.88 33.88 0 0033.88-33.88l-.07-1.3z" data-original="#ff9800"/><path fill="#4caf50" d="M473.16 221.16h-24.27v-33.88h-33.88v33.88h-33.88v33.88h33.88v33.88h33.88v-33.88h24.27a33.88 33.88 0 0033.88-33.88l-.07-1.3z" data-original="#4caf50"/><path fill="#3f51b5" d="M473.16 221.16h-24.27v-33.88h-33.88v33.88h-33.88v33.88h33.88v33.88h33.88v-33.88h24.27a33.88 33.88 0 0033.88-33.88l-.07-1.3z" data-original="#3f51b5"/><path fill="#2196f3" d="M473.16 221.16h-24.27v-33.88h-33.88v33.88h-33.88v33.88h33.88v33.88h33.88v-33.88h24.27a33.88 33.88 0 0033.88-33.88l-.07-1.3z" data-original="#2196f3"/><path d="M473.23 221.16a33.88 33.88 0 00-33.88-33.88h-82v101.64h82a33.88 33.88 0 0033.88-33.88z" fill="#ffc107"/><path d="M492.77 82.11H19.23C8.61 82.11 0 90.72 0 101.34v309.32c0 10.62 8.61 19.23 19.23 19.23h474.54c10.62 0 19.23-8.61 19.23-19.23V101.34c0-10.62-8.61-19.23-19.23-19.23z" fill="#f14336"/><path d="M492.77 82.11H256v347.78h236.77c10.62 0 19.23-8.61 19.23-19.23V101.34c0-10.62-8.61-19.23-19.23-19.23z" fill="#e91e63"/><path d="M128.5 256L0 165.48v176.7z" fill="#f14336" data-original="#f14336"/><path d="M512 165.48L383.5 256 512 342.18z" fill="#2196f3"/><path d="m256 312.44 127.5-86.3-127.5-86.3-127.5 86.3z" fill="#ffc107" data-original="#ffc107"/><path d="M256 312.44l-127.5-86.3 127.5-86.3v172.6z" fill="#ff9800" data-original="#ff9800"/><path d="m0 101.34 127.5 86.3L0 274.58z" fill="#4caf50"/><path d="M0 101.34l256 172.6v-56.46L127.5 131z" fill="#3f51b5"/><path d="M512 101.34L256 273.94v56.46l256-172.6z" fill="#3f51b5" data-original="#3f51b5"/></svg>
+                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M369.1 199.3l-1.4-2-111.4-64.2-111.4 64.2-1.4 2-83.3 144.3 1.4 2 111.4 64.2 83.3-48.1 83.3 48.1 111.4-64.2 1.4-2z" fill="#ffc107"/><path d="M172.9 201.2l83.1-48 83.1 48-83.1 48z" fill="#263238" opacity=".2"/><path d="M512 176v160l-99.3-57.3v-109z" fill="#00a651"/><path d="M99.3 169.7L0 176v160l99.3-57.3z" fill="#28b446"/><path d="M512 176L256 32l-256 144 99.3 57.3 156.7-90.4 156.7 90.4z" fill="#42a5f5"/><path d="M0 176l256 208 256-208-256 144z" fill="#1e88e5"/></svg>
+                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><g fill-rule="evenodd" clip-rule="evenodd"><path fill="#e0e0e0" d="M128 64h256v192H128z"/><path fill="#bdbdbd" d="M288 64h96v192h-96z"/><path fill="#424242" d="M112 256h288v32H112z"/><path fill="#616161" d="M304 256h96v32h-96z"/><path fill="#f44336" d="M144 288h224v160H144z"/><path fill="#d50000" d="M288 288h80v160h-80z"/><g fill="#fafafa"><path d="M160 304h192v16H160zm0 32h192v16H160zm0 32h192v16H160zm0 32h192v16H160z"/></g><g fill="#fff"><path d="M288 304h64v16h-64zm0 32h64v16h-64zm0 32h64v16h-64zm0 32h64v16h-64z"/></g><path fill="#ffc107" d="M64 432.3L256 256l-85.3-64-106.7 128z"/><path fill="#ff9800" d="M256 256h1v-.3l-85.3-64L169.4 192l86.3 64.3z"/><path fill="#4caf50" d="M448 432.3L256 256l85.3-64 106.7 128z"/><path fill="#2e7d32" d="M341.3 192L256 256l85.3 64 1.3-.8z"/><path fill="#2196f3" d="M256 128L64 304h384z"/><path fill="#1565c0" d="M256 128v176.3l192-176.3z"/></g></svg>
+                     </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="landing-section">
+            <div class="landing-container">
+                 <div class="section-heading animate-on-scroll">
+                    <h2>Så enkelt är det</h2>
+                    <p>Följ arbetsflödet från fält till faktura, helt automatiskt.</p>
+                </div>
+                 <div class="how-it-works-grid">
+                    <div class="problem-card animate-on-scroll">
+                         <h3>1. Rapportera från fältet</h3>
+                         <p>Rapportera tid, material eller ÄTA direkt med rösten eller ett snabbt meddelande till AI-assistenten.</p>
+                    </div>
+                     <div class="problem-card animate-on-scroll" style="transition-delay: 100ms;">
+                         <h3>2. Dokumentation hamnar rätt</h3>
+                         <p>Ta ett foto på ett kvitto eller en checklista. Byggpilot analyserar och sorterar det i rätt projektmapp på Google Drive.</p>
+                    </div>
+                     <div class="problem-card animate-on-scroll" style="transition-delay: 200ms;">
+                         <h3>3. KMA som en biprodukt</h3>
+                         <p>Checklistor för egenkontroller och riskanalyser föreslås automatiskt och sparas i projektets KMA-pärm.</p>
+                    </div>
+                     <div class="problem-card animate-on-scroll" style="transition-delay: 300ms;">
+                         <h3>4. "Revisorns dröm"</h3>
+                         <p>Vid projektavslut sammanställs all dokumentation – avtal, foton, fakturor – till en komplett, delningsbar digital pärm.</p>
+                    </div>
+                 </div>
+            </div>
+        </section>
+        
+        <section class="landing-section">
+            <div class="landing-container">
+                 <div class="section-heading animate-on-scroll">
+                    <h2>Byggt för ditt arbetsflöde, inte för att sälja funktioner.</h2>
+                </div>
+                <div class="comparison-table animate-on-scroll" style="transition-delay: 100ms;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th class="bp-column">Byggpilot</th>
+                                <th>Traditionella System (Next, Bygglet etc.)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Kärnfokus</strong></td>
+                                <td class="bp-column"><strong>Automatiserade arbetsflöden</strong></td>
+                                <td>Omfattande funktionslista</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Användarmiljö</strong></td>
+                                <td class="bp-column"><strong>Nativt i Google Workspace</strong></td>
+                                <td>Proprietär, sluten plattform</td>
+                            </tr>
+                            <tr>
+                                <td><strong>UX på fältet</strong></td>
+                                <td class="bp-column"><strong>Mobil-först, uppgiftsorienterad (chatt)</strong></td>
+                                <td>Mobilanpassat skrivbordssystem</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Resultat</strong></td>
+                                <td class="bp-column"><strong>Sömlös administration, mindre stress</strong></td>
+                                <td>Kräver inlärning och systembyte</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section class="landing-section final-cta-section">
+            <div class="landing-container">
+                <h2 class="animate-on-scroll">Ge oss din administration. Vi ger dig tiden tillbaka.</h2>
+                <p class="animate-on-scroll" style="transition-delay: 100ms; color: var(--text-color-muted); max-width: 600px; margin: 1rem auto 2.5rem;">Byggpilot är byggt för att eliminera administrativt arbete så att du kan fokusera på det du är bäst på. Prova gratis och upplev skillnaden.</p>
+                 <button class="landing-btn hero-cta-button animate-on-scroll" style="transition-delay: 200ms;" data-action="login-google">
+                    <span>Kom igång nu</span>
+                </button>
+            </div>
+        </section>
+        
+        <footer class="landing-footer">
+            <div class="landing-container">
+                <p>&copy; 2024 ByggPilot. Alla rättigheter förbehållna.</p>
+            </div>
+        </footer>
+
+    </main>
+    
+    <div class="dashboard-container" id="dashboard-container">
+        <!-- ===== Sidebar Navigation ===== -->
+        <aside class="sidebar" id="app-sidebar">
+            <div class="sidebar-header">
+                <a href="#" class="logo-container nav-item" data-view="dashboard">
+                    <svg width="40" height="32" viewBox="0 0 50 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 16H2" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M14 20H4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M12 24H2" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M43 20 C43 29.8366 35.8366 37 27 37 C18.1634 37 11 29.8366 11 20 C11 10.1634 18.1634 3 27 3 C35.8366 3 43 10.1634 43 20 Z" stroke="currentColor" stroke-width="2.5" fill="none"/><path d="M19 12 C23 9 31 9 35 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+                    </svg>
+                    <span class="logo-text">BYGGPILOT</span>
+                </a>
+            </div>
+
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="nav-item" data-view="dashboard"><a href="#" title="Översikt"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg><span class="nav-text">Översikt</span></a></li>
+                    <li class="nav-item" data-view="projects"><a href="#" title="Projekt"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8l-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z"></path></svg><span class="nav-text">Projekt</span></a></li>
+                    <li class="nav-item" data-view="economy"><a href="#" title="Ekonomi"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"></path><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4h-6"></path><path d="M12 18V6"></path></svg><span class="nav-text">Ekonomi</span></a></li>
+                    <li class="nav-item" data-view="revisions"><a href="#" title="Revisioner"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.174 6.812a1 1 0 0 0-1.265-.513l-1.411.565a1 1 0 0 1-1.265-.513l-1.41-2.443a1 1 0 0 0-1.74 0l-1.412 2.443a1 1 0 0 1-1.265.513l-1.411-.565a1 1 0 0 0-1.265.513l-1.412 2.443a1 1 0 0 0 0 1l1.412 2.443a1 1 0 0 0 1.265.513l1.411-.565a1 1 0 0 1 1.265.513l1.412 2.443a1 1 0 0 0 1.74 0l1.412-2.443a1 1 0 0 1 1.265-.513l1.411.565a1 1 0 0 0 1.265-.513l1.412-2.443a1 1 0 0 0 0-1z"/><circle cx="12" cy="12" r="3"/></svg><span class="nav-text">Revisioner</span></a></li>
+                    <li class="nav-item" data-view="reports"><a href="#" title="Rapporter"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8l-5-5Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 12h8"/><path d="M8 16h3"/></svg><span class="nav-text">Rapporter</span></a></li>
+                    <li class="nav-item" data-view="team"><a href="#" title="Team"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span class="nav-text">Team</span></a></li>
+                </ul>
+            </nav>
+
+            <div class="sidebar-footer">
+                <ul>
+                     <li class="nav-item" data-view="settings"><a href="#" title="Inställningar"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2l.15.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg><span class="nav-text">Inställningar</span></a></li>
+                     <li class="nav-item" data-view="help"><a href="#" title="Hjälp"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="nav-text">Hjälp</span></a></li>
+                </ul>
+            </div>
+        </aside>
+
+        <!-- ===== Main Content Area ===== -->
+        <div class="main-wrapper">
+            <header class="main-header">
+                <div class="header-left">
+                    <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Öppna meny">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                    </button>
+                    <h1 class="header-title">Översikt</h1>
+                </div>
+                <div class="header-center">
+                    <div class="header-search">
+                        <input type="search" placeholder="Sök projekt, dokument, kontakter...">
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <div class="dropdown-container">
+                        <button class="action-button primary" id="create-new-button" data-action="toggle-dropdown">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            <span class="action-text">Skapa Nytt</span>
+                        </button>
+                        <div class="dropdown-menu" id="create-new-menu">
+                            <a class="dropdown-item" data-action="create-new" data-details='{"type":"project"}'>Nytt Projekt</a>
+                            <a class="dropdown-item" data-action="create-new" data-details='{"type":"report"}'>Ny Rapport</a>
+                            <a class="dropdown-item" data-action="create-new" data-details='{"type":"ata"}'>Ny ÄTA</a>
+                        </div>
+                    </div>
+                    <div class="dropdown-container">
+                        <button class="icon-action-button" id="notifications-button" aria-label="Notifikationer" data-action="show-notifications">
+                             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                        </button>
+                        <div class="dropdown-menu" id="notifications-menu">
+                            <a class="dropdown-item notification-item" data-action="view-task" data-details='{"project": "BRF Solgläntan", "task": "Beställa fönster"}'>
+                                <p><strong>Försenad uppgift</strong><small>Beställa fönster i projekt Solgläntan</small></p>
+                            </a>
+                            <a class="dropdown-item notification-item" data-action="review-ata" data-details='{"project": "Villa Eklund", "id": "ATA-001"}'>
+                               <p><strong>Nytt ÄTA-förslag</strong><small>Ändrad färg på kakel i Villa Eklund</small></p>
+                            </a>
+                            <div class="dropdown-divider"></div>
+                             <a class="dropdown-item" style="justify-content: center; color: var(--primary-accent);">Visa alla</a>
+                        </div>
+                    </div>
+                    <div class="dropdown-container">
+                        <button class="user-profile-button" id="user-profile-button" aria-label="Anslut Google-konto" data-action="show-profile">
+                            <span class="avatar" id="user-avatar">
+                                <!-- Avatar will be injected by script -->
+                            </span>
+                        </button>
+                         <div class="dropdown-menu" id="user-profile-menu">
+                            <a class="dropdown-item" data-action="logout">Logga ut</a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div id="page-content-wrapper">
+                <!-- ===== Dashboard View ===== -->
+                <main class="dashboard-view" id="dashboard-view">
+                    <h1 class="greeting">God morgon, Michael!</h1>
+
+                    <section class="dashboard-section attention-section" data-section-key="attention">
+                        <h2>Vad kräver din uppmärksamhet?</h2>
+                        <div class="attention-list" id="attention-list-container">
+                             <!-- Attention items will be rendered here -->
+                        </div>
+                    </section>
+
+                    <section class="dashboard-section projects-section" data-section-key="projects">
+                        <h2>Projektstatus i korthet</h2>
+                        <div class="project-grid" id="project-grid-container">
+                           <!-- Project cards will be rendered here -->
+                        </div>
+                    </section>
+                </main>
+                
+                <!-- ===== Project Detail View ===== -->
+                <main class="content-view" id="project-detail-view" style="display: none;">
+                   <h1 id="project-detail-title"></h1>
+                   <p class="text-color-muted">Dra och släpp filer från ditt skrivbord eller e-post direkt in i en mapp för att ladda upp dem. Du kan också klicka på uppladdningsikonen i varje mapp.</p>
+                   <div class="folder-list" id="project-detail-folders">
+                        <!-- Folder structure rendered here by script -->
+                   </div>
+                </main>
+
+
+                <!-- ===== Placeholder Views ===== -->
+                <main class="content-view" id="projects-view" style="display: none;">
+                    <h1>Projekthantering</h1>
+                    <p>Här kommer en komplett lista över alla dina projekt att visas, med filter och sökfunktioner.</p>
+                </main>
+                <main class="content-view" id="economy-view" style="display: none;">
+                    <h1>Ekonomiöversikt</h1>
+                    <p>Här kommer ÄTA-hantering, fakturor och revisioner att samlas för fullständig ekonomisk kontroll.</p>
+                </main>
+                 <main class="content-view" id="revisions-view" style="display: none;">
+                    <h1>Revisioner</h1>
+                    <p>Här kan du skapa ett komplett revisionsunderlag för dina projekt, redo att skickas till revisorn.</p>
+                    <div class="revision-list" id="revisions-list-container">
+                        <!-- Revision items will be rendered here -->
+                    </div>
+                </main>
+                <main class="content-view" id="reports-view" style="display: none;">
+                    <h1>Rapporter</h1>
+                    <p>Här kommer du kunna skapa och visa anpassade rapporter för projektstatus, ekonomi och tidrapportering.</p>
+                </main>
+                <main class="content-view" id="team-view" style="display: none;">
+                    <h1>Teamhantering</h1>
+                    <p>Här kommer du kunna hantera personal, deras behörigheter och se deras scheman.</p>
+                </main>
+                <main class="content-view" id="settings-view" style="display: none;">
+                    <h1>Inställningar</h1>
+                    <div class="settings-container">
+                        <section class="settings-section">
+                            <h2>Anpassa sidofältet</h2>
+                            <p>Välj vilka moduler som ska visas i navigationsmenyn.</p>
+                            <div class="settings-toggles" id="sidebar-settings">
+                                <!-- Toggles will be injected by JS -->
+                            </div>
+                        </section>
+                        <section class="settings-section">
+                            <h2>Anpassa översikten</h2>
+                            <p>Välj vilka sektioner som ska visas på din översiktssida.</p>
+                            <div class="settings-toggles" id="dashboard-settings">
+                                <!-- Toggles will be injected by JS -->
+                            </div>
+                        </section>
+                        <section class="settings-section">
+                            <h2>Återställ innehåll</h2>
+                            <p>Här kan du återställa projektkort som du tidigare har arkiverat eller tagit bort från översikten.</p>
+                            <div id="restore-projects-list">
+                                <!-- Restore list will be rendered here -->
+                            </div>
+                        </section>
+                    </div>
+                </main>
+
+
+                <!-- ===== Chat View (initially hidden) ===== -->
+                <main class="chat-view" id="main-chat-view" style="display: none;">
+                    <button id="close-chat-button" class="close-chat-button" aria-label="Stäng chattvy">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                    <div class="chat-messages" id="chat-messages" aria-live="polite">
+                        <div class="chat-message ai welcome-message">
+                            <p>Välkommen till ByggPilot! Jag är din digitala kollega, redo att hjälpa dig med administration och planering. Vad kan jag assistera dig med idag?</p>
+                        </div>
+                    </div>
+                    <div id="loading-indicator" class="loading-indicator" style="display: none;">
+                        <div class="dot-flashing"></div>
+                        <span>ByggPilot tänker...</span>
+                    </div>
+                </main>
+            </div>
+
+            <footer class="ai-assistant-bar">
+                 <div class="chat-input-wrapper">
+                    <div class="chat-input-area">
+                        <button id="file-input-button" class="input-icon-button" aria-label="Bifoga fil" title="Bifoga fil">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        </button>
+                        <input type="file" id="file-input-hidden" style="display: none;" accept=".pdf,.doc,.docx,.txt,.jpg,.png" multiple>
+                        
+                        <button id="voice-input-button" class="input-icon-button" aria-label="Röstinmatning" title="Använd mikrofonen för att skriva">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+                        </button>
+                        
+                        <input type="text" id="chat-input" class="chat-input" placeholder="Ställ en fråga eller ge ett kommando..." aria-label="Chattinmatning">
+                        
+                        <button id="send-button" class="input-icon-button send-button" aria-label="Skicka meddelande">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="m2.01 21 20.99-9-20.99-9-.01 7 15 2-15 2z"/></svg>
+                        </button>
+                    </div>
+                    <p class="chat-disclaimer">ByggPilot kan visa felaktig information. Verifiera alltid viktig information från AI:n. <span id="privacy-link-chat" class="privacy-link" role="button" tabindex="0">Information & Användarvillkor</span></p>
+                </div>
+            </footer>
+        </div>
     </div>
 
-    <footer class="privacy-footer">
-        <span id="privacy-link" class="privacy-link" role="button" tabindex="0">Viktig Information & Användarvillkor</span>
-    </footer>
+    <!-- ===== Modals and Global Elements ===== -->
+    <div id="toast-container"></div>
+    <div class="modal-overlay" id="generic-modal"></div>
+    
+    <!-- ===== Templates ===== -->
+    <template id="attention-item-template">
+        <div class="attention-item">
+            <p class="attention-text"></p>
+            <div class="actions">
+                <!-- Buttons will be added here -->
+            </div>
+        </div>
+    </template>
+    
+    <template id="project-card-template">
+        <div class="project-card" data-action="view-project">
+            <div class="project-card-actions">
+                <button class="icon-action-button kebab-menu" aria-label="Fler alternativ">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+                </button>
+                <div class="dropdown-menu project-actions-menu">
+                    <a class="dropdown-item" data-action="edit-project">Redigera</a>
+                    <a class="dropdown-item" data-action="archive-project">Arkivera</a>
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item danger-action" data-action="remove-project">Ta bort</a>
+                </div>
+            </div>
+            <div class="project-card-header">
+                <h3 class="project-name"></h3>
+                <span class="status-tag"></span>
+            </div>
+            <div class="project-card-body">
+                <p>Tidslinje (<span class="progress-percentage"></span>)</p>
+                <div class="progress-bar"><div class="progress-bar-inner"></div></div>
+            </div>
+            <div class="project-card-footer">
+                <div class="footer-details">
+                    <span>Nästa deadline: <span class="deadline-name"></span></span>
+                    <span class="deadline-date"></span>
+                </div>
+                <div class="footer-actions">
+                    <button class="icon-action-button small" title="Skicka e-post om projektet" data-action="mail-project">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </template>
 
-    <div class="modal-overlay" id="privacy-modal" aria-labelledby="privacy-modal-title" aria-modal="true" role="dialog">
+    <template id="google-login-modal-template">
+         <div class="modal-content" style="text-align: center;">
+            <button class="modal-close-button" data-action="close-modal" aria-label="Stäng modal">&times;</button>
+            <svg class="google-login-btn-logo" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid" viewBox="0 0 256 262" style="width: 42px; height: 42px; margin: 0 auto 1rem;">
+                <path fill="#4285F4" d="M255.878 133.451c0-10.734-.871-18.567-2.756-26.686H130.55v48.448h71.947c-1.45 12.04-9.283 30.172-26.69 42.356l-.007-.002-36.874 28.71-.008.002C169.344 246.32 151.27 256 130.55 256c-52.212 0-95.7-43.49-95.7-96s43.488-96 95.7-96c25.229 0 45.698 10.73 59.842 24.18l-34.808 34.01c-6.176-5.816-15.155-9.82-25.034-9.82-31.088 0-57.015 25.795-57.015 57.625s25.927 57.625 57.015 57.625c34.917 0 51.002-24.97 53.078-37.188z"></path>
+            </svg>
+            <h3>Anslut ditt Google-konto</h3>
+            <p style="color: var(--text-color-muted); font-size: 1rem; max-width: 350px; margin: 0 auto 1.5rem;">Synkronisera projekt, dokument och kalenderhändelser direkt med ByggPilot för en smidigare vardag.</p>
+            <button class="google-login-btn" data-action="login-google">
+                <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" class="google-logo"><g><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.42-4.55H24v8.51h12.8c-.57 2.84-2.3 5.22-4.78 6.82l7.46 5.77C44.97 36.33 46.98 30.82 46.98 24.55z"></path><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.46-5.77c-2.18 1.45-4.94 2.3-8.43 2.3-6.27 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path><path fill="none" d="M0 0h48v48H0z"></path></g></svg>
+                <span>Logga in med Google</span>
+            </button>
+        </div>
+    </template>
+    
+    <template id="revision-item-template">
+        <div class="revision-item">
+            <span class="revision-item-name"></span>
+            <button class="action-button primary" data-action="generate-revision">Skapa Revisionsunderlag</button>
+        </div>
+    </template>
+    
+    <template id="file-item-template">
+        <div class="file-item">
+            <span class="file-item-name">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
+                 <span></span>
+            </span>
+            <button class="icon-action-button small" data-action="delete-file" title="Ta bort fil">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            </button>
+        </div>
+    </template>
+
+    <template id="create-project-modal-template">
         <div class="modal-content">
-            <button id="privacy-modal-close" class="modal-close-button" aria-label="Stäng modal">&times;</button>
-            <h3 id="privacy-modal-title">Viktig Information & Användarvillkor</h3>
-            <p><strong>Viktig Information:</strong> ByggPilot är en AI-assistent utvecklad för att ge vägledning och automatisera uppgifter inom byggbranschen. Informationen som genereras av AI:n kan vara ofullständig, förenklad eller i vissa fall felaktig. Den är avsedd som ett stöd och bör inte ensamt ligga till grund för viktiga beslut.</p>
-            <p>Kontrollera alltid kritisk information, siffror, och rekommendationer med kvalificerade fackmän (t.ex. jurister, konstruktörer, ekonomer) och relevanta myndighetskrav innan du agerar.</p>
-            <p><strong>Dubbelkolla alltid informationen:</strong> Liksom med andra AI-verktyg, är det viktigt att komma ihåg att svar från ByggPilot kan innehålla felaktigheter eller vara ofullständiga. Använd informationen som en utgångspunkt och en hjälp, men <strong>dubbelkolla alltid viktig information och rådfråga mänskliga experter</strong> innan du fattar slutgiltiga beslut, särskilt när det gäller säkerhet, ekonomi eller juridik. Google Geminis och andra liknande AI-tjänsters användarvillkor innehåller liknande påminnelser om att verifiera AI-genererat innehåll.</p>
-            <p>Användning av ByggPilot sker helt på egen risk. Utvecklarna av ByggPilot frånsäger sig allt ansvar för eventuella direkta eller indirekta förluster, skador eller olägenheter som kan uppstå till följd av användning eller beroende av information från denna tjänst.</p>
+            <button class="modal-close-button" data-action="close-modal" aria-label="Stäng modal">&times;</button>
+            <h3 id="project-modal-title">Skapa Nytt Projekt</h3>
+            <form id="project-form" class="modal-form">
+                <input type="hidden" id="project-id-input" value="">
+                <div class="form-group">
+                    <label for="project-name-input">Projektnamn</label>
+                    <input type="text" id="project-name-input" required placeholder="T.ex. Villa Eklund">
+                </div>
+                <div class="form-group">
+                    <label for="project-customer-input">Kund</label>
+                    <input type="text" id="project-customer-input" required placeholder="T.ex. Familjen Andersson">
+                </div>
+                <div class="form-group">
+                    <label for="project-deadline-date-input">Slutdatum</label>
+                    <input type="date" id="project-deadline-date-input" required>
+                </div>
+                 <div class="form-group">
+                    <label for="project-progress-input">Framsteg (%)</label>
+                    <input type="number" id="project-progress-input" min="0" max="100" value="0" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="action-button" data-action="close-modal">Avbryt</button>
+                    <button type="submit" class="action-button primary">Spara Projekt</button>
+                </div>
+            </form>
         </div>
-    </div>
+    </template>
 
-    <div class="cookie-consent-banner" id="cookie-consent-banner" style="display: none;">
-        <p>Vi använder cookies för att förbättra din upplevelse på ByggPilot. Genom att fortsätta accepterar du vår användning av cookies enligt våra villkor.</p>
-        <div class="cookie-actions">
-            <button id="accept-cookie-button">Godkänn Alla</button>
-            <button id="reject-cookie-button" class="cookie-reject">Avvisa Alla</button>
-            <button id="preferences-cookie-button" class="cookie-preferences">Anpassa</button>
+    <template id="help-modal-template">
+         <div class="modal-content">
+            <button class="modal-close-button" data-action="close-modal" aria-label="Stäng modal">&times;</button>
+            <h3>Välkommen till ByggPilot!</h3>
+            <p>Här är en snabb översikt över vad du kan göra:</p>
+            <ul>
+                <li><strong>Översikt:</strong> Få en snabb blick över dina projekt och vad som kräver din uppmärksamhet.</li>
+                <li><strong>Projekt:</strong> Hantera alla dina byggprojekt från start till slut. Klicka på ett projektkort för att se detaljer och mappar.</li>
+                <li><strong>Revisioner:</strong> Samla all dokumentation för ett projekt med ett klick, perfekt för revisorn eller projektavslut.</li>
+                <li><strong>Skapa Nytt:</strong> Skapa enkelt nya projekt, ÄTA:er eller rapporter direkt från huvudmenyn.</li>
+                <li><strong>Inställningar:</strong> Anpassa vilka delar av appen som är synliga för att skräddarsy din arbetsyta.</li>
+                <li><strong>AI-Assistent:</strong> Använd chattfönstret längst ner för att ställa frågor, skapa dokument eller få hjälp med planering.</li>
+            </ul>
+            <p>Utforska menyerna och tveka inte att använda AI-assistenten för att effektivisera ditt arbete!</p>
         </div>
-    </div>
+    </template>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Mobile sidebar toggle
+    const sidebar = document.getElementById('app-sidebar');
+    const mobileToggle = document.getElementById('mobile-menu-toggle');
+    if (mobileToggle && sidebar) {
+        mobileToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+        });
+    }
+
+    // Placeholder rotation for chat input
+    const chatInput = document.getElementById('chat-input');
+    if (chatInput) {
+        const suggestions = [ 'Skapa en KMA-plan för ett stambytesprojekt...', 'Vad säger ABT 06 om vite vid försening?', 'Ge mig en checklista för egenkontroll av tätskikt...' ];
+        let i = 0;
+        const cycleSuggestions = () => {
+            if (document.activeElement !== chatInput) {
+                chatInput.placeholder = suggestions[i];
+                i = (i + 1) % suggestions.length;
+            }
+        };
+        let intervalId = setInterval(cycleSuggestions, 4000);
+        chatInput.addEventListener('focus', () => { 
+            clearInterval(intervalId);
+            chatInput.placeholder = 'Ställ en fråga eller ge ett kommando...'; 
+        });
+        chatInput.addEventListener('blur', () => {
+            clearInterval(intervalId); // Stop old interval
+            intervalId = setInterval(cycleSuggestions, 4000); // Start new one
+        });
+        cycleSuggestions();
+    }
+    
+    // On-scroll animations for landing page
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('in-view');
+            }
+        });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.animate-on-scroll').forEach(el => {
+        observer.observe(el);
+    });
+});
+</script>
+<script type="module" src="/index.tsx"></script>
 
 </body>
 </html>

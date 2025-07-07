@@ -1,10 +1,6 @@
 {
-  "requestFramePermissions": [],
-  "name": "Byggpilot nya",
-  "description": "",
-  "prompt": ""
-}
-{
+  "name": "byggpilot-nya",
+  "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
@@ -13,9 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "google-auth-library": "^10.1.0",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
