@@ -1,6 +1,25 @@
+<<<<<<< HEAD
 import React from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+=======
+import { useState, useEffect } from 'react';
+import { initializeApp } from 'firebase/app';
+import { 
+  getAuth, 
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  signOut,
+  onAuthStateChanged,
+  User 
+} from 'firebase/auth';
+import { FirebaseApp, initializeApp } from "firebase/app";
+import { Auth, getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut, User } from "firebase/auth";
+import { 
+    Firestore, getFirestore, doc, setDoc, getDoc, collection, 
+    query, getDocs, addDoc, updateDoc, deleteDoc, writeBatch, serverTimestamp 
+} from "firebase/firestore";
+>>>>>>> 93ffc59acc7622bb268bcb7d081408b6c85fdb64
 
 // Firebase configuration from environment variables
 const firebaseConfig = {
