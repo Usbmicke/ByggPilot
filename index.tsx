@@ -488,9 +488,8 @@ export default function ByggPilotApp() {
   );
 
   return (
-    return (
-      <React.Fragment>
-        <style jsx global>{`
+    <React.Fragment>
+      <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
         :root {
@@ -861,5 +860,7 @@ export default function ByggPilotApp() {
           align-items: center;
           gap: 0.5rem;
         `}</style>
-      </React.Fragment>
-    );
+      {/* Render main content here */}
+      {user ? renderDashboard() : renderLoggedOutView()}
+    </React.Fragment>
+  );
