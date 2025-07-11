@@ -1,9 +1,4 @@
-<<<<<<< HEAD
-import React from 'react';
-import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider } from 'firebase/auth';
-=======
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
@@ -11,15 +6,11 @@ import {
   signInWithPopup, 
   signOut,
   onAuthStateChanged,
-  User 
 } from 'firebase/auth';
-import { FirebaseApp, initializeApp } from "firebase/app";
-import { Auth, getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut, User } from "firebase/auth";
 import { 
-    Firestore, getFirestore, doc, setDoc, getDoc, collection, 
-    query, getDocs, addDoc, updateDoc, deleteDoc, writeBatch, serverTimestamp 
-} from "firebase/firestore";
->>>>>>> 93ffc59acc7622bb268bcb7d081408b6c85fdb64
+  getFirestore, doc, setDoc, getDoc, collection, 
+  query, getDocs, addDoc, updateDoc, deleteDoc, writeBatch, serverTimestamp 
+} from 'firebase/firestore';
 
 // Firebase configuration from environment variables
 const firebaseConfig = {
@@ -497,8 +488,9 @@ export default function ByggPilotApp() {
   );
 
   return (
-    <React.Fragment>
-      <style jsx global>{`
+    return (
+      <React.Fragment>
+        <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
         :root {
@@ -868,3 +860,6 @@ export default function ByggPilotApp() {
           display: flex;
           align-items: center;
           gap: 0.5rem;
+        `}</style>
+      </React.Fragment>
+    );
