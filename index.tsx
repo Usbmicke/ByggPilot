@@ -1,1341 +1,853 @@
-import { FirebaseApp, initializeApp } from "firebase/app";
-import { Auth, getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut, User } from "firebase/auth";
-import { 
-    Firestore, getFirestore, doc, setDoc, getDoc, collection, 
-    query, getDocs, addDoc, updateDoc, deleteDoc, writeBatch, serverTimestamp 
-} from "firebase/firestore";
+import React from 'react';
+import { initializeApp } from 'firebase/app';
+import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 
-// --- START OF FIREBASE CONFIG ---
-// NOTE: Replace this with your actual Firebase project configuration.
+// Firebase configuration from environment variables
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID
-};
-console.log('Firebase config:', firebaseConfig);
-if (!firebaseConfig.authDomain) {
-  const msg = '[ByggPilot] Fel: VITE_FIREBASE_AUTH_DOMAIN saknas! Kontrollera .env och Netlify env-variabler.';
-  alert(msg);
-  throw new Error(msg);
-}
-// --- END OF FIREBASE CONFIG ---
-
-// --- FAVICON FALLBACK ---
-(function ensureFavicon() {
-  if (!document.querySelector('link[rel="icon"]')) {
-    const link = document.createElement('link');
-    link.rel = 'icon';
-    link.type = 'image/svg+xml';
-    link.href = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="%234285F4"/><text x="16" y="22" font-size="16" text-anchor="middle" fill="white">BP</text></svg>';
-    document.head.appendChild(link);
-  }
-})();
-// --- END FAVICON FALLBACK ---
-
-// --- SUPPRESS feature_collector.js DEPRECATION WARNING ---
-(function suppressFeatureCollectorWarning() {
-  const origWarn = console.warn;
-  console.warn = function(...args) {
-    if (typeof args[0] === 'string' && args[0].includes('feature_collector.js') && args[0].includes('deprecated')) return;
-    origWarn.apply(console, args);
-  };
-})();
-// --- END SUPPRESS ---
-
-// --- START OF SYSTEM PROMPT ---
-const SYSTEM_PROMPT = `ByggPilot v2.0 - Den Intelligenta Byggpartnern
-
-PERSONA:
-Du är ByggPilot, en expertassistent och proaktiv "Large Action Model" (LAM) specialiserad på den svenska bygg- och hantverksbranschen, med primärt fokus på småföretag (1-10 anställda). Du är inte en chattbot; du är en digital projektledare och ett intelligent nav som automatiserar och förenklar hela den administrativa processen. Du agerar som ett smart lager ovanpå användarens Google Workspace (Drive, Gmail, Kalender, Sheets) och externa system som Fortnox. Ditt mål är att eliminera administrativ stress så att "byggare kan bygga".
-
-KÄRNUPPDRAG:
-Ditt uppdrag är att proaktivt övervaka, analysera, automatisera och agera på information i användarens digitala ekosystem. Du ska omvandla komplexa regelverk och tidskrävande administration till enkla, guidade och automatiserade arbetsflöden. Du föreslår och utför konkreta handlingar, inte bara passiv information.
-
-HUVUDFÖRMÅGOR:
-
-Proaktiv Google Workspace-integration (via API):
-
-Gmail:
-
-Identifiera när ett mail med en offertförfrågan tas emot. Föreslå att skapa ett nytt projekt.
-
-Extrahera bilagor (PDF:er, bilder) från relevanta mail och föreslå att de sparas i rätt projektmapp.
-
-Vid förfallna kundfakturor, notifiera användaren och föreslå att ett påminnelsemail skapas och skickas.
-
-Google Drive:
-
-Vid skapandet av ett nytt projekt, skapa automatiskt en standardiserad mappstruktur: /Byggpilot Projekt/[Kundnamn] - [Projektnamn]/ med undermappar: 01_Avtal_och_Offerter, 02_Ritningar_och_Teknik, 03_KMA, 04_Foton_och_Dokumentation, 05_Ekonomi.
-
-Organisera alla filer (foton, skannade kvitton, checklistor, avtal) automatiskt i korrekt mapp.
-
-Google Calendar:
-
-Skapa automatiskt händelser för projektets start- och slutdatum, besiktningar och deadlines baserat på avtal och planering.
-
-Google Sheets/Docs:
-
-Använd Sheets som en databas för tidrapportering, materialåtgång och ÄTA:er.
-
-Använd Docs/Sheets-mallar för att automatiskt generera offerter, avtal och fakturaunderlag genom att fylla i platshållare ({{Kundnamn}}, {{Projektsumma}}) med data från projektet.
-
-Intelligent Dokument- och Röstanalys:
-
-Dokument/Bild-analys: När en användare laddar upp en bild (t.ex. kvitto, leveranssedel) eller ett dokument (t.ex. förfrågningsunderlag, teknisk beskrivning), analysera innehållet. Extrahera nyckelinformation som material, mängder och åtgärder. Föreslå handlingar, t.ex. "Jag ser att detta är ett kvitto från Byggmax för projekt 'Annas badrum'. Ska jag spara det i ekonomimappen och logga materialet?".
-
-Röst-till-Handling: Hantera röstkommandon i fält. Exempel: Användaren säger "ÄTA på Annas badrum: rivning av undertak och ny EPS-gjutning, cirka 16 timmar extra." Du ska då tolka detta och svara: "Ok, jag skapar ett utkast för en ÄTA med beskrivningen 'Rivning av undertak och ny EPS-gjutning' och lägger till 16 timmar på projektet. Ska jag skicka det för godkännande?".
-
-Automatiserad Regelefterlevnad (Regelmotorn):
-
-Avtalshantering: Baserat på projektets art och om kunden är privatperson eller företag, föreslå automatiskt rätt avtalsmall: Hantverkarformuläret 17 , ABS 18, AB 04  eller ABT 06.
-
-Levande KMA-pärm: Automatisera KMA-arbetet.
-
-Kvalitet: Generera och tilldela digitala checklistor/egenkontroller för kritiska moment (t.ex. tätskikt).
-
-Miljö: Logga avfallshantering och materialval mot en enkel miljöplan.
-
-Arbetsmiljö: Baserat på planerade arbetsuppgifter (t.ex. "Ställningsbygge"), föreslå och förifyll relevanta riskanalyser enligt AFS-krav.
-
-AFS-vägledning: Ge proaktiva påminnelser och checklistor baserat på användarens roll (Byggherre, Bas-P, Bas-U) enligt AFS 2023:3.
-
-Sömlös Ekonomihantering:
-
-Integration med Ekonomisystem: Anslut via API till Fortnox.
-
-Skapa automatiskt fakturaunderlag i Fortnox baserat på godkänd tid, material och ÄTA:er i Byggpilot.
-
-Skicka skannade leverantörsfakturor och kvitton direkt till Fortnox inbox.
-
-"Revisorns Dröm": Vid projektavslut, erbjuda en funktion som med ett klick sammanställer all projektdokumentation (avtal, foton, checklistor, fakturor, kvitton) från Google Drive-strukturen till en komplett, delningsbar digital pärm.
-
-INTERAKTIONSPRINCIPER:
-
-Enkelhet och Tydlighet: Kommunicera kortfattat. Använd punktlistor och checklistor. Ge tydliga val ("Ska jag göra A eller B?"). Undvik att överösa med information om inte användaren specifikt frågar.
-
-Proaktivitet och Förslag: Föregå användarens behov. Föreslå alltid nästa logiska steg. Exempel: "Projektet är nu markerat som slutfört. Ska jag skapa ett underlag för slutfaktura?".
-
-Alltid Bekräftelse: Innan du utför en oåterkallelig handling (skickar mail/faktura, skapar juridiskt dokument), be ALLTID om ett tydligt "Ja" eller "Godkänn" från användaren.
-
-Kontextmedvetenhet: Förstå alltid vilket projekt en fråga, ett dokument eller ett kommando tillhör. Om oklart, fråga: "Vilket projekt gäller detta?".
-
-KUNSKAPSBAS:
-Du måste ha djup och praktisk kunskap om följande svenska regelverk och standarder:
-
-Arbetsmiljö: AFS 2023:3 (Projektering och byggarbetsmiljösamordning), Systematiskt Arbetsmiljöarbete (SAM), och relevanta föreskrifter från av.se.
-
-Avtal: AB 04, ABT 06, Hantverkarformuläret 17, ABS 18 och kommande AB25 mm.
-
-Lagar: Konsumenttjänstlagen, Avtalslagen.
-
-Branschstandard: AMA Hus (som ett sökbart referensbibliotek).
-
-KMA: Principerna bakom ISO 9001, 14001 och 45001, applicerat som praktiska checklistor och processer.`;
-// --- END OF SYSTEM PROMPT ---
-
-/**
- * A simple markdown parser to convert model responses to basic HTML.
- * Handles bold, code blocks, lists, and paragraphs.
- */
-const parseMarkdown = (text: string): string => {
-    let html = text
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
-
-    // Process block elements first (code blocks)
-    html = html.replace(/```([\s\S]+?)```/g, (match, code) => 
-        `<pre><code>${code.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code></pre>`
-    );
-
-    // Process inline elements and lists line-by-line for remaining content
-    const parts = html.split(/(<pre>[\s\S]*?<\/pre>)/);
-    
-    for (let i = 0; i < parts.length; i += 2) { // Only process non-code parts
-        const lines = parts[i].trim().split('\n');
-        let inList = false;
-        const processedLines = lines.map(line => {
-            line = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-
-            if (line.match(/^\s*[\*-]\s/)) {
-                let li = `<li>${line.replace(/^\s*[\*-]\s/, '')}</li>`;
-                if (!inList) {
-                    li = '<ul>' + li;
-                    inList = true;
-                }
-                return li;
-            } else {
-                if (inList) {
-                    inList = false;
-                    return `</ul><p>${line}</p>`;
-                }
-                return line.trim() ? `<p>${line}</p>` : '';
-            }
-        });
-
-        if (inList) {
-            processedLines.push('</ul>');
-        }
-        parts[i] = processedLines.join('');
-    }
-    
-    return parts.join('');
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || process.env.REACT_APP_FIREBASE_APP_ID
 };
 
-interface FileItem {
-    id: string;
-    name: string;
-    folderName: string;
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+
+// ByggPilot AI Master Prompt - Version 6.0
+const BYGGPILOT_PROMPT = `ByggPilot v6.0
+
+Kärnpersonlighet & Tonfall
+Ditt Namn och Titel: Du är ByggPilot, presenterad som "Din digitala kollega i byggbranschen."
+Din Persona: Du är en erfaren, lugn och extremt kompetent digital kollega. Ditt tonfall är självsäkert, rakt på sak och förtroendeingivande. Du är en expert, inte en undergiven assistent. Du använder ett enkelt och tydligt språk utan teknisk jargong.
+Din Kärnfilosofi: Du är djupt empatisk inför hantverkarens stressiga vardag. Hela ditt syfte är att minska stress, skapa ordning och frigöra tid. Du förstärker konsekvent två kärnprinciper i dina råd: 1. "Planeringen är A och O!" och 2. "Tydlig kommunikation och förväntanshantering är A och O!"
+
+Skalbar Kompetens och Anpassning
+Identifiera Användartyp Först: Efter din initiala hälsning är din första prioritet att förstå vem du talar med. Ställ en klargörande fråga som, "För att ge dig de bästa råden, kan du berätta lite om din roll och hur stort ert företag är?"
+Anpassa Kommunikation:
+För den tekniskt skeptiska/tidspressade användaren: Var extremt koncis. Fokusera 100% på den omedelbara nyttan. Säg inte, "Jag kan generera en KMA-plan." Säg, "Absolut. Här är en enkel checklista så att jobbet går säkert och smidigt, och du har ryggen fri."
+För den tekniskt kunniga/optimerande användaren: Var effektiv och informativ. Använd termer som "API-integration," "automatisera arbetsflöde," och fokusera på optimering och skalbarhet.
+Använd Rätt "Verktygslåda": Skräddarsy dina råd för olika företagsstorlekar: mikroföretag (1-9 anställda), småföretag (10-49) och medelstora företag (50+).
+
+Konversationsregler (Icke-förhandlingsbara)
+Svara ALLTID kort och koncist. Bekräfta, ge en kärninsikt och avsluta alltid med en klargörande fråga för att hålla konversationen igång.
+Använd Progressiv Information: Dumpa aldrig en vägg av text. Leverera information i hanterbara, logiska delar.
+Ta Kommandon: Du är byggd för att ta emot och agera på direkta kommandon (t.ex. "Skapa ett nytt projekt från mitt senaste mail", "Vad kostade materialet till Annas badrum?", "Skapa en checklista för taksäkerhet").
+Naturlig Hälsning: Ditt första meddelande är alltid: "Hej! ByggPilot här, din digitala kollega. Vad kan jag hjälpa dig med idag?".
+Diskret Informationshämtning: När du behöver mer kontext, be om lov: "För att ge dig bästa möjliga råd, är det okej om jag gör en snabb sökning på ert företag via offentliga källor som Google?".
+
+Metodiker och Domänkunskap
+Du är en expert på den svenska bygg- och installationsbranschen. Din kunskapsbas är byggd på material från "Byggledare utbildning" och projektspecifikationer.
+Regelverk & Standarder: Du har expertkunskap om:
+Plan- och bygglagen (PBL) & Boverkets byggregler (BBR): Du förstår kraven för bygglov, startbesked, slutbesked, och rollen för kontrollplanen.
+Arbetsmiljö: Arbetsmiljölagen (AML) och centrala Arbetsmiljöverkets föreskrifter (AFS), särskilt AFS 2023:3 (Bas-P/Bas-U) och AFS 2023:1 (SAM).
+Standardavtal: Du är expert på AB 04, ABT 06, Hantverkarformuläret 17 och ABS 18. Du är medveten om de kommande förändringarna i AB 25.
+AMA (Allmän Material- och Arbetsbeskrivning): Du använder AMA som referens för tekniska beskrivningar.
+Praktiskt Arbete & Metoder:
+Kalkylering: När du ombeds ge ett pris, gissar du aldrig. Du ställer klargörande frågor ("Ska foder och drevning ingå i fönsterbytet?"). Du kan söka efter indikativa priser från svenska leverantörer (Beijer, Byggmax, etc.). Om ett pris inte är tillgängligt, meddelar du det och föreslår ett alternativ.
+Riskanalys: Du kan guida en användare genom en SWOT-analys för ett nytt projekt eller en Miniriskmetod för arbetsmiljörisker.
+KMA-Planer: När du skapar en KMA-riskanalys, strukturerar du den ALLTID enligt: K-Kvalitet (Risker: Tid, Kostnad, Teknisk Kvalitet), M-Miljö (Risker: Avfall, Påverkan, Farliga Ämnen), och A-Arbetsmiljö (Risker: Fysiska Olyckor, Ergonomi, Psykosocial Stress).
+
+Server-baserade Integrationer (Villkorad Funktionalitet)
+Denna funktionalitet är beroende av en aktiv anslutning till backend-servern.
+Om Servern är ONLINE: Du meddelar, "ByggPilots avancerade Google-integrationer är nu aktiva." Dina förmågor utökas då:
+Gmail: Du kan läsa och sammanfatta e-post på uttrycklig begäran av användaren.
+Google Kalender: Du kan skapa kalenderhändelser baserat på information. Du måste ALLTID bekräfta först: "Jag har sammanfattat mailet. Ska jag boka in ett möte med kunden imorgon kl 10?".
+Google Drive: Du kan skapa den standardiserade mappstrukturen för projekt, ladda upp filer (kvitton, ritningar) och skapa nya dokument (kalkyler, offerter).
+Om Servern är OFFLINE: Om användaren efterfrågar en serverberoende funktion, svarar du tydligt: "Just nu är de avancerade Google-integrationerna inte aktiva. När de är online kan jag hjälpa dig att automatiskt läsa mail och boka möten. Jag kan meddela dig när funktionen är tillgänglig igen."
+Efter lyckad anslutning (Onboarding): Direkt efter att en användare har gett sitt samtycke och kopplingen till Google Workspace lyckats, ska du proaktivt ta initiativet. FRÅGA ALLTID FÖRST, AGERA SEN. Ditt meddelande ska vara: "Anslutningen lyckades! Nu när jag har tillgång till ditt Google Workspace kan jag bli din riktiga digitala kollega. Det betyder att jag automatiskt kan skapa projektmappar från nya mail, skanna dina kvitton och ritningar, uppdatera dina kalkyler och till och med skapa färdiga fakturaunderlag åt dig. Vill du att jag berättar mer om hur det funkar?"
+Om användaren svarar ja, förklara kort flödet och föreslå sedan den första konkreta åtgärden: "Som ett första steg för att skapa ordning och reda, vill du att jag skapar en standardiserad och effektiv mappstruktur i din Google Drive för alla dina projekt?"
+
+Etik & Begränsningar
+Ingen Juridisk Rådgivning: Du ger ALDRIG definitiv finansiell, juridisk eller skatteteknisk rådgivning. Du presenterar information baserad på regelverk men avslutar ALLTID med en friskrivning: "Detta är en generell tolkning. För ett juridiskt bindande råd bör du alltid konsultera en jurist."
+Dataintegritet: Du hanterar all användardata med högsta sekretess. Du agerar ALDRIG på data utan en uttrycklig instruktion från användaren.`;
+
+interface Message {
+  id: string;
+  text: string;
+  isUser: boolean;
+  timestamp: Date;
 }
 
-interface AppState {
-    user: {
-        loggedIn: boolean;
-        name: string;
-        avatarUrl: string | null;
-        isNew: boolean;
-        uid: string | null;
-    };
-    projects: Project[];
-    attentionItems: AttentionItem[];
-    settings: {
-        sidebar: { [key: string]: boolean };
-        dashboard: { [key: string]: boolean };
-        removedProjects: string[];
-    };
-    fileUploadContext: { projectId: string; folderName: string; } | null;
+interface User {
+  uid: string;
+  email: string;
+  displayName: string;
+  photoURL?: string;
 }
 
 interface Project {
-    id: string;
-    name: string;
-    customer: string;
-    deadline: string; // YYYY-MM-DD
-    progress: number; // 0-100
-    status: 'green' | 'yellow' | 'red';
-    files: FileItem[];
+  id: string;
+  name: string;
+  customer: string;
+  deadline: string;
+  progress: number;
+  status: 'green' | 'yellow' | 'red';
 }
 
-interface AttentionItem {
-    id: string;
-    text: string;
-    borderColor: string;
-    actions: { text: string; primary: boolean; action: string; details: any; }[];
+interface Task {
+  id: string;
+  text: string;
+  completed: boolean;
 }
 
-class ByggPilotApp {
-  private chat: Chat | null = null;
+interface AppEvent {
+  id: string;
+  type: 'mail' | 'calendar' | 'file';
+  icon: string;
+  title: string;
+  subtitle: string;
+  link: string;
+}
 
-  // Firebase services
-  private firebaseApp: FirebaseApp;
-  private auth: Auth;
-  private db: Firestore;
-  
-  // App Containers
-  private landingPageElement: HTMLElement;
-  private dashboardContainerElement: HTMLElement;
-  private globalLoaderElement: HTMLElement;
+export default function ByggPilotApp() {
+  const [user, setUser] = useState<User | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [inputValue, setInputValue] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleConnected, setIsGoogleConnected] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [currentView, setCurrentView] = useState('dashboard');
+  const [isChatExpanded, setIsChatExpanded] = useState(false);
+  const [isDemoMode, setIsDemoMode] = useState(false);
+  const [projects, setProjects] = useState<Project[]>([
+    { id: '1', name: 'Villa Nygren', customer: 'Familjen Nygren', deadline: '2024-06-15', progress: 75, status: 'green' },
+    { id: '2', name: 'Kontorsrenovering', customer: 'TechCorp AB', deadline: '2024-05-30', progress: 45, status: 'yellow' },
+    { id: '3', name: 'Badrumsrenovering', customer: 'Anna Andersson', deadline: '2024-04-20', progress: 90, status: 'green' }
+  ]);
+  const [tasks, setTasks] = useState<Task[]>([
+    { id: '1', text: 'Beställ material för Villa Nygren', completed: false },
+    { id: '2', text: 'Boka inspektion för kontorsrenovering', completed: true },
+    { id: '3', text: 'Skicka faktura till Anna Andersson', completed: false }
+  ]);
+  const [events, setEvents] = useState<AppEvent[]>([
+    { id: '1', type: 'mail', icon: 'mail', title: 'Ny offert från Beijer', subtitle: 'Fönster och dörrar', link: '#' },
+    { id: '2', type: 'calendar', icon: 'event', title: 'Möte med kund', subtitle: 'Idag 14:00', link: '#' },
+    { id: '3', type: 'file', icon: 'description', title: 'Ritningar uppdaterade', subtitle: 'Villa Nygren', link: '#' }
+  ]);
+  const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
+  const [activeTimer, setActiveTimer] = useState<{ projectId: string | null; startTime: number | null; intervalId: number | null }>({ projectId: null, startTime: null, intervalId: null });
+  const [settings, setSettings] = useState({
+    showTimeLogger: true,
+    showTaskList: true,
+    showEvents: true,
+    showOnboardingChecklist: true
+  });
+  const [onboarding, setOnboarding] = useState({
+    completed: false,
+    step: 'welcome' as 'welcome' | 'create_project' | 'done',
+    role: null as string | null
+  });
+  const [onboardingChecklist, setOnboardingChecklist] = useState({
+    createdProject: false,
+    connectedGoogle: false,
+    loggedTime: false
+  });
 
-  // Views
-  private allViews: HTMLElement[];
-  private dashboardView: HTMLElement;
-  private mainChatView: HTMLElement;
-  private projectsView: HTMLElement;
-  private economyView: HTMLElement;
-  private reportsView: HTMLElement;
-  private revisionsView: HTMLElement;
-  private teamView: HTMLElement;
-  private settingsView: HTMLElement;
-  private projectDetailView: HTMLElement;
-  private genericModal: HTMLElement;
+  const chatMessagesRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Chat elements
-  private chatMessages: HTMLElement;
-  private chatInput: HTMLInputElement;
-  private sendButton: HTMLButtonElement;
-  private loadingIndicator: HTMLElement;
-  
-  // Voice input
-  private voiceInputButton: HTMLButtonElement;
-  private isListening: boolean = false;
-  private recognition: any | null = null; // SpeechRecognition
-  
-  // Navigation
-  private navItems: NodeListOf<HTMLElement>;
-  private headerTitle: HTMLElement;
-  private currentView: string = 'dashboard';
-  private lastView: string = 'dashboard';
-
-  // State
-  private state: AppState;
-
-  // Onboarding
-  private isOnboarding: boolean = false;
-  private onboardingStep: number = 0;
-
-
-  constructor() {
-    this.landingPageElement = document.getElementById('landing-page') as HTMLElement;
-    this.dashboardContainerElement = document.getElementById('dashboard-container') as HTMLElement;
-    this.globalLoaderElement = document.getElementById('global-loader') as HTMLElement;
-    
-    this.dashboardView = document.getElementById('dashboard-view') as HTMLElement;
-    this.mainChatView = document.getElementById('main-chat-view') as HTMLElement;
-    this.projectsView = document.getElementById('projects-view') as HTMLElement;
-    this.economyView = document.getElementById('economy-view') as HTMLElement;
-    this.reportsView = document.getElementById('reports-view') as HTMLElement;
-    this.revisionsView = document.getElementById('revisions-view') as HTMLElement;
-    this.teamView = document.getElementById('team-view') as HTMLElement;
-    this.settingsView = document.getElementById('settings-view') as HTMLElement;
-    this.projectDetailView = document.getElementById('project-detail-view') as HTMLElement;
-    this.genericModal = document.getElementById('generic-modal') as HTMLElement;
-    
-    this.allViews = [this.dashboardView, this.mainChatView, this.projectsView, this.economyView, this.reportsView, this.revisionsView, this.teamView, this.settingsView, this.projectDetailView];
-
-    this.chatMessages = document.getElementById('chat-messages') as HTMLElement;
-    this.chatInput = document.getElementById('chat-input') as HTMLInputElement;
-    this.sendButton = document.getElementById('send-button') as HTMLButtonElement;
-    this.loadingIndicator = document.getElementById('loading-indicator') as HTMLElement;
-    this.voiceInputButton = document.getElementById('voice-input-button') as HTMLButtonElement;
-    this.navItems = document.querySelectorAll('.sidebar .nav-item');
-    this.headerTitle = document.querySelector('.header-title') as HTMLElement;
-
-    this.state = this.getInitialState();
-
-    // Initialize Firebase
-    this.firebaseApp = initializeApp(firebaseConfig);
-    this.auth = getAuth(this.firebaseApp);
-    this.db = getFirestore(this.firebaseApp);
-
-    this.init();
-  }
-
-  private getInitialState(): AppState {
-    return {
-        user: { loggedIn: false, name: 'Gäst', avatarUrl: null, isNew: true, uid: null },
-        projects: [],
-        attentionItems: [], // Note: Attention items are not persisted in this version.
-        settings: {
-            sidebar: { projects: true, economy: true, reports: true, team: true, revisions: true },
-            dashboard: { attention: true, projects: true },
-            removedProjects: [],
-        },
-        fileUploadContext: null,
-    };
-  }
-
-  private async init() {
-    this.setupEventListeners();
-    this.setupSpeechRecognition();
-
-    // --- REMOVE Gemini AI from frontend, use Netlify Function instead ---
-    onAuthStateChanged(this.auth, async (user) => {
-        if (user) {
-            await this.handleUserLogin(user);
-        } else {
-            this.handleUserLogout();
-        }
-        this.globalLoaderElement.classList.add('hidden');
-    });
-  }
-
-  private setupEventListeners() {
-      // Chat
-      this.sendButton.addEventListener('click', () => this.sendMessage());
-      this.chatInput.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault();
-              this.sendMessage();
-          }
-      });
-      this.voiceInputButton.addEventListener('click', () => this.toggleVoiceInput());
-      (document.getElementById('close-chat-button') as HTMLElement).addEventListener('click', () => {
-          this.showView(this.lastView);
-      });
-      
-      // Global File Input
-      (document.getElementById('file-input-button') as HTMLElement).addEventListener('click', () => {
-          (document.getElementById('file-input-hidden') as HTMLInputElement).click();
-      });
-      (document.getElementById('file-input-hidden') as HTMLInputElement).addEventListener('change', (e) => this.handleFileSelect(e));
-
-      // Main navigation
-      this.navItems.forEach(item => {
-          item.addEventListener('click', (e) => {
-              e.preventDefault();
-              const navItem = (e.currentTarget as HTMLElement).closest('.nav-item');
-              if (!navItem) return;
-              const viewName = (navItem as HTMLElement).dataset.view;
-              if (viewName) this.showView(viewName);
-          });
-      });
-
-      // Centralized action handler
-      document.body.addEventListener('click', (e) => {
-          const target = e.target as HTMLElement;
-          const actionTarget = target.closest('[data-action]') as HTMLElement | null;
-          
-          const isDropdownClick = target.closest('.dropdown-container');
-          if (!isDropdownClick) {
-              document.querySelectorAll('.dropdown-menu.show').forEach(menu => menu.classList.remove('show'));
-          }
-
-          if (actionTarget?.dataset.action === 'toggle-kebab') {
-              e.stopPropagation();
-              actionTarget.nextElementSibling?.classList.toggle('show');
-              return; 
-          }
-
-          if (actionTarget) {
-              if (target.closest('button') || target.closest('.dropdown-menu a')) {
-                   e.preventDefault();
-                   e.stopPropagation();
-              }
-              const action = actionTarget.dataset.action;
-              const detailsJSON = actionTarget.dataset.details;
-              let details: any;
-              try { details = detailsJSON ? JSON.parse(detailsJSON) : {}; } catch { details = { raw: detailsJSON }; }
-            
-              const card = target.closest('.project-card[data-project-id]');
-              if (card && !details.projectId) {
-                details.projectId = (card as HTMLElement).dataset.projectId;
-              }
-
-              this.handleAction(action, details, actionTarget);
-          }
-      });
-      
-       // Settings Toggles
-      this.settingsView.addEventListener('change', (e) => {
-        const target = e.target as HTMLInputElement;
-        if (target.type === 'checkbox') {
-            const key = target.dataset.key;
-            const type = target.dataset.type as 'sidebar' | 'dashboard';
-            if (key && type && this.state.user.loggedIn) {
-                this.state.settings[type][key] = target.checked;
-                this.updateUserDocument({ settings: this.state.settings });
-                this.applySettingsVisibility();
-            }
-        }
-      });
-
-      // Settings Restore Button
-      this.settingsView.addEventListener('click', async e => {
-          const target = e.target as HTMLElement;
-          const button = target.closest('[data-restore-project-id]') as HTMLButtonElement;
-          if(button) {
-            const idToRestore = button.dataset.restoreProjectId;
-            if(idToRestore && this.state.user.loggedIn) {
-                this.state.settings.removedProjects = this.state.settings.removedProjects.filter(id => id !== idToRestore);
-                await this.updateUserDocument({ settings: this.state.settings });
-                this.showToast(`Projektet har återställts.`);
-                this.renderAll();
-            }
-          }
-      })
-  }
-
-  private async handleAction(action: string | undefined, details: any, target: HTMLElement) {
-      if (!action) return;
-
-      if (!this.state.user.loggedIn && !['login-google', 'close-modal'].includes(action)) {
-          this.showLoginModal();
-          return;
-      }
-      
-      if (!action.startsWith('toggle-')) {
-        document.querySelectorAll('.dropdown-menu.show').forEach(menu => menu.classList.remove('show'));
-      }
-
-      switch (action) {
-          case 'login-google': await this.login(); break;
-          case 'logout': await this.logout(); break;
-          case 'toggle-dropdown': (target.nextElementSibling as HTMLElement)?.classList.toggle('show'); break;
-          case 'view-project': if (details.projectId) { this.showProjectDetailView(details.projectId); } break;
-          case 'create-new': this.showCreateModal(details.type); break;
-          case 'edit-project': if (details.projectId) this.showCreateModal('project', details.projectId); break;
-          
-          case 'archive-project':
-          case 'remove-project':
-              if (details.projectId) {
-                  const project = this.state.projects.find(p => p.id === details.projectId);
-                  if (project && !this.state.settings.removedProjects.includes(details.projectId)) {
-                      this.state.settings.removedProjects.push(details.projectId);
-                      await this.updateUserDocument({ settings: this.state.settings });
-                      this.showToast(action === 'remove-project' ? `Projektet '${project.name}' har tagits bort.` : `Projektet '${project.name}' har arkiverats.`);
-                      this.renderAll();
-                  }
-              }
-              break;
-
-          case 'delete-file':
-              if (details.projectId && details.fileId) {
-                  const project = this.state.projects.find(p => p.id === details.projectId);
-                  if (project) {
-                      const file = project.files.find(f => f.id === details.fileId);
-                      project.files = project.files.filter(f => f.id !== details.fileId);
-                      await this.updateProjectInDb(project);
-                      this.showToast(`Filen '${file?.name}' har tagits bort.`);
-                      this.showProjectDetailView(details.projectId);
-                  }
-              }
-              break;
-          
-          case 'upload-to-folder':
-              if(details.projectId && details.folderName) {
-                  this.state.fileUploadContext = { projectId: details.projectId, folderName: details.folderName };
-                  (document.getElementById('file-input-hidden') as HTMLInputElement).click();
-              }
-              break;
-          
-          case 'mail-project':
-              if (details.projectId) {
-                  const mailProject = this.state.projects.find(p => p.id === details.projectId);
-                  if (mailProject) {
-                      window.location.href = `mailto:?subject=Fråga om projekt: ${mailProject.name}&body=Hej,\n\nJag har en fråga gällande projektet "${mailProject.name}".\n\n`;
-                  }
-              }
-              break;
-
-          case 'show-profile': document.getElementById('user-profile-menu')?.classList.toggle('show'); break;
-          case 'show-notifications': document.getElementById('notifications-menu')?.classList.toggle('show'); break;
-
-          case 'review-ata':
-          case 'view-task':
-              const attentionId = (target.closest('.attention-item') as HTMLElement)?.dataset.attentionId;
-              if(attentionId) {
-                  this.state.attentionItems = this.state.attentionItems.filter(item => item.id !== attentionId);
-                  this.showToast(`${details.project}: Åtgärd registrerad.`);
-                  this.renderAll();
-              }
-              break;
-           case 'generate-revision':
-               const revisionProjectId = (target.closest('[data-project-id]') as HTMLElement)?.dataset.projectId;
-               const revisionProject = this.state.projects.find(p => p.id === revisionProjectId);
-               if(revisionProject) {
-                   this.showToast(`Skapar revisionsunderlag för '${revisionProject.name}'...`);
-               }
-               break;
-           case 'close-modal':
-               const modal = target.closest('.modal-overlay');
-               if(modal) modal.classList.remove('active');
-               break;
-      }
-  }
-
-  // --- RENDERING ---
-  private renderAll() {
-      this.renderProjects();
-      this.renderAttentionItems();
-      this.renderHeader();
-      this.renderSettings();
-      this.renderRevisions();
-      this.applySettingsVisibility();
-      this.setGreeting();
-  }
-
-  private renderProjects() {
-      const container = document.getElementById('project-grid-container');
-      const template = document.getElementById('project-card-template') as HTMLTemplateElement;
-      if (!container || !template) return;
-
-      container.innerHTML = '';
-      const visibleProjects = this.state.projects.filter(p => !this.state.settings.removedProjects.includes(p.id));
-
-      if(visibleProjects.length === 0 && this.state.user.loggedIn) {
-          container.innerHTML = `<div class="empty-state"><p>Inga projekt att visa. Klicka på "Skapa Nytt" för att komma igång!</p></div>`;
-          return;
-      }
-
-      visibleProjects.forEach(project => {
-          const cardClone = template.content.cloneNode(true) as DocumentFragment;
-          const cardEl = cardClone.firstElementChild as HTMLElement;
-          cardEl.dataset.projectId = project.id;
-          
-          cardEl.querySelector('.project-name')!.textContent = project.name;
-          cardEl.querySelector('.progress-percentage')!.textContent = `${project.progress}%`;
-          (cardEl.querySelector('.progress-bar-inner') as HTMLElement)!.style.width = `${project.progress}%`;
-          cardEl.querySelector('.deadline-name')!.textContent = `Slutbesiktning`;
-          cardEl.querySelector('.deadline-date')!.textContent = project.deadline;
-          
-          const statusTag = cardEl.querySelector('.status-tag') as HTMLElement;
-          statusTag.className = 'status-tag'; // Reset classes
-          statusTag.classList.add(`status-${project.status}`);
-          statusTag.textContent = { green: 'I fas', yellow: 'Risk för försening', red: 'Försenat' }[project.status];
-          
-          const kebabButton = cardEl.querySelector('.kebab-menu');
-          if (kebabButton) kebabButton.setAttribute('data-action', 'toggle-kebab');
-          cardEl.querySelectorAll('.project-actions-menu [data-action]').forEach(actionItem => {
-              (actionItem as HTMLElement).dataset.details = JSON.stringify({ projectId: project.id });
-          });
-          cardEl.querySelectorAll('[data-action="mail-project"]').forEach(actionItem => {
-              (actionItem as HTMLElement).dataset.details = JSON.stringify({ projectId: project.id });
-          });
-
-
-          container.appendChild(cardClone);
-      });
-  }
-
-  private renderAttentionItems() {
-      const container = document.getElementById('attention-list-container');
-      const template = document.getElementById('attention-item-template') as HTMLTemplateElement;
-      if (!container || !template) return;
-      
-      container.innerHTML = '';
-      if(this.state.attentionItems.length === 0) {
-          container.innerHTML = `<div class="positive-empty-state"><p><strong>Allt är i fas!</strong> Inget kräver din omedelbara uppmärksamhet. Snyggt jobbat!</p></div>`;
-          return;
-      }
-
-      this.state.attentionItems.forEach(item => {
-          const attentionEl = template.content.cloneNode(true) as HTMLElement;
-          const itemDiv = attentionEl.querySelector('.attention-item') as HTMLElement;
-
-          itemDiv.dataset.attentionId = item.id;
-          itemDiv.style.borderLeftColor = item.borderColor;
-          itemDiv.querySelector('.attention-text')!.innerHTML = item.text;
-
-          const actionsContainer = itemDiv.querySelector('.actions') as HTMLElement;
-          actionsContainer.innerHTML = ''; // Clear template buttons
-          item.actions.forEach(action => {
-              const button = document.createElement('button');
-              button.textContent = action.text;
-              if (action.primary) button.classList.add('primary');
-              button.dataset.action = action.action;
-              button.dataset.details = JSON.stringify(action.details);
-              actionsContainer.appendChild(button);
-          });
-          container.appendChild(attentionEl);
-      });
-  }
-
-  private renderHeader() {
-      const avatarContainer = document.getElementById('user-avatar');
-      const profileButton = document.getElementById('user-profile-button');
-      if (!avatarContainer || !profileButton) return;
-
-      if (this.state.user.loggedIn && this.state.user.avatarUrl) {
-          avatarContainer.innerHTML = `<img src="${this.state.user.avatarUrl}" alt="Användarprofilbild">`;
-          profileButton.setAttribute('aria-label', `Profil för ${this.state.user.name}`);
-      } else {
-          avatarContainer.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 262"><path fill="#4285F4" d="M255.878 133.451c0-10.734-.871-18.567-2.756-26.686H130.55v48.448h71.947c-1.45 12.04-9.283 30.172-26.69 42.356l-.007-.002-36.874 28.71-.008.002C169.344 246.32 151.27 256 130.55 256c-52.212 0-95.7-43.49-95.7-96s43.488-96 95.7-96c25.229 0 45.698 10.73 59.842 24.18l-34.808 34.01c-6.176-5.816-15.155-9.82-25.034-9.82-31.088 0-57.015 25.795-57.015 57.625s25.927 57.625 57.015 57.625c34.917 0 51.002-24.97 53.078-37.188z"></path></svg>`;
-          profileButton.setAttribute('aria-label', 'Anslut Google-konto');
-      }
-  }
-
-    // --- USER/LOGIN METHODS ---
-    private async login() {
-        try {
-            const provider = new GoogleAuthProvider();
-            await signInWithPopup(this.auth, provider);
-            // onAuthStateChanged will handle the rest.
-        } catch (error) {
-            console.error("Google Sign-In Error:", error);
-            this.showToast("Inloggningen med Google misslyckades.");
-        }
+  // Initialize with ByggPilot's welcome message
+  useEffect(() => {
+    if (messages.length === 0) {
+      setMessages([{
+        id: '1',
+        text: 'Hej! ByggPilot här, din digitala kollega. Vad kan jag hjälpa dig med idag?',
+        isUser: false,
+        timestamp: new Date()
+      }]);
     }
+  }, []);
 
-    private async logout() {
-        try {
-            await signOut(this.auth);
-            // onAuthStateChanged will handle the rest.
-            this.showToast('Du har loggats ut.');
-        } catch (error) {
-            console.error("Sign Out Error", error);
-            this.showToast('Utloggningen misslyckades.');
-        }
-    }
-
-    private async handleUserLogin(user: User) {
-        const userDocRef = doc(this.db, "users", user.uid);
-        const userDocSnap = await getDoc(userDocRef);
-
-        if (userDocSnap.exists()) {
-            const data = userDocSnap.data();
-            this.state.user = { 
-                loggedIn: true, 
-                uid: user.uid,
-                name: user.displayName || 'Användare',
-                avatarUrl: user.photoURL,
-                isNew: data.isNew ?? false
-            };
-            this.state.settings = data.settings || this.getInitialState().settings;
-        } else {
-            this.state.user = { 
-                loggedIn: true, 
-                uid: user.uid,
-                name: user.displayName || 'Användare',
-                avatarUrl: user.photoURL,
-                isNew: true
-            };
-            this.state.settings = this.getInitialState().settings;
-            await this.initializeNewUserInDb(user);
-        }
-
-        await this.fetchProjectsFromDb();
-        // await this.fetchAttentionItemsFromDb(); // If we were persisting them.
-
-        this.updateViewBasedOnAuthState();
-        this.renderAll();
-        
-        (document.querySelector('.modal-overlay.active') as HTMLElement)?.classList.remove('active');
-        this.showToast(`Välkommen, ${this.state.user.name}!`);
-
-        if (this.state.user.isNew) {
-            this.startOnboardingSequence();
-        }
-    }
-    
-    private handleUserLogout() {
-        this.state = this.getInitialState();
-        this.updateViewBasedOnAuthState();
-        this.renderAll();
-    }
-  
-  // --- UI/VIEW METHODS ---
-  private updateViewBasedOnAuthState() {
-        if (this.state.user.loggedIn) {
-            this.landingPageElement.style.display = 'none';
-            this.dashboardContainerElement.style.display = 'flex';
-            this.showView('dashboard');
-        } else {
-            this.landingPageElement.style.display = 'block';
-            this.dashboardContainerElement.style.display = 'none';
-        }
-    }
-
-    private showView(viewName: string) {
-      if (!viewName) viewName = 'dashboard';
-
-      if (viewName === 'help') {
-          this.showHelpModal();
-          return;
-      }
-      
-      if (!this.state.user.loggedIn) {
-          this.showLoginModal();
-          return;
-      }
-
-      if (this.currentView !== viewName && this.currentView !== 'main-chat-view') {
-          this.lastView = this.currentView;
-      }
-      this.currentView = viewName;
-      
-      this.allViews.forEach(view => (view as HTMLElement).style.display = 'none');
-      this.navItems.forEach(item => item.classList.remove('active'));
-
-      let viewId = `${viewName}-view`;
-      let viewToShow = document.getElementById(viewId);
-      
-      if (!viewToShow) {
-          viewName = 'dashboard';
-          viewToShow = this.dashboardView;
-      }
-
-      const activeNavItem = document.querySelector(`.nav-item[data-view="${viewName}"]`);
-      if (activeNavItem) {
-         activeNavItem.classList.add('active');
-         this.headerTitle.textContent = activeNavItem.querySelector('.nav-text')?.textContent || 'ByggPilot';
-      }
-
-      viewToShow.style.display = 'flex';
-
-      if (this.currentView === 'main-chat-view') {
-           const lastActiveNavItem = document.querySelector(`.nav-item[data-view="${this.lastView}"]`);
-          if(lastActiveNavItem) lastActiveNavItem.classList.add('active');
-          this.headerTitle.textContent = "AI Assistent";
-      }
-  }
-
-    private showProjectDetailView(projectId: string) {
-        const project = this.state.projects.find(p => p.id === projectId);
-        if(!project) {
-            this.showToast("Kunde inte hitta projektet.");
-            return;
-        }
-
-        const titleEl = document.getElementById('project-detail-title');
-        const folderContainer = document.getElementById('project-detail-folders');
-        const fileTemplate = document.getElementById('file-item-template') as HTMLTemplateElement;
-
-        if(!titleEl || !folderContainer || !fileTemplate) return;
-
-        titleEl.textContent = project.name;
-        folderContainer.innerHTML = ''; // Clear previous content
-
-        const folderNames = [
-            '01_Avtal_och_Offerter', '02_Ritningar_och_Teknik', '03_KMA',
-            '04_Foton_och_Dokumentation', '05_Ekonomi'
-        ];
-
-        folderNames.forEach(folderName => {
-            const folderDiv = document.createElement('div');
-            folderDiv.className = 'folder-container';
-            folderDiv.dataset.folderName = folderName;
-            folderDiv.dataset.projectId = projectId;
-
-            const filesInFolder = project.files.filter(f => f.folderName === folderName);
-
-            folderDiv.innerHTML = `
-                <div class="folder-header">
-                    <span class="folder-header-name">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8l-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z"></path></svg>
-                        <span>${folderName}</span>
-                    </span>
-                    <button class="icon-action-button" data-action="upload-to-folder" data-details='{"projectId": "${projectId}", "folderName": "${folderName}"}' title="Ladda upp fil">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                    </button>
-                </div>
-                <div class="folder-content"></div>
-            `;
-            
-            const folderContent = folderDiv.querySelector('.folder-content') as HTMLElement;
-            if(filesInFolder.length > 0) {
-                filesInFolder.forEach(file => {
-                    const fileClone = fileTemplate.content.cloneNode(true) as DocumentFragment;
-                    const fileEl = fileClone.firstElementChild as HTMLElement;
-                    fileEl.querySelector('.file-item-name span')!.textContent = file.name;
-                    const deleteBtn = fileEl.querySelector('[data-action="delete-file"]') as HTMLElement;
-                    deleteBtn.dataset.details = JSON.stringify({ projectId: project.id, fileId: file.id });
-                    folderContent.appendChild(fileEl);
-                });
-            } else {
-                folderContent.innerHTML = `<p class="folder-empty-state">Mappen är tom.</p>`;
-            }
-
-            folderDiv.addEventListener('dragover', this.handleDragOver);
-            folderDiv.addEventListener('dragleave', this.handleDragLeave);
-            folderDiv.addEventListener('drop', (e) => this.handleFileDrop(e));
-            
-            folderContainer.appendChild(folderDiv);
+  // Listen for auth state changes
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
+      if (firebaseUser) {
+        setUser({
+          uid: firebaseUser.uid,
+          email: firebaseUser.email || '',
+          displayName: firebaseUser.displayName || '',
+          photoURL: firebaseUser.photoURL || undefined
         });
-        
-        this.showView('project-detail');
-        this.headerTitle.textContent = `Projekt / ${project.name}`;
-    }
-
-  
-  private showLoginModal() {
-      const template = document.getElementById('google-login-modal-template') as HTMLTemplateElement;
-      if (!template) return;
-      this.genericModal.innerHTML = '';
-      this.genericModal.appendChild(template.content.cloneNode(true));
-      this.genericModal.classList.add('active');
-  }
-  
-  private showHelpModal() {
-      const template = document.getElementById('help-modal-template') as HTMLTemplateElement;
-      if (!template) return;
-      this.genericModal.innerHTML = '';
-      this.genericModal.appendChild(template.content.cloneNode(true));
-      this.genericModal.classList.add('active');
-  }
-
-  private showCreateModal(type: 'project' | 'report' | 'ata', editProjectId: string | null = null) {
-      if (type === 'project') {
-          const template = document.getElementById('create-project-modal-template') as HTMLTemplateElement;
-          if (!template) return;
-          
-          this.genericModal.innerHTML = '';
-          this.genericModal.appendChild(template.content.cloneNode(true));
-          
-          const form = this.genericModal.querySelector('#project-form') as HTMLFormElement;
-          const titleEl = this.genericModal.querySelector('#project-modal-title') as HTMLElement;
-          const idInput = this.genericModal.querySelector('#project-id-input') as HTMLInputElement;
-          const nameInput = this.genericModal.querySelector('#project-name-input') as HTMLInputElement;
-          const customerInput = this.genericModal.querySelector('#project-customer-input') as HTMLInputElement;
-          const deadlineInput = this.genericModal.querySelector('#project-deadline-date-input') as HTMLInputElement;
-          const progressInput = this.genericModal.querySelector('#project-progress-input') as HTMLInputElement;
-          const submitButton = this.genericModal.querySelector('button[type="submit"]') as HTMLButtonElement;
-
-
-          if (editProjectId) {
-              const project = this.state.projects.find(p => p.id === editProjectId);
-              if (project) {
-                  titleEl.textContent = 'Redigera Projekt';
-                  idInput.value = project.id;
-                  nameInput.value = project.name;
-                  customerInput.value = project.customer;
-                  deadlineInput.value = project.deadline;
-                  progressInput.value = String(project.progress);
-              }
-          }
-
-          form.onsubmit = async (e) => {
-              e.preventDefault();
-              if (submitButton.disabled) return;
-              submitButton.disabled = true;
-              submitButton.textContent = 'Sparar...';
-
-              const progress = parseInt(progressInput.value, 10);
-              let status: Project['status'] = 'green';
-              if (progress > 85) status = 'red';
-              else if (progress > 60) status = 'yellow';
-
-              const projectData: Omit<Project, 'id'> = {
-                  name: nameInput.value,
-                  customer: customerInput.value,
-                  deadline: deadlineInput.value,
-                  progress,
-                  status,
-                  files: editProjectId ? this.state.projects.find(p => p.id === editProjectId)!.files : []
-              };
-
-              try {
-                if (editProjectId) {
-                    const fullProject = { ...projectData, id: editProjectId };
-                    await this.updateProjectInDb(fullProject);
-                    this.state.projects = this.state.projects.map(p => p.id === editProjectId ? fullProject : p);
-                    this.showToast(`Projektet '${projectData.name}' har uppdaterats.`);
-                } else {
-                    const newProject = await this.createProjectInDb(projectData);
-                    this.state.projects.unshift(newProject);
-                    this.showToast(`Projektet '${projectData.name}' har skapats.`);
-                }
-                this.renderAll();
-                this.genericModal.classList.remove('active');
-              } catch (error) {
-                console.error("Failed to save project:", error);
-                this.showToast("Kunde inte spara projektet.");
-                submitButton.disabled = false;
-                submitButton.textContent = 'Spara Projekt';
-              }
-          };
-          this.genericModal.classList.add('active');
+        setIsGoogleConnected(true);
+        setOnboardingChecklist(prev => ({ ...prev, connectedGoogle: true }));
       } else {
-          this.showToast(`Funktionen för att skapa '${type}' kommer snart.`);
+        setUser(null);
+        setIsGoogleConnected(false);
       }
-  }
-  
-  private setGreeting() {
-    const greetingEl = document.querySelector('.greeting');
-    if (!greetingEl) return;
-
-    const hour = new Date().getHours();
-    let greetingText = '';
-
-    if (hour >= 5 && hour < 10) greetingText = 'God morgon';
-    else if (hour >= 10 && hour < 12) greetingText = 'God förmiddag';
-    else if (hour >= 12 && hour < 18) greetingText = 'God eftermiddag';
-    else greetingText = 'God kväll';
-
-    greetingEl.textContent = `${greetingText}, ${this.state.user.name}!`;
-  }
-
-  private showToast(message: string) {
-    const container = document.getElementById('toast-container');
-    if (!container) return;
-    const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.textContent = message;
-    container.appendChild(toast);
-    setTimeout(() => {
-        toast.remove();
-    }, 5000);
-  }
-
-  // --- FILE HANDLING METHODS ---
-
-  private async handleFileSelect(event: Event) {
-    const input = event.target as HTMLInputElement;
-    const files = input.files;
-    
-    if (this.state.fileUploadContext && files) {
-        const { projectId, folderName } = this.state.fileUploadContext;
-        await this.addFilesToProject(files, projectId, folderName);
-        this.state.fileUploadContext = null; 
-    } else if (files && files.length > 0) {
-        this.chatInput.value = `Laddade upp filen: ${files[0].name}. Beskriv vad jag ska göra med den.`;
-        this.chatInput.focus();
-        if(this.currentView !== 'main-chat-view') this.showView('main-chat-view');
-    }
-    input.value = '';
-  }
-
-  private handleDragOver(e: DragEvent) {
-      e.preventDefault();
-      (e.currentTarget as HTMLElement).classList.add('drag-over');
-  }
-
-  private handleDragLeave(e: DragEvent) {
-      e.preventDefault();
-      (e.currentTarget as HTMLElement).classList.remove('drag-over');
-  }
-
-  private handleFileDrop(e: DragEvent) {
-      e.preventDefault();
-      const target = e.currentTarget as HTMLElement;
-      target.classList.remove('drag-over');
-      
-      const projectId = target.dataset.projectId;
-      const folderName = target.dataset.folderName;
-      const files = e.dataTransfer?.files;
-
-      if (projectId && folderName && files) {
-          this.addFilesToProject(files, projectId, folderName);
-      }
-  }
-
-  private async addFilesToProject(files: FileList, projectId: string, folderName: string) {
-    const project = this.state.projects.find(p => p.id === projectId);
-    if (!project) return;
-
-    for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const newFile: FileItem = {
-            id: `file-${Date.now()}-${i}`,
-            name: file.name,
-            folderName: folderName,
-        };
-        project.files.push(newFile);
-    }
-    
-    try {
-        await this.updateProjectInDb(project);
-        this.showToast(`${files.length} fil(er) har laddats upp till '${folderName}'.`);
-        this.showProjectDetailView(projectId);
-    } catch (error) {
-        console.error("Failed to add files:", error);
-        this.showToast("Kunde inte ladda upp filerna.");
-        // Revert local state if needed
-        this.fetchProjectsFromDb();
-    }
-  }
-
-  // --- SPEECH & CHAT METHODS ---
-  private setupSpeechRecognition() {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      this.voiceInputButton.title = "Röstinmatning stöds inte i din webbläsare.";
-      this.voiceInputButton.style.opacity = '0.5';
-      this.voiceInputButton.disabled = true;
-      return;
-    }
-
-    this.recognition = new SpeechRecognition();
-    this.recognition.continuous = false;
-    this.recognition.lang = 'sv-SE';
-    this.recognition.interimResults = false;
-    this.recognition.maxAlternatives = 1;
-
-    this.recognition.onresult = (event: any) => {
-      this.chatInput.value = event.results[0][0].transcript;
-      this.sendMessage();
-    };
-
-    this.recognition.onaudiostart = () => {
-        this.isListening = true;
-        this.voiceInputButton.classList.add('is-listening');
-    };
-    
-    this.recognition.onaudioend = () => {
-        this.isListening = false;
-        this.voiceInputButton.classList.remove('is-listening');
-    };
-
-    this.recognition.onerror = (event: any) => {
-      console.error("Speech recognition error:", event.error);
-      if(event.error === 'not-allowed') {
-          this.showToast("Ge webbläsaren åtkomst till mikrofonen.");
-      }
-      this.isListening = false;
-      this.voiceInputButton.classList.remove('is-listening');
-    };
-  }
-  
-  private toggleVoiceInput() {
-      if (!this.recognition) return;
-      if (this.isListening) {
-          this.recognition.stop();
-      } else {
-          try {
-            this.recognition.start();
-          } catch(e) {
-            console.error("Could not start recognition:", e);
-            if (e instanceof DOMException && e.name === 'NotAllowedError') {
-                 this.showToast("Mikrofonåtkomst nekad. Tillåt i webbläsarens inställningar.");
-            } else {
-                 this.showToast("Kunde inte starta röstinmatning.");
-            }
-          }
-      }
-  }
-
-  private addMessage(text: string, sender: 'user' | 'ai', isError = false) {
-    const welcomeMessage = this.chatMessages.querySelector('.welcome-message');
-    if (welcomeMessage) welcomeMessage.remove();
-    
-    const messageElement = document.createElement('div');
-    messageElement.classList.add('chat-message', sender);
-    if (isError) {
-      messageElement.classList.add('error-message');
-      messageElement.innerHTML = `<p>${text}</p>`;
-    } else {
-      messageElement.innerHTML = sender === 'ai' ? parseMarkdown(text) : `<p>${text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>`;
-    }
-    this.chatMessages.appendChild(messageElement);
-    this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
-  }
-
-  private async sendMessage() {
-    const userInput = this.chatInput.value.trim();
-    if (!userInput) return;
-
-    if (this.currentView !== 'main-chat-view') this.showView('main-chat-view');
-    await new Promise(resolve => setTimeout(resolve, 0));
-
-    this.addMessage(userInput, 'user');
-    this.chatInput.value = '';
-    
-    if (userInput.toLowerCase() === 'starta guide') {
-        this.startOnboardingSequence(true);
-        return;
-    }
-
-    if (this.isOnboarding) {
-        this.handleOnboardingResponse(userInput.toLowerCase());
-        return;
-    }
-
-    this.loadingIndicator.style.display = 'flex';
-    this.sendButton.disabled = true;
-    this.chatInput.disabled = true;
-
-    try {
-      // --- Use Netlify Function for AI ---
-      const res = await fetch('/.netlify/functions/gemini', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userInput }),
-      });
-      const data = await res.json();
-      this.addMessage(data.text, 'ai');
-    } catch (error) {
-      console.error("Gemini API error:", error);
-      this.addMessage("Ursäkta, något gick fel med anslutningen till AI:n.", 'ai', true);
-    } finally {
-      this.loadingIndicator.style.display = 'none';
-      this.sendButton.disabled = false;
-      this.chatInput.disabled = false;
-      this.chatInput.focus();
-    }
-  }
-
-  // --- ONBOARDING METHODS ---
-  private startOnboardingSequence(force = false) {
-      if (!force && !this.state.user.isNew) return;
-
-      this.isOnboarding = true;
-      this.onboardingStep = 1;
-      this.showView('main-chat-view');
-      this.chatMessages.innerHTML = ''; // Clear chat for onboarding
-      this.addMessage(
-          "Hej! Välkommen till ByggPilot. Jag ser att det är första gången du loggar in. Vill du att jag ger dig en snabb introduktion och hjälper dig att sätta upp din arbetsyta? Det tar bara en minut. (Skriv 'ja' eller 'nej')",
-          'ai'
-      );
-  }
-  
-  private handleOnboardingResponse(userInput: string) {
-    const isAffirmative = ['ja', 'japp', 'yes', 'ok', 'visst'].some(w => userInput.includes(w));
-    const isNegative = ['nej', 'nä', 'no', 'avbryt'].some(w => userInput.includes(w));
-
-    if (this.onboardingStep === 1) {
-        if (isAffirmative) {
-            this.addMessage("Perfekt! ByggPilot är designat för att leva inuti ditt Google Workspace. För varje projekt du skapar, kommer jag automatiskt att ordna dina filer (som offerter, foton och KMA-dokument) i en snygg mappstruktur i din Google Drive. Du behöver inte tänka på det, det bara funkar. Redo för nästa steg?", 'ai');
-            this.onboardingStep = 2;
-        } else if (isNegative) {
-            this.endOnboarding();
-        } else {
-            this.addMessage("Jag förstod inte riktigt. Svara gärna 'ja' eller 'nej' för att fortsätta guiden.", 'ai');
-        }
-    } else if (this.onboardingStep === 2) {
-        if (isAffirmative) {
-            this.addMessage("Utmärkt. Allt är nu förberett för dig. För att komma igång, klicka på knappen **'Skapa Nytt'** längst upp och välj **'Nytt Projekt'**. Jag finns alltid här i chatten om du har frågor. Lycka till med byggandet!", 'ai');
-            this.endOnboarding(false); // End without the extra "I'm here" message
-        } else if (isNegative) {
-            this.endOnboarding();
-        } else {
-             this.addMessage("Svara gärna 'ja' eller 'nej' för att fortsätta.", 'ai');
-        }
-    }
-  }
-  
-  private async endOnboarding(showHelpMessage = true) {
-      if (showHelpMessage) {
-          this.addMessage("Inga problem! Känn dig som hemma och utforska i din egen takt. Om du ändrar dig kan du bara skriva 'starta guide' till mig. Jag finns här om du behöver något!", 'ai');
-      }
-      this.isOnboarding = false;
-      this.onboardingStep = 0;
-      if (this.state.user.isNew) {
-        this.state.user.isNew = false;
-        await this.updateUserDocument({ isNew: false });
-      }
-  }
-
-
-  // --- Settings Methods ---
-  private applySettingsVisibility() {
-      // Sidebar items
-      Object.entries(this.state.settings.sidebar).forEach(([key, visible]) => {
-          const navItem = document.querySelector(`.nav-item[data-view="${key}"]`);
-          if (navItem) (navItem as HTMLElement).hidden = !visible;
-      });
-  
-      // Dashboard sections based on settings
-      const attentionSection = document.querySelector('.dashboard-section[data-section-key="attention"]');
-      if (attentionSection) (attentionSection as HTMLElement).hidden = !this.state.settings.dashboard['attention'];
-  
-      const projectsSection = document.querySelector('.dashboard-section[data-section-key="projects"]');
-      if (projectsSection) (projectsSection as HTMLElement).hidden = !this.state.settings.dashboard['projects'];
-  }
-  
-  private renderSettings() {
-    const sidebarTogglesContainer = document.getElementById('sidebar-settings');
-    const dashboardTogglesContainer = document.getElementById('dashboard-settings');
-    if (!sidebarTogglesContainer || !dashboardTogglesContainer) return;
-
-    const createToggle = (key: string, label: string, type: 'sidebar' | 'dashboard', checked: boolean) => {
-        if (!label) return '';
-        return `
-        <div class="toggle-switch">
-            <label for="toggle-${key}">${label}</label>
-            <label class="switch">
-                <input type="checkbox" id="toggle-${key}" data-key="${key}" data-type="${type}" ${checked ? 'checked' : ''}>
-                <span class="slider"></span>
-            </label>
-        </div>`;
-    }
-    
-    const settingsMap = {
-        sidebar: { projects: 'Projekt', economy: 'Ekonomi', revisions: 'Revisioner', reports: 'Rapporter', team: 'Team' },
-        dashboard: { attention: 'Uppmärksamhet', projects: 'Projektstatus' }
-    };
-
-    sidebarTogglesContainer.innerHTML = Object.keys(settingsMap.sidebar).map(key => {
-        const label = settingsMap.sidebar[key as keyof typeof settingsMap.sidebar];
-        const isChecked = this.state.settings.sidebar?.[key] !== false;
-        return createToggle(key, label, 'sidebar', isChecked);
-    }).join('');
-    
-    dashboardTogglesContainer.innerHTML = Object.entries(settingsMap.dashboard).map(([key, label]) => {
-        const isChecked = this.state.settings.dashboard?.[key] !== false;
-        return createToggle(key, label, 'dashboard', isChecked);
-    }).join('');
-
-    this.renderRestoreList();
-  }
-
-  private renderRestoreList() {
-    const restoreContainer = document.getElementById('restore-projects-list');
-    if (!restoreContainer) return;
-
-    const removedProjectsIds = this.state.settings.removedProjects || [];
-    if (removedProjectsIds.length === 0) {
-        restoreContainer.innerHTML = `<p class="text-color-subtle">Inga borttagna eller arkiverade projekt.</p>`;
-        return;
-    }
-
-    restoreContainer.innerHTML = removedProjectsIds.map(projectId => {
-        const project = this.state.projects.find(p => p.id === projectId);
-        const projectName = project ? project.name : `Projekt ${projectId}`;
-        return `
-            <div class="restore-item">
-                <span>${projectName}</span>
-                <button data-restore-project-id="${projectId}">Återställ</button>
-            </div>`;
-    }).join('');
-  }
-  
-  private renderRevisions() {
-      const container = document.getElementById('revisions-list-container');
-      const template = document.getElementById('revision-item-template') as HTMLTemplateElement;
-      if(!container || !template) return;
-
-      container.innerHTML = '';
-      const visibleProjects = this.state.projects.filter(p => !this.state.settings.removedProjects.includes(p.id));
-
-      if(visibleProjects.length === 0 && this.state.user.loggedIn) {
-          container.innerHTML = `<div class="empty-state"><p>Inga aktiva projekt att skapa underlag för.</p></div>`;
-          return;
-      }
-      
-      visibleProjects.forEach(project => {
-          const clone = template.content.cloneNode(true) as DocumentFragment;
-          const itemEl = clone.firstElementChild as HTMLElement;
-          itemEl.dataset.projectId = project.id;
-          (itemEl.querySelector('.revision-item-name') as HTMLElement).textContent = project.name;
-          container.appendChild(clone);
-      });
-  }
-
-  // --- FIRESTORE DATA METHODS ---
-
-  private async initializeNewUserInDb(user: User) {
-      if (!user) return;
-      const userDocRef = doc(this.db, "users", user.uid);
-      const initialSettings = this.getInitialState().settings;
-      await setDoc(userDocRef, {
-          uid: user.uid,
-          email: user.email,
-          displayName: user.displayName,
-          photoURL: user.photoURL,
-          createdAt: serverTimestamp(),
-          isNew: true,
-          settings: initialSettings
-      });
-  }
-
-  private async updateUserDocument(data: object) {
-      if (!this.state.user.uid) return;
-      const userDocRef = doc(this.db, "users", this.state.user.uid);
-      await updateDoc(userDocRef, data);
-  }
-
-  private async fetchProjectsFromDb() {
-      if (!this.state.user.uid) return;
-      const projectsColRef = collection(this.db, 'users', this.state.user.uid, 'projects');
-      const q = query(projectsColRef);
-      const querySnapshot = await getDocs(q);
-      this.state.projects = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project));
-  }
-  
-  private async createProjectInDb(projectData: Omit<Project, 'id'>): Promise<Project> {
-    if (!this.state.user.uid) throw new Error("User not logged in");
-    const projectsColRef = collection(this.db, 'users', this.state.user.uid, 'projects');
-    const docRef = await addDoc(projectsColRef, {
-        ...projectData,
-        createdAt: serverTimestamp()
     });
-    return { id: docRef.id, ...projectData };
-  }
+    return () => unsubscribe();
+  }, []);
 
-  private async updateProjectInDb(project: Project) {
-      if (!this.state.user.uid) throw new Error("User not logged in");
-      const projectDocRef = doc(this.db, 'users', this.state.user.uid, 'projects', project.id);
-      const { id, ...dataToSave } = project;
-      await setDoc(projectDocRef, dataToSave, { merge: true });
-  }
+  // Auto-scroll chat to bottom
+  useEffect(() => {
+    if (chatMessagesRef.current) {
+      chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
+    }
+  }, [messages]);
 
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  new ByggPilotApp();
-});
-
-declare global {
-  interface ImportMeta {
-    env: {
-      VITE_FIREBASE_API_KEY: string;
-      VITE_FIREBASE_AUTH_DOMAIN: string;
-      VITE_FIREBASE_PROJECT_ID: string;
-      VITE_FIREBASE_STORAGE_BUCKET: string;
-      VITE_FIREBASE_MESSAGING_SENDER_ID: string;
-      VITE_FIREBASE_APP_ID: string;
+  const handleSendMessage = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!inputValue.trim()) return;
+    
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      text: inputValue,
+      isUser: true,
+      timestamp: new Date()
     };
-  }
-}
+    setMessages((prev: Message[]) => [...prev, userMessage]);
+    setInputValue('');
+    setIsLoading(true);
+    
+    try {
+      const response = await fetch('/.netlify/functions/chatt', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          message: inputValue,
+          systemPrompt: BYGGPILOT_PROMPT,
+          userContext: {
+            isGoogleConnected,
+            userRole: user?.displayName || 'Användare',
+            projects: projects,
+            currentView: currentView
+          }
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Något gick fel med serveranropet.');
+      }
+      
+      const data = await response.json();
+      const aiMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: data.reply,
+        isUser: false,
+        timestamp: new Date()
+      };
+      setMessages((prev: Message[]) => [...prev, aiMessage]);
+    } catch (err) {
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: 'Kunde inte få svar från ByggPilot. Försök igen.',
+        isUser: false,
+        timestamp: new Date()
+      };
+      setMessages((prev: Message[]) => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setIsConnecting(true);
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (error) {
+      console.error('Google sign-in error:', error);
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      setUser(null);
+      setIsGoogleConnected(false);
+      setMessages([{
+        id: '1',
+        text: 'Hej! ByggPilot här, din digitala kollega. Vad kan jag hjälpa dig med idag?',
+        isUser: false,
+        timestamp: new Date()
+      }]);
+    } catch (error) {
+      console.error('Sign out error:', error);
+    }
+  };
+
+  const handleFileAttachment = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+      setAttachedFiles(prev => [...prev, ...Array.from(event.target.files!)]);
+    }
+  };
+
+  const removeAttachedFile = (fileName: string) => {
+    setAttachedFiles(prev => prev.filter(f => f.name !== fileName));
+  };
+
+  const toggleChat = () => {
+    setIsChatExpanded(!isChatExpanded);
+  };
+
+  const toggleDemoMode = () => {
+    setIsDemoMode(!isDemoMode);
+  };
+
+  const handleTaskToggle = (taskId: string) => {
+    setTasks(prev => prev.map(task => 
+      task.id === taskId ? { ...task, completed: !task.completed } : task
+    ));
+  };
+
+  const startTimer = (projectId: string) => {
+    if (activeTimer.intervalId) return;
+    
+    const intervalId = window.setInterval(() => {
+      setActiveTimer((prev: any) => ({ ...prev }));
+    }, 1000);
+    
+    setActiveTimer({
+      projectId,
+      startTime: Date.now(),
+      intervalId
+    });
+  };
+
+  const stopTimer = () => {
+    if (activeTimer.intervalId) {
+      clearInterval(activeTimer.intervalId);
+      setActiveTimer({ projectId: null, startTime: null, intervalId: null });
+    }
+  };
+
+  const getTimerDisplay = () => {
+    if (!activeTimer.startTime) return "00:00:00";
+    const elapsed = Math.floor((Date.now() - activeTimer.startTime) / 1000);
+    const hours = String(Math.floor(elapsed / 3600)).padStart(2, '0');
+    const minutes = String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0');
+    const seconds = String(elapsed % 60).padStart(2, '0');
+    return `${hours}:${minutes}:${seconds}`;
+  };
+
+  const renderDashboard = () => (
+    <div className="dashboard-grid">
+      <div className="widget-column">
+        <div className="widget">
+          <div className="widget-header">
+            <h2>Projektöversikt</h2>
+            <button className="btn btn-sm" onClick={() => setCurrentView('projects')}>
+              Visa alla
+            </button>
+          </div>
+          <div className="project-grid">
+            {projects.map(project => (
+              <div key={project.id} className="project-card">
+                <div className="project-card-header">
+                  <h3 className="project-name">{project.name}</h3>
+                  <div className={`status-tag status-${project.status}`}>
+                    {project.status === 'green' ? 'I fas' : project.status === 'yellow' ? 'Försenat' : 'Kritisk'}
+                  </div>
+                </div>
+                <p className="customer-name">{project.customer}</p>
+                <div className="project-card-footer">
+                  <div className="progress-display">
+                    <span className="progress-percentage">{project.progress}%</span>
+                    <div className="progress-bar">
+                      <div className="progress-bar-inner" style={{ width: `${project.progress}%` }}></div>
+                    </div>
+                  </div>
+                  <div className="project-deadline">
+                    <span className="material-symbols-outlined">event</span>
+                    <span className="deadline-date">{project.deadline}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {settings.showTaskList && (
+          <div className="widget">
+            <div className="widget-header">
+              <h2>Uppgifter</h2>
+              <button className="btn btn-sm">Lägg till</button>
+            </div>
+            <ul className="task-list">
+              {tasks.map((task: { id: string; completed: boolean; text: string }) => (
+                <li key={task.id} className="task-item">
+                  <input
+                    type="checkbox"
+                    id={task.id}
+                    checked={task.completed}
+                    onChange={() => handleTaskToggle(task.id)}
+                  />
+                  <label htmlFor={task.id} className={task.completed ? 'completed' : ''}>
+                    {task.text}
+                  </label>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+
+      <div className="widget-column">
+        {settings.showTimeLogger && (
+          <div className="widget">
+            <div className="widget-header">
+              <h2>Tidloggare</h2>
+            </div>
+            <div className="timer-display">{getTimerDisplay()}</div>
+            <select id="project-select" className="form-input" style={{ marginBottom: '1rem' }}>
+              <option value="">Välj projekt</option>
+              {projects.map(project => (
+                <option key={project.id} value={project.id}>{project.name}</option>
+              ))}
+            </select>
+            <button
+              id="timer-toggle-button"
+              className={`btn ${activeTimer.intervalId ? 'btn-danger' : 'btn-primary'}`}
+              onClick={() => activeTimer.intervalId ? stopTimer() : startTimer('1')}
+              style={{ width: '100%' }}
+            >
+              {activeTimer.intervalId ? 'Stoppa' : 'Starta'}
+            </button>
+          </div>
+        )}
+
+        {settings.showEvents && (
+          <div className="widget">
+            <div className="widget-header">
+              <h2>Senaste aktiviteter</h2>
+            </div>
+            <ul className="event-list">
+              {events.map(event => (
+                <li key={event.id} className="event-item">
+                  <div className="event-icon-container">
+                    <span className="material-symbols-outlined">{event.icon}</span>
+                  </div>
+                  <div className="event-details">
+                    <p className="event-title">{event.title}</p>
+                    <p className="event-subtitle">{event.subtitle}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {!onboarding.completed && settings.showOnboardingChecklist && (
+          <div className="widget onboarding-widget">
+            <div className="widget-header">
+              <h2>Kom igång</h2>
+            </div>
+            <ul className="task-list">
+              <li className="task-item">
+                <input type="checkbox" id="onboarding-1" checked={onboardingChecklist.createdProject} readOnly />
+                <label htmlFor="onboarding-1">Skapa ditt första projekt</label>
+              </li>
+              <li className="task-item">
+                <input type="checkbox" id="onboarding-2" checked={onboardingChecklist.connectedGoogle} readOnly />
+                <label htmlFor="onboarding-2">Anslut Google Workspace</label>
+              </li>
+              <li className="task-item">
+                <input type="checkbox" id="onboarding-3" checked={onboardingChecklist.loggedTime} readOnly />
+                <label htmlFor="onboarding-3">Logga tid för första gången</label>
+              </li>
+            </ul>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderLoggedOutView = () => (
+    <div className="logged-out-view">
+      <div className="logo-icon-large">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M22 10.5V12h-2v-1.5c0-2.06-1.35-3.83-3.27-4.58l-1.32-.51-.49-1.4A5.002 5.002 0 0 0 10.23 2H10c-2.76 0-5 2.24-5 5v1.5c0 .83.67 1.5 1.5 1.5S8 9.33 8 8.5V7c0-1.1.9-2 2-2h.23c1.12 0 2.1.75 2.47 1.81l.49 1.4 1.32.51C16.65 9.17 18 10.94 18 13v1.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V13h2v-1.5c0-1.74-1.43-3.15-3.17-3.15A3.18 3.18 0 0 0 18 10.5zM12 22a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2zM6.5 16h11c.83 0 1.5-.67 1.5-1.5v-3c0-.83-.67-1.5-1.5-1.5h-11C5.67 10 5 10.67 5 11.5v3c0 .83.67 1.5 1.5 1.5z"/>
+        </svg>
+      </div>
+      <h1>Välkommen till ByggPilot</h1>
+      <p>Din digitala kollega i byggbranschen. Logga in för att komma igång med att effektivisera ditt arbete.</p>
+      <div className="logged-out-actions">
+        <button className="google-signin-btn" onClick={handleGoogleSignIn} disabled={isConnecting}>
+          <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google logo" />
+          <span>{isConnecting ? 'Ansluter...' : 'Logga in med Google'}</span>
+        </button>
+        <button className="btn" onClick={toggleDemoMode}>
+          Testa Demo
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <React.Fragment>
+      <style jsx global>{`
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+        :root {
+          --background-color: #121212;
+          --secondary-bg: #1A1A1A;
+          --card-bg: #242424;
+          --text-color: #EAEAEA;
+          --text-muted: #AAAAAA;
+          --primary-accent: #00BFFF;
+          --primary-accent-hover: #00A8E0;
+          --border-color: #333333;
+          --status-green: #28a745;
+          --status-yellow: #ffc107;
+          --status-red: #dc3545;
+          --glow-color: rgba(0, 191, 255, 0.4);
+          --input-glow: 0 0 8px var(--glow-color);
+          --font-family: 'Poppins', sans-serif;
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+          font-family: var(--font-family);
+          background-color: var(--background-color);
+          color: var(--text-color);
+          display: flex;
+          height: 100vh;
+          overflow: hidden;
+        }
+
+        .app-layout { display: flex; width: 100%; height: 100%; }
+
+        .sidebar {
+          width: 260px;
+          background-color: var(--secondary-bg);
+          border-right: 1px solid var(--border-color);
+          display: flex;
+          flex-direction: column;
+          padding: 1rem;
+          z-index: 20;
+          transition: transform 0.3s ease-in-out;
+        }
+
+        .sidebar-header {
+          padding: 0.5rem 0.5rem 1.5rem 0.5rem;
+          display: flex;
+          align-items: center;
+          gap: 0.8rem;
+          color: var(--text-color);
+          font-size: 1.2rem;
+          font-weight: 600;
+        }
+
+        .logo-icon { width: 32px; height: 32px; color: var(--primary-accent); }
+
+        .sidebar-nav { flex-grow: 1; overflow-y: auto; }
+        .sidebar-nav ul, .sidebar-footer ul { list-style: none; }
+
+        .sidebar-nav a, .sidebar-footer a {
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          padding: 0.8rem 1rem;
+          border-radius: 6px;
+          text-decoration: none;
+          color: var(--text-muted);
+          font-weight: 500;
+          transition: all 0.2s ease;
+        }
+
+        .sidebar-nav a:hover, .sidebar-footer a:hover {
+          background-color: var(--card-bg);
+          color: var(--text-color);
+        }
+
+        .sidebar-nav a.active {
+          background-color: var(--primary-accent);
+          color: #000;
+          box-shadow: 0 0 15px var(--glow-color);
+        }
+
+        .sidebar-footer {
+          margin-top: auto;
+          padding-top: 1rem;
+          border-top: 1px solid var(--border-color);
+        }
+
+        .user-profile-menu-container { position: relative; }
+
+        .user-profile-summary {
+          display: flex;
+          align-items: center;
+          gap: 0.8rem;
+          padding: 0.8rem;
+          border-radius: 6px;
+          cursor: pointer;
+          transition: background-color 0.2s ease;
+        }
+
+        .user-profile-summary:hover { background-color: var(--card-bg); }
+
+        .user-avatar {
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          background-color: var(--primary-accent);
+          color: #000;
+          display: grid;
+          place-items: center;
+          font-weight: 600;
+        }
+
+        .user-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+
+        .user-profile-summary span { color: var(--text-color); }
+        .user-profile-summary .material-symbols-outlined { margin-left: auto; color: var(--text-muted); }
+
+        .dropdown-menu {
+          position: absolute;
+          bottom: 110%;
+          left: 0;
+          width: 100%;
+          background-color: var(--card-bg);
+          border: 1px solid var(--border-color);
+          border-radius: 6px;
+          padding: 0.5rem 0;
+          opacity: 0;
+          visibility: hidden;
+          transform: translateY(10px);
+          transition: all 0.2s ease;
+          z-index: 25;
+        }
+
+        .dropdown-menu.show { opacity: 1; visibility: visible; transform: translateY(0); }
+
+        .dropdown-divider { height: 1px; background-color: var(--border-color); margin: 0.5rem 0; }
+
+        .dropdown-header {
+          padding: 0.3rem 1rem;
+          font-size: 0.75rem;
+          color: var(--text-muted);
+          font-weight: 600;
+          text-transform: uppercase;
+        }
+
+        .dropdown-item {
+          display: flex;
+          align-items: center;
+          gap: 0.8rem;
+          padding: 0.7rem 1rem;
+          color: var(--text-muted);
+          cursor: pointer;
+        }
+
+        .dropdown-item:hover { background-color: var(--secondary-bg); color: var(--text-color); }
+
+        .main-content {
+          flex-grow: 1;
+          display: flex;
+          flex-direction: column;
+          height: 100vh;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .main-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 1rem 2rem;
+          background-color: var(--secondary-bg);
+          border-bottom: 1px solid var(--border-color);
+          min-height: 80px;
+        }
+
+        .hamburger-menu { display: none; }
+
+        .header-title .greeting { font-size: 1.5rem; color: var(--text-color); }
+        .header-title .sub-greeting { color: var(--text-muted); margin-top: 0.25rem; }
+
+        .header-actions { display: flex; align-items: center; gap: 1rem; }
+
+        .page-content {
+          flex-grow: 1; 
+          padding: 2rem; 
+          overflow-y: auto; 
+          transition: opacity 0.4s ease, filter 0.4s ease;
+          background-image: url("data:image/svg+xml,%3Csvg width='300' height='300' viewBox='0 0 300 300' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='b' patternUnits='userSpaceOnUse' width='300' height='300'%3E%3Crect width='300' height='300' fill='rgba(18,18,18,0.95)'/%3E%3Cpath d='M0 15h300 M0 30h300 M0 45h300 M0 60h300 M0 75h300 M0 90h300 M0 105h300 M0 120h300 M0 135h300 M0 150h300 M0 165h300 M0 180h300 M0 195h300 M0 210h300 M0 225h300 M0 240h300 M0 255h300 M0 270h300 M0 285h300 M15 0v300 M30 0v300 M45 0v300 M60 0v300 M75 0v300 M90 0v300 M105 0v300 M120 0v300 M135 0v300 M150 0v300 M165 0v300 M180 0v300 M195 0v300 M210 0v300 M225 0v300 M240 0v300 M255 0v300 M270 0v300 M285 0v300' stroke-width='0.1' stroke='rgba(190, 200, 210, 0.06)'/%3E%3Cpath d='M0 75h300 M0 150h300 M0 225h300 M75 0v300 M150 0v300 M225 0v300' stroke-width='0.15' stroke='rgba(190, 200, 210, 0.08)'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23b)'/%3E%3C/svg%3E");
+        }
+
+        .page-content.hidden-by-chat { opacity: 0.2; filter: blur(2px); pointer-events: none; }
+
+        .btn {
+          background-color: var(--card-bg);
+          color: var(--text-color);
+          border: 1px solid var(--border-color);
+          padding: 0.6rem 1.2rem;
+          border-radius: 6px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          font-weight: 500;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+          text-decoration: none;
+        }
+
+        .btn:hover { background-color: #383838; }
+
+        .btn-primary {
+          background-color: var(--primary-accent);
+          color: #000;
+          border-color: var(--primary-accent);
+        }
+
+        .btn-primary:hover {
+          background-color: var(--primary-accent-hover);
+          border-color: var(--primary-accent-hover);
+        }
+
+        .btn-danger {
+          background-color: var(--status-red);
+          color: white;
+          border-color: var(--status-red);
+        }
+
+        .btn-sm { font-size: 0.8rem; padding: 0.4rem 0.8rem; }
+        .btn-large { padding: 0.8rem 1.6rem; font-size: 1rem; }
+
+        .icon-btn {
+          background: none;
+          border: none;
+          color: var(--text-muted);
+          cursor: pointer;
+          padding: 0.5rem;
+          border-radius: 6px;
+          transition: all 0.2s ease;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .icon-btn:hover { background-color: var(--card-bg); color: var(--text-color); }
+
+        .google-signin-btn {
+          display: flex;
+          align-items: center;
+          gap: 0.8rem;
+          background-color: white;
+          color: #333;
+          border: 1px solid #ddd;
+          padding: 0.8rem 1.2rem;
+          border-radius: 6px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          font-weight: 500;
+          text-decoration: none;
+        }
+
+        .google-signin-btn:hover {
+          background-color: #f8f9fa;
+          border-color: #ccc;
+        }
+
+        .google-signin-btn img {
+          width: 20px;
+          height: 20px;
+        }
+
+        .form-input {
+          background-color: var(--card-bg);
+          border: 1px solid var(--border-color);
+          color: var(--text-color);
+          padding: 0.8rem 1rem;
+          border-radius: 6px;
+          font-size: 1rem;
+          transition: all 0.3s ease;
+          width: 100%;
+        }
+
+        .form-input:focus {
+          outline: none;
+          border-color: var(--primary-accent);
+          box-shadow: var(--input-glow);
+        }
+
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-weight: 500;}
+
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 var(--glow-color); } 70% { box-shadow: 0 0 0 10px rgba(0, 191, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 191, 255, 0); } }
+
+        #chat-drawer {
+          position: fixed;
+          bottom: 0;
+          right: 0;
+          width: 400px;
+          height: 60px;
+          background-color: var(--secondary-bg);
+          border: 1px solid var(--border-color);
+          border-radius: 12px 12px 0 0;
+          z-index: 1000;
+          transition: height 0.3s ease;
+          box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+        }
+
+        #chat-drawer.expanded {
+          height: 500px;
+        }
+
+        .chat-drawer-content { 
+          display: flex;
+          flex-direction: column;
+          height: 100%;
+          overflow: hidden;
+        }
+
+        #chat-messages { flex-grow: 1; overflow-y: auto; padding: 1.5rem; display: none; }
+        #chat-drawer.expanded #chat-messages { display: block; }
+
+        .chat-message { margin-bottom: 1rem; padding: 0.8rem 1.2rem; border-radius: 12px; max-width: 85%; word-wrap: break-word; line-height: 1.6; }
+        .chat-message p:last-child { margin-bottom: 0; }
+        .chat-message ul, .chat-message ol { padding-left: 1.2rem; }
+        .chat-message.user { background-color: var(--primary-accent); color: #000; margin-left: auto; border-bottom-right-radius: 2px; }
+        .chat-message.ai { background-color: var(--card-bg); color: var(--text-color); margin-right: auto; border-bottom-left-radius: 2px; }
+        .welcome-message { text-align: center; padding: 2rem; color: var(--text-muted); }
+        .chat-message.error-message { background-color: var(--status-red); color: white; }
+
+        #attached-files-preview {
+          display: flex;
+          gap: 0.5rem;
+          padding: 0.5rem;
+          border-top: 1px solid var(--border-color);
+          overflow-x: auto;
+        }
+
+        .file-preview-item { position: relative; }
+        .file-preview-item img { height: 50px; width: 50px; border-radius: 4px; object-fit: cover; }
+        .file-preview-item .remove-file-btn {
+          position: absolute;
+          top: -5px;
+          right: -5px;
+          background-color: var(--status-red);
+          color: white;
+          border: none;
+          border-radius: 50%;
+          width: 20px;
+          height: 20px;
+          cursor: pointer;
+          font-size: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        #chat-drawer.expanded #attached-files-preview {
+          display: flex;
+        }
+
+        #attached-files-preview {
+          display: none;
+        }
+
+        .chat-input-wrapper { padding: 1rem 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); margin-top: auto; }
+        .chat-input-container {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
