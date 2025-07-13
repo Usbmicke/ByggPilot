@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { getFirestore, collection, query, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, orderBy } from 'firebase/firestore';
 import './index.css';
 
@@ -28,6 +28,16 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
+// Konfigurera Google Provider för optimal popup-funktionalitet
+provider.setCustomParameters({
+  prompt: 'select_account',
+  hd: '', // Tillåt alla domäner
+});
+
+// Lägg till extra debugging för OAuth
+console.log('Current window.location.origin:', window.location.origin);
+console.log('Auth domain from config:', firebaseConfig.authDomain);
+
 // Add Google scopes for ByggPilot integration
 provider.addScope('https://www.googleapis.com/auth/calendar');
 provider.addScope('https://www.googleapis.com/auth/gmail.modify');
@@ -36,7 +46,7 @@ provider.addScope('https://www.googleapis.com/auth/drive');
 provider.addScope('https://www.googleapis.com/auth/userinfo.profile');
 provider.addScope('https://www.googleapis.com/auth/userinfo.email');
 
-console.log('Firebase auth och provider konfigurerade');
+console.log('Firebase auth och provider konfigurerade för popup-inloggning');
 
 // ByggPilot AI Master Prompt - Version 6.0
 const BYGGPILOT_PROMPT = `ByggPilot v6.0
@@ -203,6 +213,34 @@ export default function ByggPilotApp() {
     return () => unsubscribe();
   }, []);
 
+  // Check for redirect result on app load
+  useEffect(() => {
+    const checkRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+          console.log('Google redirect sign-in successful:', result.user);
+          
+          // Stäng av demo-läget när inloggning lyckas
+          setIsDemoMode(false);
+          
+          // Lägg till meddelande om lyckad inloggning
+          const welcomeMessage = {
+            id: Date.now().toString(),
+            text: `Välkommen ${result.user.displayName?.split(' ')[0] || 'tillbaka'}! Nu är du inloggad och kan synkronisera dina projekt och uppgifter.`,
+            isUser: false,
+            timestamp: new Date()
+          };
+          setMessages(prev => [...prev, welcomeMessage]);
+        }
+      } catch (error) {
+        console.error('Redirect result error:', error);
+      }
+    };
+    
+    checkRedirectResult();
+  }, []);
+
   // Load user projects from Firestore
   useEffect(() => {
     if (!user) {
@@ -365,13 +403,37 @@ export default function ByggPilotApp() {
 
   const handleGoogleSignIn = async () => {
     setIsConnecting(true);
+    console.log('=== Google Sign-In Debug Info ===');
+    console.log('Current window.location:', window.location.href);
+    console.log('Current domain:', window.location.hostname);
+    console.log('Firebase Auth Domain:', firebaseConfig.authDomain);
+    console.log('Firebase Project ID:', firebaseConfig.projectId);
+    
     try {
       console.log('Försöker logga in med Google...');
       console.log('Firebase Auth:', auth);
       console.log('Google Provider:', provider);
       
-      // Sätt upp popup-fönstret korrekt
-      const result = await signInWithPopup(auth, provider);
+      // Konfigurera provider för popup
+      provider.setCustomParameters({
+        prompt: 'select_account'
+      });
+      
+      // Använd popup direkt - mer aggressiv popup-strategi
+      console.log('Försöker popup-inloggning...');
+      
+      // Använd setTimeout för att säkerställa att popup triggas från user click
+      const result = await new Promise<any>((resolve, reject) => {
+        setTimeout(async () => {
+          try {
+            const authResult = await signInWithPopup(auth, provider);
+            resolve(authResult);
+          } catch (error) {
+            reject(error);
+          }
+        }, 100);
+      });
+      
       console.log('Google sign-in successful:', result.user);
       console.log('User email:', result.user.email);
       console.log('User name:', result.user.displayName);
@@ -396,13 +458,19 @@ export default function ByggPilotApp() {
       // Visa specifikt felmeddelande till användaren
       let errorMessage = 'Kunde inte logga in med Google. ';
       if (error.code === 'auth/popup-blocked') {
-        errorMessage += 'Popup-fönstret blockerades av webbläsaren. Tillåt popup-fönster för denna sida.';
+        errorMessage += 'Popup-fönstret blockerades av webbläsaren. Kontrollera att popup-blockerare är avstängd för denna sida. Kolla efter en ikon i adressfältet och klicka för att tillåta popup-fönster.';
       } else if (error.code === 'auth/popup-closed-by-user') {
-        errorMessage += 'Inloggningsfönstret stängdes innan inloggningen var klar.';
+        errorMessage += 'Inloggningsfönstret stängdes innan inloggningen var klar. Försök igen.';
       } else if (error.code === 'auth/cancelled-popup-request') {
-        errorMessage += 'En annan inloggning pågår redan.';
+        errorMessage += 'En annan inloggning pågår redan. Vänta ett ögonblick och försök igen.';
+      } else if (error.code === 'auth/unauthorized-domain') {
+        errorMessage += 'Denna domän (localhost:5173) är inte auktoriserad för Google-inloggning. För utveckling, använd Demo-läget nedan.';
+      } else if (error.code === 'auth/operation-not-allowed') {
+        errorMessage += 'Google-inloggning är inte aktiverat för detta projekt. Använd Demo-läget för utveckling.';
+      } else if (error.message.toLowerCase().includes('utvecklare') || error.message.toLowerCase().includes('developer')) {
+        errorMessage += 'Firebase accepterar inte localhost-domäner. Använd Demo-läget för utveckling.';
       } else {
-        errorMessage += 'Försök igen senare.';
+        errorMessage += `Tekniskt fel: ${error.message}. Försök igen senare.`;
       }
       
       const errorMessageObj = {
@@ -491,6 +559,40 @@ export default function ByggPilotApp() {
     const minutes = String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0');
     const seconds = String(elapsed % 60).padStart(2, '0');
     return `${hours}:${minutes}:${seconds}`;
+  };
+
+  // Funktion för tidsanpassade hälsningar
+  const getTimeBasedGreeting = () => {
+    const hour = new Date().getHours();
+    
+    if (hour >= 5 && hour < 10) {
+      return "God morgon!";
+    } else if (hour >= 10 && hour < 12) {
+      return "God förmiddag!";
+    } else if (hour >= 12 && hour < 17) {
+      return "God eftermiddag!";
+    } else if (hour >= 17 && hour < 22) {
+      return "God kväll!";
+    } else {
+      return "God natt!";
+    }
+  };
+
+  // Funktion för välkomstmeddelande baserat på tid
+  const getWelcomeSubtitle = () => {
+    const hour = new Date().getHours();
+    
+    if (hour >= 5 && hour < 10) {
+      return "Här är en översikt över dina projekt och dagens aktiviteter. Dags att sätta igång!";
+    } else if (hour >= 10 && hour < 12) {
+      return "Här är en översikt över dina projekt och aktiviteter. Hur går morgonens arbete?";
+    } else if (hour >= 12 && hour < 17) {
+      return "Här är en översikt över dina projekt och aktiviteter. Hur går dagen?";
+    } else if (hour >= 17 && hour < 22) {
+      return "Här är en översikt över dina projekt och aktiviteter. Dags att summera dagen!";
+    } else {
+      return "Här är en översikt över dina projekt och aktiviteter. Vila gott!";
+    }
   };
 
   // Function to create a new project
@@ -833,8 +935,8 @@ export default function ByggPilotApp() {
           <path d="M22 10.5V12h-2v-1.5c0-2.06-1.35-3.83-3.27-4.58l-1.32-.51-.49-1.4A5.002 5.002 0 0 0 10.23 2H10c-2.76 0-5 2.24-5 5v1.5c0 .83.67 1.5 1.5 1.5S8 9.33 8 8.5V7c0-1.1.9-2 2-2h.23c1.12 0 2.1.75 2.47 1.81l.49 1.4 1.32.51C16.65 9.17 18 10.94 18 13v1.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V13h2v-1.5c0-1.74-1.43-3.15-3.17-3.15A3.18 3.18 0 0 0 18 10.5zM12 22a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2zM6.5 16h11c.83 0 1.5-.67 1.5-1.5v-3c0-.83-.67-1.5-1.5-1.5h-11C5.67 10 5 10.67 5 11.5v3c0 .83.67 1.5 1.5 1.5z"/>
         </svg>
       </div>
-      <h1>Välkommen till ByggPilot</h1>
-      <p>Din digitala kollega i byggbranschen. Logga in för att komma igång med att effektivisera ditt arbete.</p>
+      <h1 className="dashboard-header">{getTimeBasedGreeting()}</h1>
+      <p className="dashboard-subtitle">{getWelcomeSubtitle()}</p>
       <div className="logged-out-actions">
         <button className="google-signin-btn" onClick={handleGoogleSignIn} disabled={isConnecting}>
           <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: '8px' }}>
@@ -843,8 +945,13 @@ export default function ByggPilotApp() {
             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
           </svg>
-          <span>{isConnecting ? 'Ansluter...' : 'Logga in med Google'}</span>
+          <span>{isConnecting ? 'Öppnar inloggning...' : 'Logga in med Google'}</span>
         </button>
+        {!isConnecting && (
+          <p style={{ fontSize: '12px', color: '#666', marginTop: '5px', textAlign: 'center' }}>
+            Om popup-fönster inte öppnas, kontrollera att popup-blockerare är avstängd
+          </p>
+        )}
         <button className="google-signin-btn" onClick={() => setIsDemoMode(true)}>
           Fortsätt i Demo-läge
         </button>
@@ -1721,10 +1828,10 @@ export default function ByggPilotApp() {
           <div className="main-header">
             <div className="header-title">
               <div className="greeting">
-                {user ? `Hej ${user.displayName?.split(' ')[0] || 'där'}!` : 'Välkommen till ByggPilot'}
+                {user ? `${getTimeBasedGreeting()} ${user.displayName?.split(' ')[0] || 'där'}!` : getTimeBasedGreeting()}
               </div>
               <div className="sub-greeting">
-                {user ? 'Vad ska vi få gjort idag?' : 'Din digitala kollega i byggbranschen'}
+                {user ? getWelcomeSubtitle() : 'Din digitala kollega i byggbranschen'}
               </div>
             </div>
             <div className="header-actions">
@@ -1736,8 +1843,13 @@ export default function ByggPilotApp() {
                     <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                     <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                   </svg>
-                  <span>{isConnecting ? 'Ansluter...' : 'Logga in med Google'}</span>
+                  <span>{isConnecting ? 'Öppnar inloggning...' : 'Logga in med Google'}</span>
                 </button>
+              )}
+              {isDemoMode && !user && !isConnecting && (
+                <p style={{ fontSize: '11px', color: '#666', marginTop: '3px', textAlign: 'center' }}>
+                  Om popup-fönster inte öppnas, kontrollera popup-blockerare
+                </p>
               )}
               {isDemoMode && (
                 <div className="demo-mode-banner">

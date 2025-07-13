@@ -5,8 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:domain": "echo 'Startar ByggPilot på http://byggpilot.dev:5173' && vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "setup-domain": "powershell -ExecutionPolicy Bypass -File ./setup-dev-domain.ps1"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
