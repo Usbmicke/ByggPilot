@@ -1,0 +1,8 @@
+# Fil: netlify.toml
+
+# Detta talar om för Netlify att den här funktionen ska köras enligt ett schema.
+# Namnet "skicka-dagsrapport" måste exakt matcha filnamnet på din funktion.
+[functions."skicka-dagsrapport"]
+  # Cron-syntax för "varje dag klockan 16:00".
+  # Minut(0) Timme(16) Dag(*) Månad(*) Veckodag(*)
+  schedule = "0 16 * * *"
