@@ -1,16 +1,27 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { initializeApp } from 'firebase/app';
-import { 
-  getAuth, 
-  GoogleAuthProvider, 
-  signInWithPopup, 
+import React, { useState, useEffect, useRef, ChangeEvent, FormEvent } from "react";
+import { createRoot } from "react-dom/client";
+import { initializeApp } from "firebase/app";
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
   signOut,
   onAuthStateChanged,
-} from 'firebase/auth';
-import { 
-  getFirestore, doc, setDoc, getDoc, collection, 
-  query, getDocs, addDoc, updateDoc, deleteDoc, writeBatch, serverTimestamp 
-} from 'firebase/firestore';
+} from "firebase/auth";
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  getDoc,
+  collection,
+  query,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  writeBatch,
+  serverTimestamp,
+} from "firebase/firestore";
 
 // Firebase configuration from environment variables
 const firebaseConfig = {
@@ -19,7 +30,9 @@ const firebaseConfig = {
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || process.env.REACT_APP_FIREBASE_APP_ID
+  appId:
+    import.meta.env.VITE_FIREBASE_APP_ID ||
+    process.env.REACT_APP_FIREBASE_APP_ID,
 };
 
 const app = initializeApp(firebaseConfig);
@@ -94,7 +107,7 @@ interface Project {
   customer: string;
   deadline: string;
   progress: number;
-  status: 'green' | 'yellow' | 'red';
+  status: "green" | "yellow" | "red";
 }
 
 interface Task {
@@ -105,7 +118,7 @@ interface Task {
 
 interface AppEvent {
   id: string;
-  type: 'mail' | 'calendar' | 'file';
+  type: "mail" | "calendar" | "file";
   icon: string;
   title: string;
   subtitle: string;
@@ -115,45 +128,91 @@ interface AppEvent {
 export default function ByggPilotApp() {
   const [user, setUser] = useState<User | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleConnected, setIsGoogleConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
-  const [currentView, setCurrentView] = useState('dashboard');
+  const [currentView, setCurrentView] = useState("dashboard");
   const [isChatExpanded, setIsChatExpanded] = useState(false);
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [projects, setProjects] = useState<Project[]>([
-    { id: '1', name: 'Villa Nygren', customer: 'Familjen Nygren', deadline: '2024-06-15', progress: 75, status: 'green' },
-    { id: '2', name: 'Kontorsrenovering', customer: 'TechCorp AB', deadline: '2024-05-30', progress: 45, status: 'yellow' },
-    { id: '3', name: 'Badrumsrenovering', customer: 'Anna Andersson', deadline: '2024-04-20', progress: 90, status: 'green' }
+    {
+      id: "1",
+      name: "Villa Nygren",
+      customer: "Familjen Nygren",
+      deadline: "2024-06-15",
+      progress: 75,
+      status: "green",
+    },
+    {
+      id: "2",
+      name: "Kontorsrenovering",
+      customer: "TechCorp AB",
+      deadline: "2024-05-30",
+      progress: 45,
+      status: "yellow",
+    },
+    {
+      id: "3",
+      name: "Badrumsrenovering",
+      customer: "Anna Andersson",
+      deadline: "2024-04-20",
+      progress: 90,
+      status: "green",
+    },
   ]);
   const [tasks, setTasks] = useState<Task[]>([
-    { id: '1', text: 'Beställ material för Villa Nygren', completed: false },
-    { id: '2', text: 'Boka inspektion för kontorsrenovering', completed: true },
-    { id: '3', text: 'Skicka faktura till Anna Andersson', completed: false }
+    { id: "1", text: "Beställ material för Villa Nygren", completed: false },
+    { id: "2", text: "Boka inspektion för kontorsrenovering", completed: true },
+    { id: "3", text: "Skicka faktura till Anna Andersson", completed: false },
   ]);
   const [events, setEvents] = useState<AppEvent[]>([
-    { id: '1', type: 'mail', icon: 'mail', title: 'Ny offert från Beijer', subtitle: 'Fönster och dörrar', link: '#' },
-    { id: '2', type: 'calendar', icon: 'event', title: 'Möte med kund', subtitle: 'Idag 14:00', link: '#' },
-    { id: '3', type: 'file', icon: 'description', title: 'Ritningar uppdaterade', subtitle: 'Villa Nygren', link: '#' }
+    {
+      id: "1",
+      type: "mail",
+      icon: "mail",
+      title: "Ny offert från Beijer",
+      subtitle: "Fönster och dörrar",
+      link: "#",
+    },
+    {
+      id: "2",
+      type: "calendar",
+      icon: "event",
+      title: "Möte med kund",
+      subtitle: "Idag 14:00",
+      link: "#",
+    },
+    {
+      id: "3",
+      type: "file",
+      icon: "description",
+      title: "Ritningar uppdaterade",
+      subtitle: "Villa Nygren",
+      link: "#",
+    },
   ]);
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
-  const [activeTimer, setActiveTimer] = useState<{ projectId: string | null; startTime: number | null; intervalId: number | null }>({ projectId: null, startTime: null, intervalId: null });
+  const [activeTimer, setActiveTimer] = useState<{
+    projectId: string | null;
+    startTime: number | null;
+    intervalId: number | null;
+  }>({ projectId: null, startTime: null, intervalId: null });
   const [settings, setSettings] = useState({
     showTimeLogger: true,
     showTaskList: true,
     showEvents: true,
-    showOnboardingChecklist: true
+    showOnboardingChecklist: true,
   });
   const [onboarding, setOnboarding] = useState({
     completed: false,
-    step: 'welcome' as 'welcome' | 'create_project' | 'done',
-    role: null as string | null
+    step: "welcome" as "welcome" | "create_project" | "done",
+    role: null as string | null,
   });
   const [onboardingChecklist, setOnboardingChecklist] = useState({
     createdProject: false,
     connectedGoogle: false,
-    loggedTime: false
+    loggedTime: false,
   });
 
   const chatMessagesRef = useRef<HTMLDivElement>(null);
@@ -162,12 +221,14 @@ export default function ByggPilotApp() {
   // Initialize with ByggPilot's welcome message
   useEffect(() => {
     if (messages.length === 0) {
-      setMessages([{
-        id: '1',
-        text: 'Hej! ByggPilot här, din digitala kollega. Vad kan jag hjälpa dig med idag?',
-        isUser: false,
-        timestamp: new Date()
-      }]);
+      setMessages([
+        {
+          id: "1",
+          text: "Hej! ByggPilot här, din digitala kollega. Vad kan jag hjälpa dig med idag?",
+          isUser: false,
+          timestamp: new Date(),
+        },
+      ]);
     }
   }, []);
 
@@ -177,12 +238,12 @@ export default function ByggPilotApp() {
       if (firebaseUser) {
         setUser({
           uid: firebaseUser.uid,
-          email: firebaseUser.email || '',
-          displayName: firebaseUser.displayName || '',
-          photoURL: firebaseUser.photoURL || undefined
+          email: firebaseUser.email || "",
+          displayName: firebaseUser.displayName || "",
+          photoURL: firebaseUser.photoURL || undefined,
         });
         setIsGoogleConnected(true);
-        setOnboardingChecklist(prev => ({ ...prev, connectedGoogle: true }));
+        setOnboardingChecklist((prev) => ({ ...prev, connectedGoogle: true }));
       } else {
         setUser(null);
         setIsGoogleConnected(false);
@@ -201,53 +262,53 @@ export default function ByggPilotApp() {
   const handleSendMessage = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!inputValue.trim()) return;
-    
+
     const userMessage: Message = {
       id: Date.now().toString(),
       text: inputValue,
       isUser: true,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
     setMessages((prev: Message[]) => [...prev, userMessage]);
-    setInputValue('');
+    setInputValue("");
     setIsLoading(true);
-    
+
     try {
-      const response = await fetch('/.netlify/functions/chatt', {
-        method: 'POST',
+      const response = await fetch("/.netlify/functions/chatt", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           message: inputValue,
           systemPrompt: BYGGPILOT_PROMPT,
           userContext: {
             isGoogleConnected,
-            userRole: user?.displayName || 'Användare',
+            userRole: user?.displayName || "Användare",
             projects: projects,
-            currentView: currentView
-          }
+            currentView: currentView,
+          },
         }),
       });
-      
+
       if (!response.ok) {
-        throw new Error('Något gick fel med serveranropet.');
+        throw new Error("Något gick fel med serveranropet.");
       }
-      
+
       const data = await response.json();
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         text: data.reply,
         isUser: false,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
       setMessages((prev: Message[]) => [...prev, aiMessage]);
     } catch (err) {
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: 'Kunde inte få svar från ByggPilot. Försök igen.',
+        text: "Kunde inte få svar från ByggPilot. Försök igen.",
         isUser: false,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
       setMessages((prev: Message[]) => [...prev, errorMessage]);
     } finally {
@@ -260,7 +321,7 @@ export default function ByggPilotApp() {
     try {
       await signInWithPopup(auth, provider);
     } catch (error) {
-      console.error('Google sign-in error:', error);
+      console.error("Google sign-in error:", error);
     } finally {
       setIsConnecting(false);
     }
@@ -271,25 +332,27 @@ export default function ByggPilotApp() {
       await signOut(auth);
       setUser(null);
       setIsGoogleConnected(false);
-      setMessages([{
-        id: '1',
-        text: 'Hej! ByggPilot här, din digitala kollega. Vad kan jag hjälpa dig med idag?',
-        isUser: false,
-        timestamp: new Date()
-      }]);
+      setMessages([
+        {
+          id: "1",
+          text: "Hej! ByggPilot här, din digitala kollega. Vad kan jag hjälpa dig med idag?",
+          isUser: false,
+          timestamp: new Date(),
+        },
+      ]);
     } catch (error) {
-      console.error('Sign out error:', error);
+      console.error("Sign out error:", error);
     }
   };
 
   const handleFileAttachment = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
-      setAttachedFiles(prev => [...prev, ...Array.from(event.target.files!)]);
+      setAttachedFiles((prev) => [...prev, ...Array.from(event.target.files!)]);
     }
   };
 
   const removeAttachedFile = (fileName: string) => {
-    setAttachedFiles(prev => prev.filter(f => f.name !== fileName));
+    setAttachedFiles((prev) => prev.filter((f) => f.name !== fileName));
   };
 
   const toggleChat = () => {
@@ -301,22 +364,24 @@ export default function ByggPilotApp() {
   };
 
   const handleTaskToggle = (taskId: string) => {
-    setTasks(prev => prev.map(task => 
-      task.id === taskId ? { ...task, completed: !task.completed } : task
-    ));
+    setTasks((prev) =>
+      prev.map((task) =>
+        task.id === taskId ? { ...task, completed: !task.completed } : task
+      )
+    );
   };
 
   const startTimer = (projectId: string) => {
     if (activeTimer.intervalId) return;
-    
+
     const intervalId = window.setInterval(() => {
       setActiveTimer((prev: any) => ({ ...prev }));
     }, 1000);
-    
+
     setActiveTimer({
       projectId,
       startTime: Date.now(),
-      intervalId
+      intervalId,
     });
   };
 
@@ -330,9 +395,9 @@ export default function ByggPilotApp() {
   const getTimerDisplay = () => {
     if (!activeTimer.startTime) return "00:00:00";
     const elapsed = Math.floor((Date.now() - activeTimer.startTime) / 1000);
-    const hours = String(Math.floor(elapsed / 3600)).padStart(2, '0');
-    const minutes = String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0');
-    const seconds = String(elapsed % 60).padStart(2, '0');
+    const hours = String(Math.floor(elapsed / 3600)).padStart(2, "0");
+    const minutes = String(Math.floor((elapsed % 3600) / 60)).padStart(2, "0");
+    const seconds = String(elapsed % 60).padStart(2, "0");
     return `${hours}:${minutes}:${seconds}`;
   };
 
@@ -342,17 +407,24 @@ export default function ByggPilotApp() {
         <div className="widget">
           <div className="widget-header">
             <h2>Projektöversikt</h2>
-            <button className="btn btn-sm" onClick={() => setCurrentView('projects')}>
+            <button
+              className="btn btn-sm"
+              onClick={() => setCurrentView("projects")}
+            >
               Visa alla
             </button>
           </div>
           <div className="project-grid">
-            {projects.map(project => (
+            {projects.map((project) => (
               <div key={project.id} className="project-card">
                 <div className="project-card-header">
                   <h3 className="project-name">{project.name}</h3>
                   <div className={`status-tag status-${project.status}`}>
-                    {project.status === 'green' ? 'I fas' : project.status === 'yellow' ? 'Försenat' : 'Kritisk'}
+                    {project.status === "green"
+                      ? "I fas"
+                      : project.status === "yellow"
+                      ? "Försenat"
+                      : "Kritisk"}
                   </div>
                 </div>
                 <p className="customer-name">{project.customer}</p>
@@ -360,7 +432,10 @@ export default function ByggPilotApp() {
                   <div className="progress-display">
                     <span className="progress-percentage">{project.progress}%</span>
                     <div className="progress-bar">
-                      <div className="progress-bar-inner" style={{ width: `${project.progress}%` }}></div>
+                      <div
+                        className="progress-bar-inner"
+                        style={{ width: `${project.progress}%` }}
+                      ></div>
                     </div>
                   </div>
                   <div className="project-deadline">
@@ -388,7 +463,10 @@ export default function ByggPilotApp() {
                     checked={task.completed}
                     onChange={() => handleTaskToggle(task.id)}
                   />
-                  <label htmlFor={task.id} className={task.completed ? 'completed' : ''}>
+                  <label
+                    htmlFor={task.id}
+                    className={task.completed ? "completed" : ""}
+                  >
                     {task.text}
                   </label>
                 </li>
@@ -405,19 +483,21 @@ export default function ByggPilotApp() {
               <h2>Tidloggare</h2>
             </div>
             <div className="timer-display">{getTimerDisplay()}</div>
-            <select id="project-select" className="form-input" style={{ marginBottom: '1rem' }}>
+            <select id="project-select" className="form-input" style={{ marginBottom: "1rem" }}>
               <option value="">Välj projekt</option>
-              {projects.map(project => (
-                <option key={project.id} value={project.id}>{project.name}</option>
+              {projects.map((project) => (
+                <option key={project.id} value={project.id}>
+                  {project.name}
+                </option>
               ))}
             </select>
             <button
               id="timer-toggle-button"
-              className={`btn ${activeTimer.intervalId ? 'btn-danger' : 'btn-primary'}`}
-              onClick={() => activeTimer.intervalId ? stopTimer() : startTimer('1')}
-              style={{ width: '100%' }}
+              className={`btn ${activeTimer.intervalId ? "btn-danger" : "btn-primary"}`}
+              onClick={() => (activeTimer.intervalId ? stopTimer() : startTimer("1"))}
+              style={{ width: "100%" }}
             >
-              {activeTimer.intervalId ? 'Stoppa' : 'Starta'}
+              {activeTimer.intervalId ? "Stoppa" : "Starta"}
             </button>
           </div>
         )}
@@ -428,7 +508,7 @@ export default function ByggPilotApp() {
               <h2>Senaste aktiviteter</h2>
             </div>
             <ul className="event-list">
-              {events.map(event => (
+              {events.map((event) => (
                 <li key={event.id} className="event-item">
                   <div className="event-icon-container">
                     <span className="material-symbols-outlined">{event.icon}</span>
@@ -450,15 +530,30 @@ export default function ByggPilotApp() {
             </div>
             <ul className="task-list">
               <li className="task-item">
-                <input type="checkbox" id="onboarding-1" checked={onboardingChecklist.createdProject} readOnly />
+                <input
+                  type="checkbox"
+                  id="onboarding-1"
+                  checked={onboardingChecklist.createdProject}
+                  readOnly
+                />
                 <label htmlFor="onboarding-1">Skapa ditt första projekt</label>
               </li>
               <li className="task-item">
-                <input type="checkbox" id="onboarding-2" checked={onboardingChecklist.connectedGoogle} readOnly />
+                <input
+                  type="checkbox"
+                  id="onboarding-2"
+                  checked={onboardingChecklist.connectedGoogle}
+                  readOnly
+                />
                 <label htmlFor="onboarding-2">Anslut Google Workspace</label>
               </li>
               <li className="task-item">
-                <input type="checkbox" id="onboarding-3" checked={onboardingChecklist.loggedTime} readOnly />
+                <input
+                  type="checkbox"
+                  id="onboarding-3"
+                  checked={onboardingChecklist.loggedTime}
+                  readOnly
+                />
                 <label htmlFor="onboarding-3">Logga tid för första gången</label>
               </li>
             </ul>
@@ -471,14 +566,33 @@ export default function ByggPilotApp() {
   const renderLoggedOutView = () => (
     <div className="logged-out-view">
       <div className="logo-icon-large">
-        <img src="/assets/Gemini_Generated_Image_nmr3penmr3penmr3.jpg" alt="ByggPilot logotyp" style={{ maxWidth: '120px', maxHeight: '120px', display: 'block', margin: '0 auto' }} />
+        <img
+          src="/assets/Gemini_Generated_Image_nmr3penmr3penmr3.jpg"
+          alt="ByggPilot logotyp"
+          style={{
+            maxWidth: "120px",
+            maxHeight: "120px",
+            display: "block",
+            margin: "0 auto",
+          }}
+        />
       </div>
       <h1>Välkommen till ByggPilot</h1>
-      <p>Din digitala kollega i byggbranschen. Logga in för att komma igång med att effektivisera ditt arbete.</p>
+      <p>
+        Din digitala kollega i byggbranschen. Logga in för att komma igång med att
+        effektivisera ditt arbete.
+      </p>
       <div className="logged-out-actions">
-        <button className="google-signin-btn" onClick={handleGoogleSignIn} disabled={isConnecting}>
-          <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google logo" />
-          <span>{isConnecting ? 'Ansluter...' : 'Logga in med Google'}</span>
+        <button
+          className="google-signin-btn"
+          onClick={handleGoogleSignIn}
+          disabled={isConnecting}
+        >
+          <img
+            src="https://developers.google.com/identity/images/g-logo.png"
+            alt="Google logo"
+          />
+          <span>{isConnecting ? "Ansluter..." : "Logga in med Google"}</span>
         </button>
         <button className="btn" onClick={toggleDemoMode}>
           Testa Demo
@@ -859,8 +973,280 @@ export default function ByggPilotApp() {
           display: flex;
           align-items: center;
           gap: 0.5rem;
-        `}</style>
+        }
+
+        .emoji-picker {
+          position: absolute;
+          bottom: 70px;
+          right: 20px;
+          background-color: var(--card-bg);
+          border: 1px solid var(--border-color);
+          border-radius: 8px;
+          padding: 0.5rem;
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+          z-index: 2000;
+          display: none;
+        }
+
+        .emoji-picker.show {
+          display: block;
+        }
+
+        .emoji-category {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0.5rem;
+          cursor: pointer;
+          transition: background-color 0.2s ease;
+        }
+
+        .emoji-category:hover {
+          background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .emoji-list {
+          display: grid;
+          grid-template-columns: repeat(8, 1fr);
+          gap: 0.2rem;
+          max-height: 200px;
+          overflow-y: auto;
+          padding: 0.5rem 0;
+        }
+
+        .emoji-item {
+          cursor: pointer;
+          font-size: 1.2rem;
+          line-height: 1;
+          transition: transform 0.2s ease;
+        }
+
+        .emoji-item:hover {
+          transform: scale(1.2);
+        }
+
+        .chat-input {
+          flex-grow: 1;
+          padding: 0.8rem 1.2rem;
+          border: 1px solid var(--border-color);
+          border-radius: 6px;
+          background-color: var(--card-bg);
+          color: var(--text-color);
+          font-size: 1rem;
+          transition: all 0.3s ease;
+          position: relative;
+        }
+
+        .chat-input:focus {
+          outline: none;
+          border-color: var(--primary-accent);
+          box-shadow: var(--input-glow);
+        }
+
+        .send-button {
+          background-color: var(--primary-accent);
+          color: #000;
+          border: none;
+          border-radius: 6px;
+          padding: 0.8rem 1.2rem;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          font-weight: 500;
+        }
+
+        .send-button:hover {
+          background-color: var(--primary-accent-hover);
+        }
+
+        .timer-display {
+          font-size: 1.5rem;
+          font-weight: 600;
+          color: var(--text-color);
+          text-align: center;
+          margin: 1rem 0;
+        }
+
+        .progress-display {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-top: 0.5rem;
+        }
+
+        .progress-percentage {
+          font-size: 0.9rem;
+          color: var(--text-muted);
+        }
+
+        .progress-bar {
+          flex-grow: 1;
+          height: 8px;
+          background-color: rgba(255, 255, 255, 0.1);
+          border-radius: 4px;
+          overflow: hidden;
+          margin-left: 0.5rem;
+        }
+
+        .progress-bar-inner {
+          height: 100%;
+          background-color: var(--primary-accent);
+          border-radius: 4px;
+        }
+
+        .status-tag {
+          padding: 0.3rem 0.6rem;
+          border-radius: 12px;
+          font-size: 0.8rem;
+          font-weight: 500;
+          text-transform: uppercase;
+          display: inline-block;
+        }
+
+        .status-green { background-color: rgba(40, 167, 69, 0.1); color: #28a745; }
+        .status-yellow { background-color: rgba(255, 193, 7, 0.1); color: #ffc107; }
+        .status-red { background-color: rgba(220, 53, 69, 0.1); color: #dc3545; }
+
+        .widget {
+          background-color: var(--card-bg);
+          border: 1px solid var(--border-color);
+          border-radius: 8px;
+          margin-bottom: 1.5rem;
+          overflow: hidden;
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .widget:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .widget-header {
+          background-color: rgba(255, 255, 255, 0.05);
+          padding: 1rem;
+          border-bottom: 1px solid var(--border-color);
+        }
+
+        .widget-header h2 {
+          font-size: 1.2rem;
+          font-weight: 500;
+          margin-bottom: 0.5rem;
+        }
+
+        .task-list {
+          padding: 0.8rem 1rem;
+          border-top: 1px solid var(--border-color);
+        }
+
+        .task-item {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.6rem 0;
+          cursor: pointer;
+          transition: background-color 0.2s ease;
+        }
+
+        .task-item:hover {
+          background-color: rgba(255, 255, 255, 0.03);
+        }
+
+        .event-list {
+          padding: 0.8rem 1rem;
+          border-top: 1px solid var(--border-color);
+        }
+
+        .event-item {
+          display: flex;
+          align-items: center;
+          gap: 0.8rem;
+          padding: 0.6rem 0;
+          cursor: pointer;
+          transition: background-color 0.2s ease;
+        }
+
+        .event-item:hover {
+          background-color: rgba(255, 255, 255, 0.03);
+        }
+
+        .logo-icon-large {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          height: 120px;
+          margin-bottom: 1.5rem;
+        }
+
+        .welcome-message {
+          font-size: 1.2rem;
+          color: var(--text-muted);
+          text-align: center;
+          margin-top: 1rem;
+        }
+
+        .logged-out-view {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          height: 100%;
+          text-align: center;
+          padding: 0 1.5rem;
+        }
+
+        .logged-out-actions {
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+          width: 100%;
+          max-width: 400px;
+          margin: 0 auto;
+        }
+
+        @media (max-width: 768px) {
+          .sidebar {
+            position: fixed;
+            left: -260px;
+            height: 100%;
+            transition: left 0.3s ease;
+            z-index: 30;
+          }
+
+          .sidebar.open {
+            left: 0;
+          }
+
+          .hamburger-menu {
+            display: block;
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: var(--text-color);
+          }
+
+          .main-content {
+            padding: 1rem;
+          }
+
+          .page-content {
+            padding: 1rem;
+          }
+
+          .widget {
+            margin-bottom: 1rem;
+          }
+
+          .logged-out-view {
+            padding: 0 1rem;
+          }
+        }
+      `}</style>
       {/* Render main content here */}
       {user ? renderDashboard() : renderLoggedOutView()}
     </React.Fragment>
   );
+}
+
+// --- Rendera appen ---
+const container = document.getElementById("root");
+if (container) {
+  createRoot(container).render(<ByggPilotApp />);
+}
