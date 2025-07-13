@@ -118,6 +118,11 @@ body {
   box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
+.google-logo {
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
 .google-signin-btn:hover,
 .sign-out-btn:hover {
   background: #f8f9fa;
