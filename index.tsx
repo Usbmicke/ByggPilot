@@ -125,7 +125,7 @@ interface AppEvent {
   link: string;
 }
 
-export default function ByggPilotApp() {
+function App() {
   const [user, setUser] = useState<User | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
@@ -1248,5 +1248,6 @@ export default function ByggPilotApp() {
 // --- Rendera appen ---
 const container = document.getElementById("root");
 if (container) {
-  createRoot(container).render(<ByggPilotApp />);
+  createRoot(container).render(<App />);
 }
+export default App;
