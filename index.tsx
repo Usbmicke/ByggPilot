@@ -469,6 +469,8 @@ export default function ByggPilotApp() {
         errorMessage += 'Google-inloggning är inte aktiverat för detta projekt. Använd Demo-läget för utveckling.';
       } else if (error.message.toLowerCase().includes('utvecklare') || error.message.toLowerCase().includes('developer')) {
         errorMessage += 'Firebase accepterar inte localhost-domäner. Använd Demo-läget för utveckling.';
+      } else if (error.code === 'auth/invalid-api-key' || error.message.includes('deleted_client') || error.message.includes('OAuth client')) {
+        errorMessage += 'Google OAuth-klienten behöver konfigureras om. Kontakta administratören eller använd Demo-läget medan detta fixas.';
       } else {
         errorMessage += `Tekniskt fel: ${error.message}. Försök igen senare.`;
       }
