@@ -409,6 +409,7 @@ export default function ByggPilotApp() {
     console.log('Firebase Auth Domain:', firebaseConfig.authDomain);
     console.log('Firebase Project ID:', firebaseConfig.projectId);
     console.log('Google Client ID från .env:', import.meta.env.VITE_GOOGLE_CLIENT_ID);
+    console.log('=== OAuth Client Check ===');
     
     try {
       console.log('Försöker logga in med Google...');
