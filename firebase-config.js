@@ -8,6 +8,7 @@ console.log('API Key exists:', !!import.meta.env.VITE_FIREBASE_API_KEY)
 console.log('API Key value:', import.meta.env.VITE_FIREBASE_API_KEY)
 console.log('Auth Domain:', import.meta.env.VITE_FIREBASE_AUTH_DOMAIN)
 console.log('Project ID:', import.meta.env.VITE_FIREBASE_PROJECT_ID)
+console.log('Google Client ID from env:', import.meta.env.VITE_GOOGLE_CLIENT_ID)
 
 // Firebase config - replace with your actual config values
 export const firebaseConfig = {
@@ -58,8 +59,8 @@ googleProvider.setCustomParameters({
   prompt: 'select_account'
 });
 
-// Add Client ID if provided
-if (import.meta.env.VITE_GOOGLE_CLIENT_ID) {
+// Add Client ID if provided - TEMPORARY DISABLE
+if (false && import.meta.env.VITE_GOOGLE_CLIENT_ID) {
   console.log('Setting custom Client ID:', import.meta.env.VITE_GOOGLE_CLIENT_ID)
   // Don't override the client_id in custom parameters - let Firebase handle it
 }

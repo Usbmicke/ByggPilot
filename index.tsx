@@ -411,6 +411,10 @@ export default function ByggPilotApp() {
     console.log('Google Client ID från .env:', import.meta.env.VITE_GOOGLE_CLIENT_ID);
     console.log('=== OAuth Client Check ===');
     
+    // Temporary fallback för ny klient-ID
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '975739376169-vk63mf3f54dnjitqjk1beigijg9gitkc.apps.googleusercontent.com';
+    console.log('Using Client ID:', clientId);
+    
     try {
       console.log('Försöker logga in med Google...');
       console.log('Firebase Auth:', auth);
