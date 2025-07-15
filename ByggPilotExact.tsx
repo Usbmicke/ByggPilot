@@ -27,14 +27,16 @@ interface DriveDocument {
 interface ChatMessage {
   id: string
   message: string
-  type: 'user' | 'ai'
+  type: 'user' | 'ai' | 'assistant'
   timestamp: Date
+  buttons?: Array<{ text: string; action: string }>
 }
 
 interface User {
   isLoggedIn: boolean
   email: string | null
   name: string | null
+  isDemoMode?: boolean
 }
 
 export default function ByggPilotExact() {
@@ -48,6 +50,10 @@ export default function ByggPilotExact() {
   const [attachedFiles, setAttachedFiles] = useState<File[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isAuthenticating, setIsAuthenticating] = useState(false)
+  
+  // Google Workspace Integration State
+  const [isFirstTimeUser, setIsFirstTimeUser] = useState(false)
+  const [showWorkspaceOnboarding, setShowWorkspaceOnboarding] = useState(false)
   
   const chatInputRef = useRef<HTMLInputElement>(null)
   const placeholderInterval = useRef<number | null>(null)
@@ -128,7 +134,7 @@ export default function ByggPilotExact() {
         setTimeout(() => {
           const welcomeMessage: ChatMessage = {
             id: 'welcome-' + Date.now(),
-            message: '🏗️ **ByggPilot aktiverad**\n\n👋 Hej! Vad kan jag hjälpa dig med?',
+            message: 'Hej! ByggPilot här, din digitale kollega. Vad kan jag hjälpa dig med idag?\n\nFör att ge dig bästa resultat, kan du berätta lite om din roll och hur stort ert företag är?',
             type: 'ai',
             timestamp: new Date()
           }
@@ -178,21 +184,35 @@ export default function ByggPilotExact() {
       const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY || '')
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
       
-      // System prompt from original
-      const systemPrompt = `Du är ByggPilot, en digital kollega och intelligent verktyg för svenska byggföretagare. Du är specialiserad på ABT06, KMA-planer, byggregler och administrativa uppgifter. Ditt mål är att eliminera administrativ stress så att "byggare kan bygga".
+      // Professional ByggPilot System Prompt v7.0
+      const systemPrompt = `Du är ByggPilot, en erfaren digital kollega för svenska byggföretagare. Du är expert på bygg- och installationsbranschen med djup kunskap inom ABT06, PBL, BBR, arbetsmiljölagen och KMA-planer.
 
-      VIKTIGT - Chattbeteende:
-      - Var alltid direkt och professionell, aldrig mångordigt
-      - Använd listor, punkter och strukturerad information
-      - Ställ en fråga i taget när du behöver mer information  
-      - Bekräfta när uppgifter är klara med "✅ [Uppgift] klar"
-      - Ge konkreta nästa steg eller knappalternativ när möjligt
-      - Undvik onödiga hälsningsfraser och känslomässigt språk
-      
-      Ditt första meddelande: "ByggPilot redo. Vad behöver du hjälp med?" följt av "För bästa resultat, berätta kort om ditt projekt eller företag."`
+      KÄRNPERSONLIGHET:
+      - Professionell, kompetent och självsäker expert - inte undergiven assistent
+      - Lugn och förtroendeingivande, förstår hantverkarens stressiga vardag
+      - Kärnprincip 1: "Planeringen är A och O!"
+      - Kärnprincip 2: "Tydlig kommunikation och förväntanshantering är A och O!"
+
+      KONVERSATIONSREGLER (KRITISKA):
+      1. FÖRSTA INTRYCK: Välkomstmeddelande är alltid: "Hej! ByggPilot här, din digitale kollega. Vad kan jag hjälpa dig med idag?"
+      2. PROGRESSIV INFO: Aldrig komplett svar direkt - leverera i små, hanterbara delar
+      3. EN FRÅGA I TAGET: Varje svar ska avslutas med EN enda, tydlig och relevant motfråga
+      4. STRUKTURERAD INFO: Använd alltid listor, punkter och fetstil - aldrig textväggar
+      5. PROFESSIONELL TON: Tydligt språk utan teknisk jargong, inga emojis eller känslomässigt språk
+
+      DOMÄNEXPERTIS:
+      - Plan- och bygglagen (PBL) & Boverkets byggregler (BBR)
+      - Arbetsmiljölagen (AML) och AFS:er (särskilt AFS 2023:3 Bas-P/Bas-U)
+      - Standardavtal: AB 04, ABT 06, Hantverkarformuläret 17, ABS 18
+      - KMA-strukturering: K-Kvalitet, M-Miljö, A-Arbetsmiljö
+      - Kalkylering med svenska leverantörer (Beijer, Byggmax, etc.)
+
+      FRISKRIVNING: Du ger ALDRIG definitiv juridisk eller skatteteknisk rådgivning. Avsluta med: "För juridiskt bindande råd, konsultera alltid expert som jurist eller revisor."
+
+      Anpassa ditt första svar efter denna användarkontext:`
       
       const contextText = user.isLoggedIn 
-        ? `[Användarkontext: Användaren är inloggad som ${user.email} och har gett åtkomst till Google Kalender och Gmail.]\n\n`
+        ? `[Användarkontext: Användaren är inloggad som ${user.email} och har gett åtkomst till Google Workspace.]\n\n`
         : ''
       
       const fullPrompt = systemPrompt + '\n\n' + contextText + userInput
@@ -227,6 +247,60 @@ export default function ByggPilotExact() {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       sendMessage()
+    }
+  }
+
+  // Google Workspace Onboarding Functions
+  const triggerWorkspaceOnboarding = () => {
+    setIsChatExpanded(true)
+    
+    // Add onboarding messages to chat
+    const onboardingMessages: ChatMessage[] = [
+      {
+        id: Date.now().toString(),
+        message: 'Anslutningen lyckades! Nu när jag har tillgång till ditt Google Workspace kan jag bli din riktiga digitala kollega. Det betyder att jag kan hjälpa dig automatisera allt från att skapa projektmappar från nya mail till att sammanställa fakturaunderlag.',
+        type: 'assistant',
+        timestamp: new Date()
+      },
+      {
+        id: (Date.now() + 1).toString(),
+        message: 'Som ett första steg för att skapa ordning och reda, vill du att jag skapar en standardiserad och effektiv mappstruktur i din Google Drive för alla dina projekt?',
+        type: 'assistant',
+        timestamp: new Date(),
+        buttons: [
+          { text: 'Ja, skapa mappstruktur', action: 'create-folder-structure' },
+          { text: 'Nej tack, inte nu', action: 'skip-onboarding' }
+        ]
+      }
+    ]
+    
+    setChatMessages(prev => [...prev, ...onboardingMessages])
+    setShowWorkspaceOnboarding(true)
+  }
+
+  const handleOnboardingAction = async (action: string) => {
+    if (action === 'create-folder-structure') {
+      // In a real implementation, this would call your backend API
+      const confirmMessage: ChatMessage = {
+        id: Date.now().toString(),
+        message: 'Klart! Jag har skapat din nya mappstruktur i Google Drive. Du hittar den under "ByggPilot - [Företagsnamn]". Är du redo att skapa ditt första projekt?',
+        type: 'assistant',
+        timestamp: new Date(),
+        buttons: [
+          { text: 'Ja, skapa projekt', action: 'create-first-project' },
+          { text: 'Senare', action: 'finish-onboarding' }
+        ]
+      }
+      setChatMessages(prev => [...prev, confirmMessage])
+    } else if (action === 'skip-onboarding' || action === 'finish-onboarding') {
+      const finalMessage: ChatMessage = {
+        id: Date.now().toString(),
+        message: 'Perfekt! Jag är nu redo att hjälpa dig med alla dina byggprojekt. Vad kan jag hjälpa dig med idag?',
+        type: 'assistant',
+        timestamp: new Date()
+      }
+      setChatMessages(prev => [...prev, finalMessage])
+      setShowWorkspaceOnboarding(false)
     }
   }
 
@@ -332,8 +406,12 @@ export default function ByggPilotExact() {
         setUser({
           isLoggedIn: true,
           email: result.user.email,
-          name: result.user.displayName
+          name: result.user.displayName,
+          isDemoMode: false
         })
+        
+        // Trigger Google Workspace onboarding
+        triggerWorkspaceOnboarding()
         setIsAuthenticating(false)
         return
       } catch (popupError: any) {
@@ -675,50 +753,52 @@ export default function ByggPilotExact() {
           </div>
         </div>
       </div>
-
-      <div className="widgets-grid">
-        <div className="widget">
-          <div className="widget-header">
-            <span className="material-symbols-outlined">calendar_today</span>
-            <h3>Kommande händelser</h3>
+      
+      {!user.isDemoMode && (
+        <div className="widgets-grid">
+          <div className="widget">
+            <div className="widget-header">
+              <span className="material-symbols-outlined">calendar_today</span>
+              <h3>Kommande händelser</h3>
+            </div>
+            <div className="widget-content">
+              {user.isLoggedIn ? (
+                <p>Hämtar kalenderdata...</p>
+              ) : (
+                <p>Logga in för att se kommande händelser</p>
+              )}
+            </div>
           </div>
-          <div className="widget-content">
-            {user.isLoggedIn ? (
-              <p>Hämtar kalenderdata...</p>
-            ) : (
-              <p>Logga in för att se kommande händelser</p>
-            )}
+
+          <div className="widget">
+            <div className="widget-header">
+              <span className="material-symbols-outlined">mail</span>
+              <h3>Senaste meddelanden</h3>
+            </div>
+            <div className="widget-content">
+              {user.isLoggedIn ? (
+                <p>Hämtar e-postdata...</p>
+              ) : (
+                <p>Logga in för att se senaste meddelanden</p>
+              )}
+            </div>
+          </div>
+
+          <div className="widget">
+            <div className="widget-header">
+              <span className="material-symbols-outlined">description</span>
+              <h3>Senaste dokument</h3>
+            </div>
+            <div className="widget-content">
+              {user.isLoggedIn ? (
+                <p>Hämtar dokumentdata...</p>
+              ) : (
+                <p>Logga in för att se senaste dokument</p>
+              )}
+            </div>
           </div>
         </div>
-
-        <div className="widget">
-          <div className="widget-header">
-            <span className="material-symbols-outlined">mail</span>
-            <h3>Senaste meddelanden</h3>
-          </div>
-          <div className="widget-content">
-            {user.isLoggedIn ? (
-              <p>Hämtar e-postdata...</p>
-            ) : (
-              <p>Logga in för att se senaste meddelanden</p>
-            )}
-          </div>
-        </div>
-
-        <div className="widget">
-          <div className="widget-header">
-            <span className="material-symbols-outlined">description</span>
-            <h3>Senaste dokument</h3>
-          </div>
-          <div className="widget-content">
-            {user.isLoggedIn ? (
-              <p>Hämtar dokumentdata...</p>
-            ) : (
-              <p>Logga in för att se senaste dokument</p>
-            )}
-          </div>
-        </div>
-      </div>
+      )}
     </div>
   )
 
