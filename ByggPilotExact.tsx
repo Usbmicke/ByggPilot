@@ -666,6 +666,38 @@ export default function ByggPilotExact() {
       <div className="page-header">
         <h1>🏗️ Dashboard</h1>
         <p>Översikt av dina projekt och aktiviteter</p>
+        <div className="status-indicator online">
+          <span className="status-dot"></span>
+          System online
+        </div>
+      </div>
+
+      {/* Welcome feature cards */}
+      <div className="welcome-feature-card">
+        <h2>Välkommen till ByggPilot, Michael!</h2>
+        <p>Din digitala kollega är redo att hjälpa dig hantera alla byggprojekt effektivt. Börja med att utforska dina aktiva projekt nedan.</p>
+      </div>
+
+      {/* Quick metrics */}
+      <div className="metrics-grid">
+        <div className="metric-card">
+          <span className="metric-icon">🏗️</span>
+          <div className="metric-value">{projects.length}</div>
+          <div className="metric-label">Aktiva projekt</div>
+          <div className="metric-change positive">+2 denna månad</div>
+        </div>
+        <div className="metric-card">
+          <span className="metric-icon">⏰</span>
+          <div className="metric-value">87%</div>
+          <div className="metric-label">Genomsnittlig progress</div>
+          <div className="metric-change positive">+5% från förra månaden</div>
+        </div>
+        <div className="metric-card">
+          <span className="metric-icon">💰</span>
+          <div className="metric-value">245k</div>
+          <div className="metric-label">kr omsättning</div>
+          <div className="metric-change positive">+12% ökning</div>
+        </div>
       </div>
 
       <div className="projects-section">
@@ -853,6 +885,28 @@ export default function ByggPilotExact() {
         <div className="demo-badge">Demo-läge aktiv</div>
       </div>
       
+      {/* Interactive metrics */}
+      <div className="metrics-grid">
+        <div className="metric-card">
+          <span className="metric-icon">📊</span>
+          <div className="metric-value">8</div>
+          <div className="metric-label">Aktiva projekt</div>
+          <div className="metric-change positive">+2 denna vecka</div>
+        </div>
+        <div className="metric-card">
+          <span className="metric-icon">⏰</span>
+          <div className="metric-value">24</div>
+          <div className="metric-label">Möten denna månad</div>
+          <div className="metric-change neutral">Samma som förra</div>
+        </div>
+        <div className="metric-card">
+          <span className="metric-icon">🚚</span>
+          <div className="metric-value">12</div>
+          <div className="metric-label">Leveranser planerade</div>
+          <div className="metric-change positive">+4 från förra veckan</div>
+        </div>
+      </div>
+      
       <div className="calendar-grid">
         <div className="calendar-widget">
           <div className="section-header">
@@ -913,16 +967,28 @@ export default function ByggPilotExact() {
             </button>
           </div>
           
-          <div className="calendar-stats">
-            <h4>📊 Denna vecka</h4>
-            <div className="stat-item">
-              <span>Möten:</span> <strong>12</strong>
+          <div className="progress-visualization">
+            <h4>� Kapacitetsöversikt</h4>
+            <div className="progress-item">
+              <span>Michael E.F.</span>
+              <div className="progress-bar-demo">
+                <div className="progress-fill-demo" style={{ width: '85%' }}></div>
+              </div>
+              <span>85%</span>
             </div>
-            <div className="stat-item">
-              <span>Leveranser:</span> <strong>5</strong>
+            <div className="progress-item">
+              <span>Team Alpha</span>
+              <div className="progress-bar-demo">
+                <div className="progress-fill-demo" style={{ width: '65%' }}></div>
+              </div>
+              <span>65%</span>
             </div>
-            <div className="stat-item">
-              <span>Besiktningar:</span> <strong>3</strong>
+            <div className="progress-item">
+              <span>Team Beta</span>
+              <div className="progress-bar-demo">
+                <div className="progress-fill-demo" style={{ width: '45%' }}></div>
+              </div>
+              <span>45%</span>
             </div>
           </div>
         </div>
@@ -936,6 +1002,28 @@ export default function ByggPilotExact() {
         <h1>📁 Dokument & Mallar</h1>
         <p>Organisera och hantera alla projektdokument</p>
         <div className="demo-badge">Demo-läge aktiv</div>
+      </div>
+      
+      {/* Quick Stats */}
+      <div className="metrics-grid">
+        <div className="metric-card">
+          <span className="metric-icon">📄</span>
+          <div className="metric-value">127</div>
+          <div className="metric-label">Totalt dokument</div>
+          <div className="metric-change positive">+15 denna månad</div>
+        </div>
+        <div className="metric-card">
+          <span className="metric-icon">📋</span>
+          <div className="metric-value">8</div>
+          <div className="metric-label">Mallar använda</div>
+          <div className="metric-change neutral">Samma som förra</div>
+        </div>
+        <div className="metric-card">
+          <span className="metric-icon">💾</span>
+          <div className="metric-value">2.4 GB</div>
+          <div className="metric-label">Lagringsutrymme</div>
+          <div className="metric-change positive">Optimerat</div>
+        </div>
       </div>
       
       <div className="documents-grid">
@@ -974,37 +1062,54 @@ export default function ByggPilotExact() {
         
         <div className="document-templates">
           <h3>⚡ Snabbmallar</h3>
-          <div className="template-grid">
-            <div className="template-card primary">
-              <span className="material-symbols-outlined">assignment</span>
-              <h4>KMA-mall</h4>
-              <p>Skapa säkerhetsplan</p>
-              <button className="template-btn">Använd</button>
+          
+          {/* Feature showcase för mallar */}
+          <div className="feature-showcase">
+            <div className="feature-item">
+              <span className="feature-icon">🛡️</span>
+              <div className="feature-title">KMA-mall</div>
+              <div className="feature-description">Skapa professionella säkerhetsplaner snabbt</div>
+              <button className="feature-action">Använd mall</button>
             </div>
-            <div className="template-card">
-              <span className="material-symbols-outlined">fact_check</span>
-              <h4>Checklista</h4>
-              <p>Projektchecklista</p>
-              <button className="template-btn">Skapa</button>
+            
+            <div className="feature-item">
+              <span className="feature-icon">✅</span>
+              <div className="feature-title">Checklista</div>
+              <div className="feature-description">Strukturerad projektchecklista för alla faser</div>
+              <button className="feature-action">Skapa checklista</button>
             </div>
-            <div className="template-card">
-              <span className="material-symbols-outlined">request_quote</span>
-              <h4>Offertmall</h4>
-              <p>Standardoffert</p>
-              <button className="template-btn">Ny offert</button>
+            
+            <div className="feature-item">
+              <span className="feature-icon">💰</span>
+              <div className="feature-title">Offertmall</div>
+              <div className="feature-description">Professionella offerter med automatisk kalkyl</div>
+              <button className="feature-action">Ny offert</button>
             </div>
           </div>
           
-          <div className="document-stats">
-            <h4>📈 Statistik</h4>
-            <div className="stat-item">
-              <span>Totalt dokument:</span> <strong>127</strong>
+          {/* Progress visualization för dokumenthantering */}
+          <div className="progress-visualization">
+            <h4>📈 Dokumentflöde denna månad</h4>
+            <div className="progress-item">
+              <span>KMA-planer</span>
+              <div className="progress-bar-demo">
+                <div className="progress-fill-demo" style={{ width: '90%' }}></div>
+              </div>
+              <span>18/20</span>
             </div>
-            <div className="stat-item">
-              <span>Denna månad:</span> <strong>23</strong>
+            <div className="progress-item">
+              <span>Offerter</span>
+              <div className="progress-bar-demo">
+                <div className="progress-fill-demo" style={{ width: '70%' }}></div>
+              </div>
+              <span>14/20</span>
             </div>
-            <div className="stat-item">
-              <span>Mallar använda:</span> <strong>8</strong>
+            <div className="progress-item">
+              <span>Fakturaunderlag</span>
+              <div className="progress-bar-demo">
+                <div className="progress-fill-demo" style={{ width: '95%' }}></div>
+              </div>
+              <span>19/20</span>
             </div>
           </div>
         </div>
