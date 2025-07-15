@@ -181,15 +181,23 @@ export default function ByggPilotApp() {
   const chatMessagesRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Initialize with ByggPilot's welcome message
+  // Initialize with ByggPilot's proactive welcome messages
   useEffect(() => {
     if (messages.length === 0) {
-      setMessages([{
-        id: '1',
-        text: 'Hej! ByggPilot här, din digitala kollega. Vad kan jag hjälpa dig med idag?',
-        isUser: false,
-        timestamp: new Date()
-      }]);
+      setMessages([
+        {
+          id: '1',
+          text: 'Hej! Jag är ByggPilot, din digitala kollega. Vad kan jag hjälpa dig med idag?',
+          isUser: false,
+          timestamp: new Date()
+        },
+        {
+          id: '2',
+          text: 'För att ge dig de bästa råden, kan du berätta lite kort om din roll och vad ert företag heter?',
+          isUser: false,
+          timestamp: new Date()
+        }
+      ]);
     }
   }, []);
 
@@ -204,10 +212,12 @@ export default function ByggPilotApp() {
           photoURL: firebaseUser.photoURL || undefined
         });
         setIsGoogleConnected(true);
+        setIsDemoMode(false); // Turn off demo mode when user is logged in
         setOnboardingChecklist(prev => ({ ...prev, connectedGoogle: true }));
       } else {
         setUser(null);
         setIsGoogleConnected(false);
+        setIsDemoMode(true); // Enable demo mode when user is logged out
       }
     });
     return () => unsubscribe();
@@ -227,7 +237,7 @@ export default function ByggPilotApp() {
           // Lägg till meddelande om lyckad inloggning
           const welcomeMessage = {
             id: Date.now().toString(),
-            text: `Välkommen ${result.user.displayName?.split(' ')[0] || 'tillbaka'}! Nu är du inloggad och kan synkronisera dina projekt och uppgifter.`,
+            text: `Välkommen ${result.user.displayName?.split(' ')[0] || 'tillbaka'}! Nu är du inloggad och kan synkronisera dina projekt och uppgifter med ditt Google Workspace.`,
             isUser: false,
             timestamp: new Date()
           };
@@ -292,12 +302,20 @@ export default function ByggPilotApp() {
   // Load user messages from Firestore
   useEffect(() => {
     if (!user) {
-      setMessages([{
-        id: '1',
-        text: 'Hej! ByggPilot här, din digitala kollega. Vad kan jag hjälpa dig med idag?',
-        isUser: false,
-        timestamp: new Date()
-      }]);
+      setMessages([
+        {
+          id: '1',
+          text: 'Hej! Jag är ByggPilot, din digitala kollega. Vad kan jag hjälpa dig med idag?',
+          isUser: false,
+          timestamp: new Date()
+        },
+        {
+          id: '2',
+          text: 'För att ge dig de bästa råden, kan du berätta lite kort om din roll och vad ert företag heter?',
+          isUser: false,
+          timestamp: new Date()
+        }
+      ]);
       return;
     }
 
@@ -425,12 +443,37 @@ export default function ByggPilotApp() {
         prompt: 'select_account'
       });
       
-      // Använd redirect istället för popup för bättre kompatibilitet
-      console.log('Försöker redirect-inloggning...');
-      
-      // Använd signInWithRedirect istället
-      await signInWithRedirect(auth, provider);
-      return; // Funktionen avslutas här, redirect sker
+      // Try popup first, fallback to redirect
+      try {
+        console.log('Försöker popup-inloggning först...');
+        const result = await signInWithPopup(auth, provider);
+        console.log('Popup sign-in successful:', result.user);
+        
+        // Stäng av demo-läget när inloggning lyckas
+        setIsDemoMode(false);
+        
+        // Lägg till meddelande om lyckad inloggning
+        const welcomeMessage = {
+          id: Date.now().toString(),
+          text: `Välkommen ${result.user.displayName?.split(' ')[0] || 'tillbaka'}! Nu är du inloggad och kan synkronisera dina projekt och uppgifter med ditt Google Workspace.`,
+          isUser: false,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, welcomeMessage]);
+        
+      } catch (popupError: any) {
+        console.log('Popup failed, trying redirect...', popupError);
+        
+        if (popupError.code === 'auth/popup-blocked' || 
+            popupError.code === 'auth/popup-closed-by-user' ||
+            popupError.code === 'auth/cancelled-popup-request') {
+          console.log('Försöker redirect-inloggning...');
+          await signInWithRedirect(auth, provider);
+          return; // Funktionen avslutas här, redirect sker
+        } else {
+          throw popupError; // Re-throw other errors
+        }
+      }
       
     } catch (error: any) {
       console.error('Google sign-in error:', error);
@@ -440,19 +483,19 @@ export default function ByggPilotApp() {
       // Visa specifikt felmeddelande till användaren
       let errorMessage = 'Kunde inte logga in med Google. ';
       if (error.code === 'auth/popup-blocked') {
-        errorMessage += 'Popup-fönstret blockerades av webbläsaren. Kontrollera att popup-blockerare är avstängd för denna sida. Kolla efter en ikon i adressfältet och klicka för att tillåta popup-fönster.';
+        errorMessage += 'Popup-fönstret blockerades av webbläsaren. Kontrollera att popup-blockerare är avstängd för denna sida.';
       } else if (error.code === 'auth/popup-closed-by-user') {
         errorMessage += 'Inloggningsfönstret stängdes innan inloggningen var klar. Försök igen.';
       } else if (error.code === 'auth/cancelled-popup-request') {
         errorMessage += 'En annan inloggning pågår redan. Vänta ett ögonblick och försök igen.';
       } else if (error.code === 'auth/unauthorized-domain') {
-        errorMessage += 'Denna domän (localhost:5173) är inte auktoriserad för Google-inloggning. För utveckling, använd Demo-läget nedan.';
+        errorMessage += 'Denna domän är inte auktoriserad för Google-inloggning. Kontakta administratören.';
       } else if (error.code === 'auth/operation-not-allowed') {
-        errorMessage += 'Google-inloggning är inte aktiverat för detta projekt. Använd Demo-läget för utveckling.';
+        errorMessage += 'Google-inloggning är inte aktiverat för detta projekt. Kontakta administratören.';
       } else if (error.message.toLowerCase().includes('utvecklare') || error.message.toLowerCase().includes('developer')) {
         errorMessage += 'Firebase accepterar inte localhost-domäner. Använd Demo-läget för utveckling.';
       } else if (error.code === 'auth/invalid-api-key' || error.message.includes('deleted_client') || error.message.includes('OAuth client')) {
-        errorMessage += 'Google OAuth-klienten behöver konfigureras om. Kontakta administratören eller använd Demo-läget medan detta fixas.';
+        errorMessage += 'Google OAuth-klienten behöver konfigureras om. Kontakta administratören.';
       } else {
         errorMessage += `Tekniskt fel: ${error.message}. Försök igen senare.`;
       }
@@ -465,7 +508,6 @@ export default function ByggPilotApp() {
       };
       setMessages(prev => [...prev, errorMessageObj]);
       
-      // Behåll demo-läget om inloggning misslyckas
     } finally {
       setIsConnecting(false);
     }
@@ -477,12 +519,20 @@ export default function ByggPilotApp() {
       setUser(null);
       setIsGoogleConnected(false);
       setIsDemoMode(true); // Aktivera demo-läget igen när man loggar ut
-      setMessages([{
-        id: '1',
-        text: 'Hej! ByggPilot här, din digitala kollega. Vad kan jag hjälpa dig med idag?',
-        isUser: false,
-        timestamp: new Date()
-      }]);
+      setMessages([
+        {
+          id: '1',
+          text: 'Hej! Jag är ByggPilot, din digitala kollega. Vad kan jag hjälpa dig med idag?',
+          isUser: false,
+          timestamp: new Date()
+        },
+        {
+          id: '2',
+          text: 'För att ge dig de bästa råden, kan du berätta lite kort om din roll och vad ert företag heter?',
+          isUser: false,
+          timestamp: new Date()
+        }
+      ]);
     } catch (error) {
       console.error('Sign out error:', error);
     }
@@ -780,6 +830,151 @@ export default function ByggPilotApp() {
     return null;
   };
 
+  const renderMainContent = () => {
+    if (!user && !isDemoMode) {
+      return renderLoggedOutView();
+    }
+
+    switch (currentView) {
+      case 'dashboard':
+        return renderDashboard();
+      case 'projects':
+        return renderProjectsView();
+      case 'tasks':
+        return renderTasksView();
+      case 'calendar':
+        return renderCalendarView();
+      case 'files':
+        return renderFilesView();
+      case 'how-it-works':
+        return renderHowItWorksView();
+      case 'settings':
+        return renderSettingsView();
+      default:
+        return renderDashboard();
+    }
+  };
+
+  const renderHowItWorksView = () => (
+    <div className="how-it-works-view">
+      <div className="page-header">
+        <h1>Så funkar ByggPilot</h1>
+        <p className="page-subtitle">
+          ByggPilot är din digitala kollega som hjälper dig att organisera och optimera ditt byggföretag. 
+          Genom att integrera med ditt Google Workspace får du en samlad plattform för projektledning, 
+          tidsrapportering och kommunikation.
+        </p>
+      </div>
+      
+      <div className="example-cards-grid">
+        <div className="example-card">
+          <div className="example-icon">
+            <span className="material-symbols-outlined">schedule</span>
+          </div>
+          <h3>Tidsrapportering</h3>
+          <p>
+            "Jag behöver logga tid för Villa Andersson idag"
+          </p>
+          <div className="example-response">
+            <strong>ByggPilot svarar:</strong> Jag startar tidloggningen för Villa Andersson. 
+            Vill du att jag också förbereder dagens dagsrapport?
+          </div>
+        </div>
+
+        <div className="example-card">
+          <div className="example-icon">
+            <span className="material-symbols-outlined">engineering</span>
+          </div>
+          <h3>Projektfrågor</h3>
+          <p>
+            "Vilka material behöver vi för badrumsprojektet?"
+          </p>
+          <div className="example-response">
+            <strong>ByggPilot svarar:</strong> Baserat på dina tidigare projekt behöver ni troligen 
+            kakel, tätning, rör och armaturer. Ska jag skapa en detaljerad materialista?
+          </div>
+        </div>
+
+        <div className="example-card">
+          <div className="example-icon">
+            <span className="material-symbols-outlined">description</span>
+          </div>
+          <h3>Dokumenthantering</h3>
+          <p>
+            "Skapa en dagsrapport för Villa Nygren"
+          </p>
+          <div className="example-response">
+            <strong>ByggPilot svarar:</strong> Jag skapar en dagsrapport med dagens utförda arbeten, 
+            väderlek och nästa steg. Ska jag skicka den till kunden också?
+          </div>
+        </div>
+
+        <div className="example-card">
+          <div className="example-icon">
+            <span className="material-symbols-outlined">calculate</span>
+          </div>
+          <h3>Ekonomi & Kalkyl</h3>
+          <p>
+            "Beräkna materialkostnad för 50 kvm kakel"
+          </p>
+          <div className="example-response">
+            <strong>ByggPilot svarar:</strong> För 50 kvm kakel behöver ni ca 52-55 kvm (5% spill). 
+            Med genomsnittspris 400 kr/kvm blir det ca 21 000 kr + lim och fog.
+          </div>
+        </div>
+
+        <div className="example-card">
+          <div className="example-icon">
+            <span className="material-symbols-outlined">groups</span>
+          </div>
+          <h3>Kundkommunikation</h3>
+          <p>
+            "Förklara för kunden varför vi blir försenade"
+          </p>
+          <div className="example-response">
+            <strong>ByggPilot svarar:</strong> Jag formulerar ett professionellt meddelande som 
+            förklarar situationen och ger ny tidsplan. Ska jag skicka det via e-post?
+          </div>
+        </div>
+
+        <div className="example-card">
+          <div className="example-icon">
+            <span className="material-symbols-outlined">search</span>
+          </div>
+          <h3>Leverantörssökning</h3>
+          <p>
+            "Hitta leverantör av specialkakel i Stockholmsområdet"
+          </p>
+          <div className="example-response">
+            <strong>ByggPilot svarar:</strong> Här är tre pålitliga leverantörer: Bygg-Ole, 
+            Kakelcentralen och Stonefactory. Vill du att jag jämför priser åt dig?
+          </div>
+        </div>
+      </div>
+
+      <div className="how-it-works-section">
+        <h2>Kom igång på 3 enkla steg</h2>
+        <div className="steps-grid">
+          <div className="step-card">
+            <div className="step-number">1</div>
+            <h3>Anslut Google Workspace</h3>
+            <p>Logga in med ditt Google-konto för att synkronisera kalendrar, e-post och filer.</p>
+          </div>
+          <div className="step-card">
+            <div className="step-number">2</div>
+            <h3>Skapa ditt första projekt</h3>
+            <p>Lägg till projektinformation så ByggPilot kan ge personliga råd och hjälpa med planering.</p>
+          </div>
+          <div className="step-card">
+            <div className="step-number">3</div>
+            <h3>Börja chatta</h3>
+            <p>Ställ frågor, begär hjälp med kalkyler eller låt ByggPilot skapa rapporter åt dig.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   const renderDashboard = () => (
     <div className="dashboard-grid">
       <div className="widget-column">
@@ -908,6 +1103,85 @@ export default function ByggPilotApp() {
             </ul>
           </div>
         )}
+      </div>
+    </div>
+  );
+
+  const renderProjectsView = () => (
+    <div className="projects-view">
+      <h1>Projekt</h1>
+      <p>Projektvy kommer snart...</p>
+    </div>
+  );
+
+  const renderTasksView = () => (
+    <div className="tasks-view">
+      <h1>Uppgifter</h1>
+      <p>Uppgiftsvy kommer snart...</p>
+    </div>
+  );
+
+  const renderCalendarView = () => (
+    <div className="calendar-view">
+      <h1>Kalender</h1>
+      <p>Kalendervy kommer snart...</p>
+    </div>
+  );
+
+  const renderFilesView = () => (
+    <div className="files-view">
+      <h1>Filer</h1>
+      <p>Filvy kommer snart...</p>
+    </div>
+  );
+
+  const renderSettingsView = () => (
+    <div className="settings-view">
+      <h1>Inställningar</h1>
+      <div className="settings-grid">
+        <div className="settings-section">
+          <h2>Visningsinställningar</h2>
+          <div className="setting-item">
+            <label>
+              <input 
+                type="checkbox" 
+                checked={settings.showTimeLogger} 
+                onChange={(e) => setSettings(prev => ({ ...prev, showTimeLogger: e.target.checked }))}
+              />
+              Visa tidloggning
+            </label>
+          </div>
+          <div className="setting-item">
+            <label>
+              <input 
+                type="checkbox" 
+                checked={settings.showTaskList} 
+                onChange={(e) => setSettings(prev => ({ ...prev, showTaskList: e.target.checked }))}
+              />
+              Visa uppgiftslista
+            </label>
+          </div>
+          <div className="setting-item">
+            <label>
+              <input 
+                type="checkbox" 
+                checked={settings.showEvents} 
+                onChange={(e) => setSettings(prev => ({ ...prev, showEvents: e.target.checked }))}
+              />
+              Visa aktiviteter
+            </label>
+          </div>
+          <div className="setting-item">
+            <label>
+              <input 
+                type="checkbox" 
+                checked={settings.showOnboardingChecklist} 
+                onChange={(e) => setSettings(prev => ({ ...prev, showOnboardingChecklist: e.target.checked }))}
+              />
+              Visa kom igång-checklista
+            </label>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -1425,10 +1699,20 @@ export default function ByggPilotApp() {
           color: var(--text-muted);
           cursor: pointer;
           font-size: 1.2rem;
+          padding: 8px;
+          border-radius: 6px;
+          transition: all 0.2s ease;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 40px;
+          min-height: 40px;
+          margin-right: 8px; /* Avoid scrollbar overlap */
         }
 
         .close-chat-btn:hover {
           color: var(--text-color);
+          background: rgba(0,0,0,0.05);
         }
 
         .demo-mode-banner {
@@ -1719,6 +2003,325 @@ export default function ByggPilotApp() {
           to { transform: translateY(0); opacity: 1; }
         }
 
+        /* How It Works Page Styles */
+        .how-it-works-view {
+          padding: 2rem;
+          max-width: 1200px;
+          margin: 0 auto;
+        }
+
+        .page-header {
+          text-align: center;
+          margin-bottom: 3rem;
+        }
+
+        .page-header h1 {
+          font-size: 2.5rem;
+          font-weight: 700;
+          color: #1a1a1a;
+          margin-bottom: 1rem;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+
+        .page-subtitle {
+          font-size: 1.1rem;
+          color: #666;
+          line-height: 1.6;
+          max-width: 800px;
+          margin: 0 auto;
+        }
+
+        .example-cards-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+          gap: 2rem;
+          margin-bottom: 4rem;
+        }
+
+        .example-card {
+          background: white;
+          border-radius: 16px;
+          padding: 2rem;
+          box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+          border: 1px solid rgba(255,255,255,0.2);
+          transition: all 0.3s ease;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .example-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 4px;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .example-card:hover {
+          transform: translateY(-8px);
+          box-shadow: 0 16px 48px rgba(0,0,0,0.15);
+        }
+
+        .example-icon {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 56px;
+          height: 56px;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          border-radius: 12px;
+          margin-bottom: 1.5rem;
+        }
+
+        .example-icon .material-symbols-outlined {
+          color: white;
+          font-size: 28px;
+        }
+
+        .example-card h3 {
+          font-size: 1.25rem;
+          font-weight: 600;
+          color: #1a1a1a;
+          margin-bottom: 1rem;
+        }
+
+        .example-card > p {
+          font-style: italic;
+          color: #4a5568;
+          margin-bottom: 1.5rem;
+          padding: 1rem;
+          background: #f8fafc;
+          border-radius: 8px;
+          border-left: 4px solid #667eea;
+        }
+
+        .example-response {
+          background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+          padding: 1.25rem;
+          border-radius: 12px;
+          border: 1px solid rgba(102, 126, 234, 0.2);
+        }
+
+        .example-response strong {
+          color: #667eea;
+          display: block;
+          margin-bottom: 0.5rem;
+        }
+
+        .how-it-works-section {
+          text-align: center;
+          margin-top: 4rem;
+        }
+
+        .how-it-works-section h2 {
+          font-size: 2rem;
+          font-weight: 600;
+          color: #1a1a1a;
+          margin-bottom: 3rem;
+        }
+
+        .steps-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+          gap: 2.5rem;
+          margin-top: 2rem;
+        }
+
+        .step-card {
+          background: white;
+          border-radius: 16px;
+          padding: 2.5rem 2rem;
+          box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+          border: 1px solid rgba(255,255,255,0.2);
+          transition: all 0.3s ease;
+          position: relative;
+        }
+
+        .step-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        }
+
+        .step-number {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 60px;
+          height: 60px;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          border-radius: 50%;
+          font-size: 1.5rem;
+          font-weight: 700;
+          margin-bottom: 1.5rem;
+        }
+
+        .step-card h3 {
+          font-size: 1.3rem;
+          font-weight: 600;
+          color: #1a1a1a;
+          margin-bottom: 1rem;
+        }
+
+        .step-card p {
+          color: #666;
+          line-height: 1.6;
+        }
+
+        /* Settings Page Styles */
+        .settings-view {
+          padding: 2rem;
+          max-width: 800px;
+          margin: 0 auto;
+        }
+
+        .settings-view h1 {
+          font-size: 2rem;
+          font-weight: 600;
+          color: #1a1a1a;
+          margin-bottom: 2rem;
+        }
+
+        .settings-grid {
+          display: grid;
+          gap: 2rem;
+        }
+
+        .settings-section {
+          background: white;
+          border-radius: 12px;
+          padding: 2rem;
+          box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+
+        .settings-section h2 {
+          font-size: 1.3rem;
+          font-weight: 600;
+          color: #1a1a1a;
+          margin-bottom: 1.5rem;
+        }
+
+        .setting-item {
+          margin-bottom: 1rem;
+        }
+
+        .setting-item label {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          cursor: pointer;
+          font-size: 1rem;
+          color: #4a5568;
+        }
+
+        .setting-item input[type="checkbox"] {
+          width: 18px;
+          height: 18px;
+          accent-color: #667eea;
+        }
+
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+          .how-it-works-view {
+            padding: 1rem;
+          }
+
+          .page-header h1 {
+            font-size: 2rem;
+          }
+
+          .example-cards-grid {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+          }
+
+          .steps-grid {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+          }
+
+          .example-card, .step-card {
+            padding: 1.5rem;
+          }
+        }
+
+        /* Additional mobile optimizations for chat and general layout */
+        @media (max-width: 768px) {
+          .app-layout {
+            grid-template-columns: 1fr;
+          }
+
+          .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 1000;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+          }
+
+          .sidebar.open {
+            transform: translateX(0);
+          }
+
+          .page-content {
+            margin-left: 0;
+            padding: 1rem;
+          }
+
+          #chat-drawer {
+            height: auto;
+            min-height: 300px;
+            max-height: 70vh;
+          }
+
+          #chat-drawer.expanded {
+            height: 70vh;
+          }
+
+          .chat-drawer-header {
+            padding: 1rem;
+          }
+
+          .chat-drawer-title {
+            font-size: 1rem;
+          }
+
+          .close-chat-btn {
+            margin-right: 4px;
+            min-width: 36px;
+            min-height: 36px;
+          }
+
+          .chat-message {
+            padding: 0.6rem 1rem;
+            max-width: 90%;
+          }
+
+          .chat-input-container {
+            padding: 1rem;
+          }
+
+          .widget {
+            margin-bottom: 1.5rem;
+          }
+
+          .dashboard-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+          }
+
+          .project-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+
         /* Dashboard Grid */
       `}} />
 
@@ -1758,33 +2361,39 @@ export default function ByggPilotApp() {
           <div className="sidebar-nav">
             <ul>
               <li>
-                <a href="#" className="active">
+                <a href="#" className={currentView === 'dashboard' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setCurrentView('dashboard'); }}>
                   <span className="material-symbols-outlined">dashboard</span>
                   Instrumentpanel
                 </a>
               </li>
               <li>
-                <a href="#">
+                <a href="#" className={currentView === 'projects' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setCurrentView('projects'); }}>
                   <span className="material-symbols-outlined">folder</span>
                   Projekt
                 </a>
               </li>
               <li>
-                <a href="#">
+                <a href="#" className={currentView === 'tasks' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setCurrentView('tasks'); }}>
                   <span className="material-symbols-outlined">check_circle</span>
                   Uppgifter
                 </a>
               </li>
               <li>
-                <a href="#">
+                <a href="#" className={currentView === 'calendar' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setCurrentView('calendar'); }}>
                   <span className="material-symbols-outlined">event</span>
                   Kalender
                 </a>
               </li>
               <li>
-                <a href="#">
+                <a href="#" className={currentView === 'files' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setCurrentView('files'); }}>
                   <span className="material-symbols-outlined">description</span>
                   Filer
+                </a>
+              </li>
+              <li>
+                <a href="#" className={currentView === 'how-it-works' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setCurrentView('how-it-works'); }}>
+                  <span className="material-symbols-outlined">help</span>
+                  Så funkar ByggPilot
                 </a>
               </li>
             </ul>
@@ -1793,7 +2402,7 @@ export default function ByggPilotApp() {
           <div className="sidebar-footer">
             <ul>
               <li>
-                <a href="#">
+                <a href="#" className={currentView === 'settings' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setCurrentView('settings'); }}>
                   <span className="material-symbols-outlined">settings</span>
                   Inställningar
                 </a>
@@ -1854,7 +2463,7 @@ export default function ByggPilotApp() {
           </div>
 
           <div className="page-content">
-            {user ? renderDashboard() : isDemoMode ? renderDashboard() : renderLoggedOutView()}
+            {renderMainContent()}
           </div>
 
           {renderOnboardingModal()}

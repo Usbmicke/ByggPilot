@@ -59,8 +59,8 @@ googleProvider.setCustomParameters({
   prompt: 'select_account'
 });
 
-// Add Client ID if provided - TEMPORARY DISABLE
-if (false && import.meta.env.VITE_GOOGLE_CLIENT_ID) {
+// Add Client ID if provided
+if (import.meta.env.VITE_GOOGLE_CLIENT_ID) {
   console.log('Setting custom Client ID:', import.meta.env.VITE_GOOGLE_CLIENT_ID)
   // Don't override the client_id in custom parameters - let Firebase handle it
 }
