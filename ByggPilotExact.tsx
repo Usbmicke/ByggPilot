@@ -57,6 +57,7 @@ export default function ByggPilotExact() {
   
   // Login success notification
   const [showLoginSuccess, setShowLoginSuccess] = useState(false)
+  const [hasWelcomedUser, setHasWelcomedUser] = useState(false)
 
   const chatInputRef = useRef<HTMLInputElement>(null)
   const placeholderInterval = useRef<number | null>(null)
@@ -582,14 +583,13 @@ export default function ByggPilotExact() {
         <div className="logo">
           <div className="logo-icon">
             <img 
-              src="/ChatGPT Image 15 juli 2025 21_02_06.png" 
+              src="/public/byggpilot-logo.svg" 
               alt="ByggPilot" 
               className="logo-image"
+              style={{ background: 'transparent' }}
               onError={(e) => {
                 console.error('Logo failed to load')
-                e.currentTarget.style.display = 'none'
-                // Visa en fallback-ikon istället
-                e.currentTarget.parentElement!.innerHTML = '<span class="material-symbols-outlined" style="font-size: 32px; color: var(--primary-accent);">construction</span>'
+                e.currentTarget.src = '/public/logo-icon.svg'
               }}
             />
           </div>

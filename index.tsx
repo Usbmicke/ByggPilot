@@ -402,9 +402,6 @@ export default function ByggPilotApp() {
     console.log('=== Google Sign-In Debug Info ===');
     console.log('Current window.location:', window.location.href);
     console.log('Current domain:', window.location.hostname);
-    console.log('Firebase Auth Domain:', firebaseConfig.authDomain);
-    console.log('Firebase Project ID:', firebaseConfig.projectId);
-    console.log('Google Client ID från .env:', import.meta.env.VITE_GOOGLE_CLIENT_ID);
     console.log('=== OAuth Client Check ===');
     
     // Temporary fallback för ny klient-ID
