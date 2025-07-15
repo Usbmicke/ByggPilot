@@ -1,0 +1,20 @@
+<svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Hjälm (huvuddel) -->
+  <path d="M15 35C15 25 23 17 33 17H47C57 17 65 25 65 35V42C65 47 63 51 60 54L55 59C53 61 50 62 47 62H33C30 62 27 61 25 59L20 54C17 51 15 47 15 42V35Z" stroke="#00BFFF" stroke-width="2.5" fill="rgba(0, 191, 255, 0.1)"/>
+  
+  <!-- Hjälmskärm -->
+  <path d="M20 32C20 29 22 27 25 27H55C58 27 60 29 60 32V37H20V32Z" stroke="#00BFFF" stroke-width="2" fill="rgba(0, 191, 255, 0.05)"/>
+  
+  <!-- Ventilationshål -->
+  <circle cx="30" cy="34" r="1.5" fill="#00BFFF" opacity="0.7"/>
+  <circle cx="50" cy="34" r="1.5" fill="#00BFFF" opacity="0.7"/>
+  
+  <!-- Vingar (byggdetaljer) -->
+  <path d="M65 32C70 27 77 25 85 27C93 29 100 35 105 42C110 49 113 57 113 65C113 69 111 72 108 74C105 76 101 76 98 74C95 72 93 69 93 65C93 59 91 53 87 48C83 43 78 39 73 37L65 32Z" stroke="#fbbf24" stroke-width="2.5" fill="rgba(251, 191, 36, 0.1)"/>
+  
+  <!-- Mindre vinge-detalj -->
+  <path d="M70 37C75 35 80 35 85 37C90 39 94 43 97 48C100 53 101 59 100 65C99 68 97 70 94 71C91 72 88 71 86 69C84 67 83 64 83 61C83 56 82 51 79 47C76 43 72 40 68 39L70 37Z" stroke="#fbbf24" stroke-width="2" fill="rgba(251, 191, 36, 0.05)"/>
+  
+  <!-- Spänne/säkerhetsdetalj -->
+  <rect x="37" y="50" width="6" height="3" rx="1" fill="#666" stroke="#444" stroke-width="0.5"/>
+</svg>

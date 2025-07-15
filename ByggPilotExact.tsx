@@ -55,6 +55,9 @@ export default function ByggPilotExact() {
   const [isFirstTimeUser, setIsFirstTimeUser] = useState(false)
   const [showWorkspaceOnboarding, setShowWorkspaceOnboarding] = useState(false)
   
+  // Login success notification
+  const [showLoginSuccess, setShowLoginSuccess] = useState(false)
+
   const chatInputRef = useRef<HTMLInputElement>(null)
   const placeholderInterval = useRef<number | null>(null)
 
@@ -304,6 +307,20 @@ export default function ByggPilotExact() {
     }
   }
 
+  // Time-based greeting function
+  const getTimeBasedGreeting = () => {
+    const hour = new Date().getHours()
+    if (hour < 10) return 'God morgon'
+    if (hour < 17) return 'God eftermiddag' 
+    return 'God kväll'
+  }
+
+  // Show success notification after login
+  const showSuccessNotification = () => {
+    setShowLoginSuccess(true)
+    setTimeout(() => setShowLoginSuccess(false), 3000)
+  }
+
   // Google Drive and project functions
   const openDriveFolder = (folderName: string) => {
     if (!user.isLoggedIn) {
@@ -413,6 +430,7 @@ export default function ByggPilotExact() {
         // Trigger Google Workspace onboarding
         triggerWorkspaceOnboarding()
         setIsAuthenticating(false)
+        showSuccessNotification()
         return
       } catch (popupError: any) {
         console.log('Popup failed, trying redirect...', popupError.code)
@@ -513,17 +531,42 @@ export default function ByggPilotExact() {
 
   // Initialize placeholder animation and check for redirect result
   useEffect(() => {
-    // Check for redirect result on component mount
+    // Auth persistence and login state management
+    const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
+      if (firebaseUser) {
+        setUser({
+          isLoggedIn: true,
+          email: firebaseUser.email,
+          name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Användare'
+        })
+        setIsAuthenticating(false)
+        setCurrentView('dashboard')
+        
+        // Show success notification for new logins
+        if (!showLoginSuccess) {
+          setShowLoginSuccess(true)
+          setTimeout(() => setShowLoginSuccess(false), 4000)
+        }
+      } else {
+        setUser({ isLoggedIn: false, email: null, name: null })
+        setIsAuthenticating(false)
+        if (currentView === 'dashboard') {
+          setCurrentView('landing')
+        }
+      }
+    })
+
+    return () => unsubscribe()
+  }, [currentView, showLoginSuccess])
+
+  // Check for redirect result on mount
+  useEffect(() => {
     const checkRedirectResult = async () => {
       try {
         const result = await getRedirectResult(auth)
-        if (result) {
-          console.log('Redirect sign in successful:', result.user.email)
-          setUser({
-            isLoggedIn: true,
-            email: result.user.email,
-            name: result.user.displayName
-          })
+        if (result?.user) {
+          setShowLoginSuccess(true)
+          setTimeout(() => setShowLoginSuccess(false), 4000)
         }
       } catch (error) {
         console.error('Redirect result error:', error)
@@ -531,14 +574,7 @@ export default function ByggPilotExact() {
     }
     
     checkRedirectResult()
-    
-    if (!isChatExpanded) {
-      startPlaceholderAnimation()
-    }
-    return () => {
-      if (placeholderInterval.current) clearInterval(placeholderInterval.current)
-    }
-  }, [isChatExpanded])
+  }, [])
 
   const renderHeader = () => (
     <header className="header">
@@ -546,7 +582,7 @@ export default function ByggPilotExact() {
         <div className="logo">
           <div className="logo-icon">
             <img 
-              src="/byggpilot-logo.jpg" 
+              src="/ChatGPT Image 15 juli 2025 21_02_06.png" 
               alt="ByggPilot" 
               className="logo-image"
               onError={(e) => {
@@ -672,9 +708,51 @@ export default function ByggPilotExact() {
         </div>
       </div>
 
+      {/* Login Success Notification */}
+      {showLoginSuccess && (
+        <div className="success-notification">
+          <span className="material-symbols-outlined">check_circle</span>
+          <span>Inloggning lyckades! Google Workspace ansluten.</span>
+        </div>
+      )}
+
+      {/* Senaste Nytt - prioriterat */}
+      <div className="latest-news-section">
+        <div className="section-header">
+          <h2>📢 SENASTE NYTT</h2>
+          <span className="project-count">3 viktiga</span>
+        </div>
+        <div className="news-grid">
+          <div className="news-item urgent">
+            <span className="news-icon">⚠️</span>
+            <div className="news-content">
+              <strong>Leverans försenad - Villa Nygren</strong>
+              <p>Kakel från Beijer försenat 2 dagar. Kontakta kund.</p>
+              <span className="news-time">2 tim sedan</span>
+            </div>
+          </div>
+          <div className="news-item info">
+            <span className="news-icon">📧</span>
+            <div className="news-content">
+              <strong>Nytt mail från Anna Andersson</strong>
+              <p>Frågor om köksprojekt. Svar inom 4h.</p>
+              <span className="news-time">5 tim sedan</span>
+            </div>
+          </div>
+          <div className="news-item success">
+            <span className="news-icon">✅</span>
+            <div className="news-content">
+              <strong>Faktura #2024-045 betald</strong>
+              <p>45,000 kr från Villa Nygren mottaget.</p>
+              <span className="news-time">Idag 09:15</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Welcome feature cards */}
       <div className="welcome-feature-card">
-        <h2>Välkommen till ByggPilot, Michael!</h2>
+        <h2>{getTimeBasedGreeting()}, Michael!</h2>
         <p>Din digitala kollega är redo att hjälpa dig hantera alla byggprojekt effektivt. Börja med att utforska dina aktiva projekt nedan.</p>
       </div>
 
@@ -709,13 +787,28 @@ export default function ByggPilotExact() {
           {projects.map(project => (
             <div key={project.id} className="project-card">
               <div className="project-header">
-                <div 
-                  className="project-status-indicator"
-                  style={{ backgroundColor: project.color }}
-                ></div>
-                <h3>{project.name}</h3>
-                <div className="project-menu">
-                  <span className="material-symbols-outlined project-menu-icon">settings</span>
+                <div className="project-info-left">
+                  <div 
+                    className="project-status-indicator"
+                    style={{ backgroundColor: project.color }}
+                  ></div>
+                  <h3>{project.name}</h3>
+                </div>
+                <div className="project-actions-right">
+                  <button 
+                    className="action-btn-small"
+                    onClick={() => openDriveFolder(project.driveFolder || project.name)}
+                    title="Öppna projektmapp"
+                  >
+                    <span className="material-symbols-outlined drive-folder-icon">folder_open</span>
+                  </button>
+                  <button 
+                    className="action-btn-small"
+                    onClick={() => alert('Projektinställningar kommer snart!')}
+                    title="Projektinställningar"
+                  >
+                    <span className="material-symbols-outlined project-menu-icon">settings</span>
+                  </button>
                 </div>
               </div>
               
@@ -786,7 +879,7 @@ export default function ByggPilotExact() {
         </div>
       </div>
       
-      {!user.isDemoMode && (
+      {!isDemoMode && (
         <div className="widgets-grid">
           <div className="widget">
             <div className="widget-header">
@@ -822,11 +915,7 @@ export default function ByggPilotExact() {
               <h3>Senaste dokument</h3>
             </div>
             <div className="widget-content">
-              {user.isLoggedIn ? (
-                <p>Hämtar dokumentdata...</p>
-              ) : (
-                <p>Logga in för att se senaste dokument</p>
-              )}
+              <p>Logga in för att se senaste dokument</p>
             </div>
           </div>
         </div>
