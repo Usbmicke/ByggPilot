@@ -77,6 +77,8 @@ body {
   width: 40px;
   height: 40px;
   background: transparent !important;
+  max-height: 32px;
+  width: auto;
   border-radius: 8px;
   object-fit: contain;
   transition: transform 0.2s ease;
@@ -84,6 +86,12 @@ body {
 
 .logo-image:hover {
   transform: scale(1.05);
+}
+
+.logo-text {
+  color: white !important;
+  font-weight: 600;
+  font-size: 1.2rem;
 }
 
 .user-info {
@@ -504,19 +512,23 @@ body {
 .chat-drawer {
   position: fixed;
   bottom: 0;
-  left: 260px;
-  right: 0;
-  background-color: var(--secondary-bg);
-  border-top: 1px solid var(--border-color);
-  z-index: 10;
-  display: flex;
-  flex-direction: column;
-  height: 95px;
-  transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  right: 20px;
+  width: 400px;
+  max-height: 80vh;
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: 12px 12px 0 0;
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  transition: all 0.3s ease;
+}
+
+.chat-drawer:not(.expanded) {
+  height: 60px;
 }
 
 .chat-drawer.expanded {
-  height: 90%;
+  height: 500px;
 }
 
 .chat-drawer-content {
