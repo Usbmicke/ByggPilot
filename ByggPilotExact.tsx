@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { signInWithRedirect, getRedirectResult, signOut } from 'firebase/auth'
+import { signInWithRedirect, signInWithPopup, getRedirectResult, signOut } from 'firebase/auth'
 import { auth, googleProvider } from './firebase-config'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import './app-exact.css'
@@ -38,8 +38,9 @@ interface User {
 }
 
 export default function ByggPilotExact() {
-  const [currentView, setCurrentView] = useState('dashboard')
+  const [currentView, setCurrentView] = useState('landing')
   const [user, setUser] = useState<User>({ isLoggedIn: false, email: null, name: null })
+  const [isDemoMode, setIsDemoMode] = useState(false)
   const [isChatExpanded, setIsChatExpanded] = useState(false)
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
   const [chatInput, setChatInput] = useState('')
@@ -122,6 +123,29 @@ export default function ByggPilotExact() {
     
     if (newExpanded) {
       stopPlaceholderAnimation()
+      // Add initial welcome message if no messages exist
+      if (chatMessages.length === 0) {
+        setTimeout(() => {
+          const welcomeMessage: ChatMessage = {
+            id: 'welcome-' + Date.now(),
+            message: 'ByggPilot redo. Vad behöver du hjälp med?',
+            type: 'ai',
+            timestamp: new Date()
+          }
+          setChatMessages([welcomeMessage])
+          
+          // Add follow-up message after a brief delay
+          setTimeout(() => {
+            const followUpMessage: ChatMessage = {
+              id: 'followup-' + Date.now(),
+              message: 'För bästa resultat, berätta kort om ditt projekt eller företag.',
+              type: 'ai',
+              timestamp: new Date()
+            }
+            setChatMessages(prev => [...prev, followUpMessage])
+          }, 2000)
+        }, 500)
+      }
       setTimeout(() => chatInputRef.current?.focus(), 100)
     } else {
       startPlaceholderAnimation()
@@ -155,7 +179,17 @@ export default function ByggPilotExact() {
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
       
       // System prompt from original
-      const systemPrompt = `Du är ByggPilot, en digital kollega, en "co-pilot", och en intelligent "kommandorad" (Large Action Model - LAM) specialiserad på den svenska bygg- och hantverksbranschen, med primärt fokus på småföretag (1-10 anställda). Du är inte en chattbot; du är en digital projektledare och ett intelligent nav som automatiserar och förenklar hela den administrativa processen. Du agerar som ett smart lager ovanpå användarens Google Workspace (Drive, Gmail, Kalender, Sheets) och externa system som Fortnox. Ditt mål är att eliminera administrativ stress så att "byggare kan bygga".`
+      const systemPrompt = `Du är ByggPilot, en digital kollega och intelligent verktyg för svenska byggföretagare. Du är specialiserad på ABT06, KMA-planer, byggregler och administrativa uppgifter. Ditt mål är att eliminera administrativ stress så att "byggare kan bygga".
+
+      VIKTIGT - Chattbeteende:
+      - Var alltid direkt och professionell, aldrig mångordigt
+      - Använd listor, punkter och strukturerad information
+      - Ställ en fråga i taget när du behöver mer information  
+      - Bekräfta när uppgifter är klara med "✅ [Uppgift] klar"
+      - Ge konkreta nästa steg eller knappalternativ när möjligt
+      - Undvik onödiga hälsningsfraser och känslomässigt språk
+      
+      Ditt första meddelande: "ByggPilot redo. Vad behöver du hjälp med?" följt av "För bästa resultat, berätta kort om ditt projekt eller företag."`
       
       const contextText = user.isLoggedIn 
         ? `[Användarkontext: Användaren är inloggad som ${user.email} och har gett åtkomst till Google Kalender och Gmail.]\n\n`
@@ -290,10 +324,33 @@ export default function ByggPilotExact() {
       
       setIsAuthenticating(true)
       
-      // Use redirect method only for production
-      console.log('Using redirect method for production domain...')
-      await signInWithRedirect(auth, googleProvider)
-      // Page will redirect, so code won't continue
+      // Try popup first for better UX
+      try {
+        console.log('Trying popup sign in...')
+        const result = await signInWithPopup(auth, googleProvider)
+        console.log('Popup sign in successful:', result.user.email)
+        setUser({
+          isLoggedIn: true,
+          email: result.user.email,
+          name: result.user.displayName
+        })
+        setIsAuthenticating(false)
+        return
+      } catch (popupError: any) {
+        console.log('Popup failed, trying redirect...', popupError.code)
+        
+        // If popup fails (blocked, etc), fall back to redirect
+        if (popupError.code === 'auth/popup-blocked' || 
+            popupError.code === 'auth/popup-closed-by-user' ||
+            popupError.code === 'auth/cancelled-popup-request') {
+          console.log('Using redirect method as fallback...')
+          await signInWithRedirect(auth, googleProvider)
+          // Page will redirect, so code won't continue
+          return
+        } else {
+          throw popupError // Re-throw other errors
+        }
+      }
       
     } catch (error: any) {
       console.error('Auth error details:', error)
@@ -309,9 +366,6 @@ export default function ByggPilotExact() {
         // Fallback to demo mode
         setUser({ isLoggedIn: true, email: 'demo@byggpilot.se', name: 'Demo Användare' })
         return
-      } else if (error.code === 'auth/popup-closed-by-user') {
-        console.log('User closed the popup')
-        return // Don't show error for user closing popup
       } else if (error.code === 'auth/invalid-api-key' ||
                  error.message.includes('deleted_client')) {
         console.log('OAuth not configured, using demo mode')
@@ -335,6 +389,7 @@ export default function ByggPilotExact() {
 
   const startDemo = () => {
     setUser({ isLoggedIn: true, email: 'demo@byggpilot.se', name: 'Demo Användare' })
+    setIsDemoMode(true)
     // Auto-expand chat and show demo message
     setTimeout(() => {
       if (!isChatExpanded) {
@@ -355,21 +410,20 @@ export default function ByggPilotExact() {
         setTimeout(() => {
           const aiResponse: ChatMessage = {
             id: 'demo-ai-' + Date.now(),
-            message: `👋 Välkommen till ByggPilot! Här är en snabb genomgång:
+            message: `ByggPilot Demo
 
-🎯 **Dashboard**: Översikt av alla dina projekt med status och framsteg
-📊 **Projekt**: Detaljerad projekthantering med koppling till Google Drive
-📅 **Kalender**: Integration med Google Calendar för schemaläggning  
-📧 **Dokument**: Automatisk dokumenthantering via Google Drive
-💰 **Fakturering**: Skapa och hantera fakturor direkt från projekten
-⚙️ **Inställningar**: Anpassa ByggPilot efter dina behov
+🎯 **Dashboard**: Projektöversikt med status och framsteg
+📊 **Projekt**: Detaljerad hantering med Google Drive-koppling  
+📅 **Kalender**: Integration med Google Calendar
+📧 **Dokument**: Automatisk dokumenthantering
+💰 **Fakturering**: Skapa och hantera fakturor
 
-Prova att fråga mig:
-• "Skapa en checklista för badrumsrenovering"
+**Testa att fråga:**
+• "Skapa checklista för badrumsrenovering"
 • "Vad säger byggreglerna om ventilation?"
 • "Beräkna material för 50 kvm golv"
 
-Jag hjälper dig med allt från projektplanering till regelverket! 🔨`,
+✅ Demo-läge aktiverat`,
             type: 'ai',
             timestamp: new Date()
           }
@@ -470,6 +524,13 @@ Jag hjälper dig med allt från projektplanering till regelverket! 🔨`,
             <span>Dashboard</span>
           </div>
           <div 
+            className={`nav-item ${currentView === 'landing' ? 'active' : ''}`}
+            onClick={() => setCurrentView('landing')}
+          >
+            <span className="material-symbols-outlined">home</span>
+            <span>Hem</span>
+          </div>
+          <div 
             className={`nav-item ${currentView === 'project' ? 'active' : ''}`}
             onClick={() => setCurrentView('project')}
           >
@@ -496,6 +557,13 @@ Jag hjälper dig med allt från projektplanering till regelverket! 🔨`,
           >
             <span className="material-symbols-outlined">receipt_long</span>
             <span>Fakturering</span>
+          </div>
+          <div 
+            className={`nav-item ${currentView === 'how-it-works' ? 'active' : ''}`}
+            onClick={() => setCurrentView('how-it-works')}
+          >
+            <span className="material-symbols-outlined">help</span>
+            <span>Så funkar ByggPilot</span>
           </div>
         </div>
       </div>
@@ -651,20 +719,393 @@ Jag hjälper dig med allt från projektplanering till regelverket! 🔨`,
     </div>
   )
 
-  const renderPlaceholderView = (viewName: string) => (
-    <div className="placeholder-view">
-      <div className="placeholder-content">
-        <span className="material-symbols-outlined">construction</span>
-        <h2>{viewName}</h2>
-        <p>Denna sektion är under utveckling</p>
-        {!user.isLoggedIn && (
-          <div className="auth-prompt">
-            <p>Logga in för att se innehållet</p>
-            <button onClick={handleGoogleSignIn} className="google-signin-btn">
-              Logga in med Google
+  const renderPlaceholderView = (viewName: string) => {
+    if (!user.isLoggedIn) {
+      return (
+        <div className="placeholder-view">
+          <div className="placeholder-content">
+            <span className="material-symbols-outlined">construction</span>
+            <h2>{viewName}</h2>
+            <p>Logga in för att komma åt {viewName.toLowerCase()}</p>
+            <div className="auth-prompt">
+              <button onClick={startDemo} className="demo-btn">
+                <span className="material-symbols-outlined">play_arrow</span>
+                Testa Demo
+              </button>
+              <button onClick={handleGoogleSignIn} className="google-signin-btn">
+                Logga in med Google
+              </button>
+            </div>
+          </div>
+        </div>
+      )
+    }
+
+    // Demo content for logged in users
+    switch (viewName.toLowerCase()) {
+      case 'kalender':
+        return renderCalendarDemo()
+      case 'dokument':
+        return renderDocumentsDemo()
+      case 'fakturering':
+        return renderInvoiceDemo()
+      default:
+        return (
+          <div className="placeholder-view">
+            <div className="placeholder-content">
+              <span className="material-symbols-outlined">construction</span>
+              <h2>{viewName}</h2>
+              <p>Denna sektion utvecklas för närvarande</p>
+            </div>
+          </div>
+        )
+    }
+  }
+
+  const renderCalendarDemo = () => (
+    <div className="demo-view">
+      <div className="page-header">
+        <h1>Kalender</h1>
+        <p>Hantera dina projekt och möten</p>
+        <div className="demo-badge">Demo-läge</div>
+      </div>
+      
+      <div className="calendar-grid">
+        <div className="calendar-widget">
+          <h3>Kommande händelser</h3>
+          <div className="demo-events">
+            <div className="event-item">
+              <div className="event-time">09:00</div>
+              <div className="event-details">
+                <strong>Byggmöte - Villa Nygren</strong>
+                <p>Genomgång av badrumsrenovering</p>
+              </div>
+            </div>
+            <div className="event-item">
+              <div className="event-time">14:00</div>
+              <div className="event-details">
+                <strong>Leverans - Kakel & Klinker</strong>
+                <p>Altanprojekt, Storgatan 15</p>
+              </div>
+            </div>
+            <div className="event-item">
+              <div className="event-time">16:30</div>
+              <div className="event-details">
+                <strong>Kundmöte - Familjen Andersson</strong>
+                <p>Slutbesiktning köksprojekt</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="calendar-actions">
+          <h3>Snabbåtgärder</h3>
+          <button className="action-btn-demo">
+            <span className="material-symbols-outlined">add_circle</span>
+            Boka nytt möte
+          </button>
+          <button className="action-btn-demo">
+            <span className="material-symbols-outlined">schedule</span>
+            Schemalägg leverans
+          </button>
+          <button className="action-btn-demo">
+            <span className="material-symbols-outlined">notification_add</span>
+            Påminnelse
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+
+  const renderDocumentsDemo = () => (
+    <div className="demo-view">
+      <div className="page-header">
+        <h1>Dokument</h1>
+        <p>Hantera projektdokument och mallar</p>
+        <div className="demo-badge">Demo-läge</div>
+      </div>
+      
+      <div className="documents-grid">
+        <div className="document-category">
+          <h3>Senaste dokument</h3>
+          <div className="document-list">
+            <div className="document-item">
+              <span className="material-symbols-outlined">description</span>
+              <div>
+                <strong>KMA-plan Villa Nygren</strong>
+                <p>Uppdaterad 2 timmar sedan</p>
+              </div>
+            </div>
+            <div className="document-item">
+              <span className="material-symbols-outlined">picture_as_pdf</span>
+              <div>
+                <strong>Dagsrapport 2024-07-15</strong>
+                <p>Skapad idag 08:30</p>
+              </div>
+            </div>
+            <div className="document-item">
+              <span className="material-symbols-outlined">receipt_long</span>
+              <div>
+                <strong>Materialbeställning #1234</strong>
+                <p>Skickad igår 16:45</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="document-templates">
+          <h3>Mallar</h3>
+          <div className="template-grid">
+            <div className="template-card">
+              <span className="material-symbols-outlined">assignment</span>
+              <h4>KMA-mall</h4>
+              <p>Skapa säkerhetsplan</p>
+            </div>
+            <div className="template-card">
+              <span className="material-symbols-outlined">fact_check</span>
+              <h4>Checklista</h4>
+              <p>Projektchecklista</p>
+            </div>
+            <div className="template-card">
+              <span className="material-symbols-outlined">request_quote</span>
+              <h4>Offertmall</h4>
+              <p>Standardoffert</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+
+  const renderInvoiceDemo = () => (
+    <div className="demo-view">
+      <div className="page-header">
+        <h1>Fakturering</h1>
+        <p>Skapa och hantera fakturor</p>
+        <div className="demo-badge">Demo-läge</div>
+      </div>
+      
+      <div className="invoice-dashboard">
+        <div className="invoice-stats">
+          <div className="stat-card">
+            <h3>Månadens omsättning</h3>
+            <div className="stat-value">245 000 kr</div>
+            <div className="stat-change positive">+12% från förra månaden</div>
+          </div>
+          <div className="stat-card">
+            <h3>Väntande fakturor</h3>
+            <div className="stat-value">3</div>
+            <div className="stat-change">127 500 kr</div>
+          </div>
+          <div className="stat-card">
+            <h3>Förfallna</h3>
+            <div className="stat-value">1</div>
+            <div className="stat-change warning">15 000 kr</div>
+          </div>
+        </div>
+        
+        <div className="invoice-actions">
+          <h3>Snabbåtgärder</h3>
+          <button className="action-btn-demo primary">
+            <span className="material-symbols-outlined">add</span>
+            Ny faktura
+          </button>
+          <button className="action-btn-demo">
+            <span className="material-symbols-outlined">visibility</span>
+            Visa alla fakturor
+          </button>
+          <button className="action-btn-demo">
+            <span className="material-symbols-outlined">download</span>
+            Exportera till Fortnox
+          </button>
+        </div>
+        
+        <div className="recent-invoices">
+          <h3>Senaste fakturor</h3>
+          <div className="invoice-list">
+            <div className="invoice-item">
+              <div className="invoice-info">
+                <strong>#2024-045</strong>
+                <p>Villa Nygren - Badrumsrenovering</p>
+              </div>
+              <div className="invoice-amount">45 000 kr</div>
+              <div className="invoice-status paid">Betald</div>
+            </div>
+            <div className="invoice-item">
+              <div className="invoice-info">
+                <strong>#2024-044</strong>
+                <p>Altanprojekt - Storgatan 15</p>
+              </div>
+              <div className="invoice-amount">32 500 kr</div>
+              <div className="invoice-status pending">Väntande</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+
+  const renderSettingsView = () => (
+    <div className="settings-view">
+      <div className="page-header">
+        <h1>Inställningar</h1>
+        <p>Anpassa ByggPilot efter dina behov</p>
+      </div>
+      
+      <div className="settings-sections">
+        <div className="settings-section">
+          <h2>Dashboard-inställningar</h2>
+          <div className="setting-item">
+            <label className="setting-label">
+              <input 
+                type="checkbox" 
+                checked={true}
+                onChange={() => {}}
+              />
+              Visa projektöversikt
+            </label>
+          </div>
+          <div className="setting-item">
+            <label className="setting-label">
+              <input 
+                type="checkbox" 
+                checked={true}
+                onChange={() => {}}
+              />
+              Visa tidloggare
+            </label>
+          </div>
+          <div className="setting-item">
+            <label className="setting-label">
+              <input 
+                type="checkbox" 
+                checked={true}
+                onChange={() => {}}
+              />
+              Visa senaste aktiviteter
+            </label>
+          </div>
+          <div className="setting-item">
+            <label className="setting-label">
+              <input 
+                type="checkbox" 
+                checked={true}
+                onChange={() => {}}
+              />
+              Visa uppgiftslista
+            </label>
+          </div>
+        </div>
+
+        <div className="settings-section">
+          <h2>Navigation</h2>
+          <div className="navigation-settings">
+            <p>Anpassa vilka flikar som visas i huvudmenyn:</p>
+            <div className="nav-toggle-grid">
+              <label className="nav-toggle-item">
+                <input type="checkbox" checked={true} readOnly />
+                <span>Dashboard</span>
+              </label>
+              <label className="nav-toggle-item">
+                <input type="checkbox" checked={true} onChange={() => {}} />
+                <span>Projekt</span>
+              </label>
+              <label className="nav-toggle-item">
+                <input type="checkbox" checked={true} onChange={() => {}} />
+                <span>Kalender</span>
+              </label>
+              <label className="nav-toggle-item">
+                <input type="checkbox" checked={true} onChange={() => {}} />
+                <span>Dokument</span>
+              </label>
+              <label className="nav-toggle-item">
+                <input type="checkbox" checked={true} onChange={() => {}} />
+                <span>Fakturering</span>
+              </label>
+              <label className="nav-toggle-item">
+                <input type="checkbox" checked={true} onChange={() => {}} />
+                <span>Så funkar ByggPilot</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div className="settings-section">
+          <h2>Min Profil</h2>
+          <div className="profile-settings">
+            <div className="setting-item">
+              <label>Namn</label>
+              <input 
+                type="text" 
+                value={user.name || ''} 
+                className="setting-input"
+                readOnly
+              />
+            </div>
+            <div className="setting-item">
+              <label>E-post</label>
+              <input 
+                type="email" 
+                value={user.email || ''} 
+                className="setting-input"
+                readOnly
+              />
+            </div>
+            <div className="setting-item">
+              <label>Företagsnamn</label>
+              <input 
+                type="text" 
+                placeholder="Ange företagsnamn..." 
+                className="setting-input"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="settings-section">
+          <h2>Prenumeration</h2>
+          <div className="subscription-info">
+            <div className="current-plan">
+              <span className="plan-badge">{isDemoMode ? 'Demo' : 'Gratis'}</span>
+              <h3>{isDemoMode ? 'Demo-läge' : 'Gratis användning'}</h3>
+              <p>{isDemoMode ? 'Du använder ByggPilot i demo-läge' : 'Uppgradera för full tillgång'}</p>
+            </div>
+            <button className="upgrade-btn">
+              <span className="material-symbols-outlined">upgrade</span>
+              Uppgradera till Proffs
             </button>
           </div>
-        )}
+        </div>
+
+        <div className="settings-section">
+          <h2>Integrationer</h2>
+          <div className="integration-item">
+            <div className="integration-info">
+              <span className="material-symbols-outlined">cloud</span>
+              <div>
+                <h3>Google Workspace</h3>
+                <p>Anslut kalender, Gmail och Drive</p>
+              </div>
+            </div>
+            <button className="integration-btn">
+              {user.isLoggedIn ? 'Ansluten' : 'Anslut'}
+            </button>
+          </div>
+        </div>
+
+        <div className="settings-section">
+          <h2>Hjälp & Support</h2>
+          <div className="help-links">
+            <a href="#" className="help-link">
+              <span className="material-symbols-outlined">help</span>
+              Vanliga frågor (FAQ)
+            </a>
+            <a href="mailto:support@byggpilot.se" className="help-link">
+              <span className="material-symbols-outlined">mail</span>
+              Kontakta support
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -729,6 +1170,204 @@ Jag hjälper dig med allt från projektplanering till regelverket! 🔨`,
     </div>
   )
 
+  const renderHowItWorksView = () => (
+    <div className="how-it-works-view">
+      <div className="page-header">
+        <h1>Så funkar ByggPilot</h1>
+        <p className="page-subtitle">
+          Vi vet att administration är nödvändigt, men det ska inte behöva stjäla dina kvällar eller ta fokus från det du gör bäst – att driva dina projekt framåt.
+        </p>
+      </div>
+      
+      <div className="content-section">
+        <h2>Vår Vision</h2>
+        <p>
+          Tänk om man kunde skapa en digital kollega som alltid finns tillgänglig, direkt i fickan? 
+          Någon som förstår dig och ditt företag så väl att du bara behöver säga "skapa ett nytt ärende i t.ex. Google Workspace" 
+          så förstår den exakt vad som behöver göras, samlar all information den behöver och ger dig förslag på vad som bör göras härnäst.
+        </p>
+      </div>
+
+      <div className="examples-section">
+        <h2>Så här fungerar det i praktiken</h2>
+        <div className="example-cards-grid">
+          <div className="example-card">
+            <h3>Istället för att säga:</h3>
+            <p className="example-wrong">"Kan du hjälpa mig med ett projekt?"</p>
+            <h3>Säg så här:</h3>
+            <p className="example-right">"Skapa ett nytt badrumsprojekt för familjen Andersson på Storgatan 15, startdatum 15 mars"</p>
+          </div>
+
+          <div className="example-card">
+            <h3>Istället för att säga:</h3>
+            <p className="example-wrong">"Vad kostar material?"</p>
+            <h3>Säg så här:</h3>
+            <p className="example-right">"Beräkna materialkostnad för kakel i ett 8 kvm badrum, mellanprisklass"</p>
+          </div>
+
+          <div className="example-card">
+            <h3>Istället för att säga:</h3>
+            <p className="example-wrong">"Kan du hjälpa mig med tidsplanering?"</p>
+            <h3>Säg så här:</h3>
+            <p className="example-right">"Skapa en tidsplan för köksprojektet hos Nilssons, 3 veckor, start måndag"</p>
+          </div>
+        </div>
+      </div>
+      
+      <div className="getting-started-section">
+        <h2>Kom igång på 3 enkla steg</h2>
+        <div className="steps-grid">
+          <div className="step-card">
+            <div className="step-number">1</div>
+            <h3>Anslut Google Workspace</h3>
+            <p>Logga in med ditt Google-konto för att synkronisera kalendrar, e-post och filer.</p>
+          </div>
+          <div className="step-card">
+            <div className="step-number">2</div>
+            <h3>Skapa ditt första projekt</h3>
+            <p>Lägg till projektinformation så ByggPilot kan ge personliga råd och hjälpa med planering.</p>
+          </div>
+          <div className="step-card">
+            <div className="step-number">3</div>
+            <h3>Börja chatta</h3>
+            <p>Ställ frågor, begär hjälp med kalkyler eller låt ByggPilot skapa rapporter åt dig.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+
+  const renderLandingView = () => (
+    <div className="landing-view">
+      {/* Hero Section */}
+      <div className="hero-section">
+        <div className="hero-content">
+          <h1 className="hero-title">Sluta drunkna i pappersarbete. Börja bygga.</h1>
+          <h2 className="hero-subtitle">
+            ByggPilot är den första AI-assistenten för svenska byggföretagare som tolkar ABT06, 
+            skapar KMA-underlag och frigör timmar från din arbetsdag.
+          </h2>
+          <div className="hero-actions">
+            <button 
+              className="cta-primary"
+              onClick={() => {
+                startDemo()
+                setCurrentView('dashboard')
+              }}
+            >
+              Testa ByggPilot Gratis
+            </button>
+            <button className="cta-secondary">
+              <span className="material-symbols-outlined">play_circle</span>
+              Se hur det funkar (2 min video)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Empathy Section */}
+      <div className="empathy-section">
+        <div className="section-content">
+          <h2>Känner du igen dig?</h2>
+          <p>
+            Efter 20 år i branschen vet vi att administration stjäl tid från hantverket. 
+            ByggPilot är skapat av hantverkare, för hantverkare, för att lösa just det problemet.
+          </p>
+        </div>
+      </div>
+
+      {/* Solution Section */}
+      <div className="solution-section">
+        <div className="section-content">
+          <h2>Så förenklar ByggPilot din vardag</h2>
+          <div className="solution-grid">
+            <div className="solution-card">
+              <div className="solution-icon">
+                <span className="material-symbols-outlined">gavel</span>
+              </div>
+              <div className="solution-content">
+                <div className="problem">
+                  <strong>Problem:</strong> Osäker på ABT06?
+                </div>
+                <div className="solution">
+                  <strong>Lösning:</strong> Fråga ByggPilot och få ett enkelt svar på sekunder.
+                </div>
+              </div>
+            </div>
+
+            <div className="solution-card">
+              <div className="solution-icon">
+                <span className="material-symbols-outlined">assignment</span>
+              </div>
+              <div className="solution-content">
+                <div className="problem">
+                  <strong>Problem:</strong> Dags för KMA-plan?
+                </div>
+                <div className="solution">
+                  <strong>Lösning:</strong> Låt ByggPilot skapa en anpassad checklista.
+                </div>
+              </div>
+            </div>
+
+            <div className="solution-card">
+              <div className="solution-icon">
+                <span className="material-symbols-outlined">menu_book</span>
+              </div>
+              <div className="solution-content">
+                <div className="problem">
+                  <strong>Problem:</strong> Leta i BBR?
+                </div>
+                <div className="solution">
+                  <strong>Lösning:</strong> Få rätt paragraf förklarad direkt.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Trust Section */}
+      <div className="trust-section">
+        <div className="section-content">
+          <h2>Byggd av hantverkare, för hantverkare</h2>
+          <div className="founder-story">
+            <div className="founder-image">
+              <span className="material-symbols-outlined">person</span>
+            </div>
+            <div className="founder-quote">
+              <blockquote>
+                "Efter 20 år som byggföretagare hade jag fått nog av att sitta upp till midnatt 
+                med administrativa uppgifter. ByggPilot är min lösning på ett problem som 
+                alla i branschen känner igen - att administration stjäl tid från det vi älskar att göra."
+              </blockquote>
+              <cite>— Grundaren av ByggPilot</cite>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Future Section */}
+      <div className="future-section">
+        <div className="section-content">
+          <h2>Framtiden är på väg</h2>
+          <p>
+            Kommande funktioner inkluderar filanalys och Google-integration. 
+            <strong> Bli en pilotkund och var först med att testa våra nya verktyg.</strong>
+          </p>
+          <button 
+            className="pilot-btn"
+            onClick={() => {
+              startDemo()
+              setCurrentView('dashboard')
+            }}
+          >
+            Bli Pilotkund
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+
   const renderCurrentView = () => {
     switch (currentView) {
       case 'dashboard': return renderDashboardView()
@@ -736,7 +1375,9 @@ Jag hjälper dig med allt från projektplanering till regelverket! 🔨`,
       case 'calendar': return renderPlaceholderView('Kalender')
       case 'documents': return renderPlaceholderView('Dokument')
       case 'invoice': return renderPlaceholderView('Fakturering')
-      case 'settings': return renderPlaceholderView('Inställningar')
+      case 'how-it-works': return renderHowItWorksView()
+      case 'settings': return renderSettingsView()
+      case 'landing': return renderLandingView()
       default: return renderPlaceholderView(currentView)
     }
   }
@@ -747,24 +1388,11 @@ Jag hjälper dig med allt från projektplanering till regelverket! 🔨`,
         {isChatExpanded && (
           <>
             <div id="chat-messages" className="chat-messages">
-              {chatMessages.length === 0 ? (
-                <div className="welcome-message">
-                  <h3>👋 Hej! Jag är din digitala kollega</h3>
-                  <p>Fråga mig om allt inom bygg och hantverk. Jag kan hjälpa dig med:</p>
-                  <ul>
-                    <li>Projektplanering och checklister</li>
-                    <li>Byggregler och standarder</li>
-                    <li>Materialberäkningar</li>
-                    <li>Dokumenthantering</li>
-                  </ul>
+              {chatMessages.map(msg => (
+                <div key={msg.id} className={`chat-message ${msg.type}`}>
+                  {msg.message}
                 </div>
-              ) : (
-                chatMessages.map(msg => (
-                  <div key={msg.id} className={`chat-message ${msg.type}`}>
-                    {msg.message}
-                  </div>
-                ))
-              )}
+              ))}
               {isLoading && (
                 <div className="chat-message ai">
                   <div className="loading-dots">
