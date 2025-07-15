@@ -128,7 +128,7 @@ export default function ByggPilotExact() {
         setTimeout(() => {
           const welcomeMessage: ChatMessage = {
             id: 'welcome-' + Date.now(),
-            message: 'ByggPilot redo. Vad behöver du hjälp med?',
+            message: '🏗️ **ByggPilot aktiverad**\n\n👋 Hej! Vad kan jag hjälpa dig med?',
             type: 'ai',
             timestamp: new Date()
           }
@@ -138,7 +138,7 @@ export default function ByggPilotExact() {
           setTimeout(() => {
             const followUpMessage: ChatMessage = {
               id: 'followup-' + Date.now(),
-              message: 'För bästa resultat, berätta kort om ditt projekt eller företag.',
+              message: '💡 **Tips:** Berätta kort om ditt projekt så kan jag ge bättre råd!\n\n📋 **Exempel:** "Renoverar badrum, behöver hjälp med KMA"',
               type: 'ai',
               timestamp: new Date()
             }
@@ -586,12 +586,15 @@ export default function ByggPilotExact() {
   const renderDashboardView = () => (
     <div className="dashboard-content">
       <div className="page-header">
-        <h1>Dashboard</h1>
+        <h1>🏗️ Dashboard</h1>
         <p>Översikt av dina projekt och aktiviteter</p>
       </div>
 
       <div className="projects-section">
-        <h2>Aktiva projekt</h2>
+        <div className="section-header">
+          <h2>📂 AKTIVA PROJEKT</h2>
+          <span className="project-count">{projects.length} projekt</span>
+        </div>
         <div className="projects-grid">
           {projects.map(project => (
             <div key={project.id} className="project-card">
@@ -602,7 +605,7 @@ export default function ByggPilotExact() {
                 ></div>
                 <h3>{project.name}</h3>
                 <div className="project-menu">
-                  <span className="material-symbols-outlined">more_vert</span>
+                  <span className="material-symbols-outlined project-menu-icon">settings</span>
                 </div>
               </div>
               
@@ -642,7 +645,7 @@ export default function ByggPilotExact() {
                     className="action-btn"
                     onClick={() => openDriveFolder(project.driveFolder!)}
                   >
-                    <span className="material-symbols-outlined">folder</span>
+                    <span className="material-symbols-outlined drive-folder-icon">folder_open</span>
                     Drive-mapp
                   </button>
                   <button 
@@ -765,53 +768,83 @@ export default function ByggPilotExact() {
   const renderCalendarDemo = () => (
     <div className="demo-view">
       <div className="page-header">
-        <h1>Kalender</h1>
-        <p>Hantera dina projekt och möten</p>
-        <div className="demo-badge">Demo-läge</div>
+        <h1>📅 Kalender & Planering</h1>
+        <p>Håll koll på projekt, möten och leveranser</p>
+        <div className="demo-badge">Demo-läge aktiv</div>
       </div>
       
       <div className="calendar-grid">
         <div className="calendar-widget">
-          <h3>Kommande händelser</h3>
+          <div className="section-header">
+            <h2>🗓️ Dagens Schema</h2>
+            <span className="project-count">3 aktiviteter</span>
+          </div>
           <div className="demo-events">
             <div className="event-item">
-              <div className="event-time">09:00</div>
+              <div className="event-time">
+                <span className="time">09:00</span>
+                <span className="duration">2h</span>
+              </div>
               <div className="event-details">
-                <strong>Byggmöte - Villa Nygren</strong>
-                <p>Genomgång av badrumsrenovering</p>
+                <strong>🏗️ Byggmöte - Villa Nygren</strong>
+                <p>Genomgång badrumsrenovering</p>
+                <span className="event-status active">Pågående</span>
               </div>
             </div>
             <div className="event-item">
-              <div className="event-time">14:00</div>
+              <div className="event-time">
+                <span className="time">14:00</span>
+                <span className="duration">1h</span>
+              </div>
               <div className="event-details">
-                <strong>Leverans - Kakel & Klinker</strong>
-                <p>Altanprojekt, Storgatan 15</p>
+                <strong>🚚 Leverans - Material</strong>
+                <p>Kakel & klinker, Storgatan 15</p>
+                <span className="event-status upcoming">Kommande</span>
               </div>
             </div>
             <div className="event-item">
-              <div className="event-time">16:30</div>
+              <div className="event-time">
+                <span className="time">16:30</span>
+                <span className="duration">45min</span>
+              </div>
               <div className="event-details">
-                <strong>Kundmöte - Familjen Andersson</strong>
-                <p>Slutbesiktning köksprojekt</p>
+                <strong>✅ Slutbesiktning</strong>
+                <p>Köksprojekt - Familjen Andersson</p>
+                <span className="event-status final">Avslutning</span>
               </div>
             </div>
           </div>
         </div>
         
         <div className="calendar-actions">
-          <h3>Snabbåtgärder</h3>
-          <button className="action-btn-demo">
-            <span className="material-symbols-outlined">add_circle</span>
-            Boka nytt möte
-          </button>
-          <button className="action-btn-demo">
-            <span className="material-symbols-outlined">schedule</span>
-            Schemalägg leverans
-          </button>
-          <button className="action-btn-demo">
-            <span className="material-symbols-outlined">notification_add</span>
-            Påminnelse
-          </button>
+          <h3>⚡ Snabbåtgärder</h3>
+          <div className="action-buttons">
+            <button className="action-btn-demo primary">
+              <span className="material-symbols-outlined">add_circle</span>
+              Boka möte
+            </button>
+            <button className="action-btn-demo">
+              <span className="material-symbols-outlined">schedule</span>
+              Leverans
+            </button>
+            <button className="action-btn-demo">
+              <span className="material-symbols-outlined">notification_add</span>
+              Påminnelse
+            </button>
+          </div>
+          
+          <div className="calendar-stats">
+            <h4>📊 Denna vecka</h4>
+            <div className="stat-item">
+              <span>Möten:</span> <strong>12</strong>
+            </div>
+            <div className="stat-item">
+              <span>Leveranser:</span> <strong>5</strong>
+            </div>
+            <div className="stat-item">
+              <span>Besiktningar:</span> <strong>3</strong>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -820,56 +853,78 @@ export default function ByggPilotExact() {
   const renderDocumentsDemo = () => (
     <div className="demo-view">
       <div className="page-header">
-        <h1>Dokument</h1>
-        <p>Hantera projektdokument och mallar</p>
-        <div className="demo-badge">Demo-läge</div>
+        <h1>📁 Dokument & Mallar</h1>
+        <p>Organisera och hantera alla projektdokument</p>
+        <div className="demo-badge">Demo-läge aktiv</div>
       </div>
       
       <div className="documents-grid">
         <div className="document-category">
-          <h3>Senaste dokument</h3>
+          <div className="section-header">
+            <h2>📄 Senaste Dokument</h2>
+            <span className="project-count">8 filer</span>
+          </div>
           <div className="document-list">
-            <div className="document-item">
+            <div className="document-item priority">
               <span className="material-symbols-outlined">description</span>
               <div>
-                <strong>KMA-plan Villa Nygren</strong>
-                <p>Uppdaterad 2 timmar sedan</p>
+                <strong>🛡️ KMA-plan Villa Nygren</strong>
+                <p>Uppdaterad 2 timmar sedan • Michael E.F.</p>
+                <span className="doc-status updated">Nyligen ändrad</span>
               </div>
             </div>
             <div className="document-item">
               <span className="material-symbols-outlined">picture_as_pdf</span>
               <div>
-                <strong>Dagsrapport 2024-07-15</strong>
-                <p>Skapad idag 08:30</p>
+                <strong>📊 Dagsrapport 2024-07-15</strong>
+                <p>Skapad idag 08:30 • Auto-genererad</p>
+                <span className="doc-status new">Ny</span>
               </div>
             </div>
             <div className="document-item">
               <span className="material-symbols-outlined">receipt_long</span>
               <div>
-                <strong>Materialbeställning #1234</strong>
-                <p>Skickad igår 16:45</p>
+                <strong>🔨 Materialbeställning #1234</strong>
+                <p>Skickad igår 16:45 • 45,500 kr</p>
+                <span className="doc-status sent">Skickad</span>
               </div>
             </div>
           </div>
         </div>
         
         <div className="document-templates">
-          <h3>Mallar</h3>
+          <h3>⚡ Snabbmallar</h3>
           <div className="template-grid">
-            <div className="template-card">
+            <div className="template-card primary">
               <span className="material-symbols-outlined">assignment</span>
               <h4>KMA-mall</h4>
               <p>Skapa säkerhetsplan</p>
+              <button className="template-btn">Använd</button>
             </div>
             <div className="template-card">
               <span className="material-symbols-outlined">fact_check</span>
               <h4>Checklista</h4>
               <p>Projektchecklista</p>
+              <button className="template-btn">Skapa</button>
             </div>
             <div className="template-card">
               <span className="material-symbols-outlined">request_quote</span>
               <h4>Offertmall</h4>
               <p>Standardoffert</p>
+              <button className="template-btn">Ny offert</button>
+            </div>
+          </div>
+          
+          <div className="document-stats">
+            <h4>📈 Statistik</h4>
+            <div className="stat-item">
+              <span>Totalt dokument:</span> <strong>127</strong>
+            </div>
+            <div className="stat-item">
+              <span>Denna månad:</span> <strong>23</strong>
+            </div>
+            <div className="stat-item">
+              <span>Mallar använda:</span> <strong>8</strong>
             </div>
           </div>
         </div>
@@ -880,64 +935,87 @@ export default function ByggPilotExact() {
   const renderInvoiceDemo = () => (
     <div className="demo-view">
       <div className="page-header">
-        <h1>Fakturering</h1>
-        <p>Skapa och hantera fakturor</p>
-        <div className="demo-badge">Demo-läge</div>
+        <h1>💰 Fakturering & Ekonomi</h1>
+        <p>Hantera fakturor och ekonomisk översikt</p>
+        <div className="demo-badge">Demo-läge aktiv</div>
       </div>
       
       <div className="invoice-dashboard">
         <div className="invoice-stats">
-          <div className="stat-card">
+          <div className="stat-card primary">
+            <div className="stat-icon">💸</div>
             <h3>Månadens omsättning</h3>
             <div className="stat-value">245 000 kr</div>
             <div className="stat-change positive">+12% från förra månaden</div>
           </div>
-          <div className="stat-card">
+          <div className="stat-card warning">
+            <div className="stat-icon">⏳</div>
             <h3>Väntande fakturor</h3>
-            <div className="stat-value">3</div>
-            <div className="stat-change">127 500 kr</div>
+            <div className="stat-value">3 st</div>
+            <div className="stat-change">127 500 kr totalt</div>
           </div>
-          <div className="stat-card">
+          <div className="stat-card danger">
+            <div className="stat-icon">⚠️</div>
             <h3>Förfallna</h3>
-            <div className="stat-value">1</div>
-            <div className="stat-change warning">15 000 kr</div>
+            <div className="stat-value">1 st</div>
+            <div className="stat-change warning">15 000 kr - Åtgärd krävs</div>
           </div>
         </div>
         
         <div className="invoice-actions">
-          <h3>Snabbåtgärder</h3>
-          <button className="action-btn-demo primary">
-            <span className="material-symbols-outlined">add</span>
-            Ny faktura
-          </button>
-          <button className="action-btn-demo">
-            <span className="material-symbols-outlined">visibility</span>
-            Visa alla fakturor
-          </button>
-          <button className="action-btn-demo">
-            <span className="material-symbols-outlined">download</span>
-            Exportera till Fortnox
-          </button>
+          <h3>⚡ Snabbåtgärder</h3>
+          <div className="action-buttons">
+            <button className="action-btn-demo primary">
+              <span className="material-symbols-outlined">add</span>
+              Ny faktura
+            </button>
+            <button className="action-btn-demo">
+              <span className="material-symbols-outlined">visibility</span>
+              Visa alla
+            </button>
+            <button className="action-btn-demo">
+              <span className="material-symbols-outlined">download</span>
+              Export Fortnox
+            </button>
+            <button className="action-btn-demo">
+              <span className="material-symbols-outlined">send</span>
+              Skicka påminnelse
+            </button>
+          </div>
         </div>
         
         <div className="recent-invoices">
-          <h3>Senaste fakturor</h3>
+          <div className="section-header">
+            <h2>📄 Senaste Fakturor</h2>
+            <span className="project-count">5 fakturor</span>
+          </div>
           <div className="invoice-list">
-            <div className="invoice-item">
+            <div className="invoice-item priority">
               <div className="invoice-info">
-                <strong>#2024-045</strong>
+                <strong>🏗️ #2024-045</strong>
                 <p>Villa Nygren - Badrumsrenovering</p>
+                <span className="invoice-date">Skickad: 10 jul 2024</span>
               </div>
-              <div className="invoice-amount">45 000 kr</div>
-              <div className="invoice-status paid">Betald</div>
+              <div className="invoice-amount success">45 000 kr</div>
+              <div className="invoice-status paid">✅ Betald</div>
             </div>
             <div className="invoice-item">
               <div className="invoice-info">
-                <strong>#2024-044</strong>
+                <strong>🏠 #2024-044</strong>
                 <p>Altanprojekt - Storgatan 15</p>
+                <span className="invoice-date">Skickad: 8 jul 2024</span>
               </div>
-              <div className="invoice-amount">32 500 kr</div>
-              <div className="invoice-status pending">Väntande</div>
+              <div className="invoice-amount pending">32 500 kr</div>
+              <div className="invoice-status pending">⏳ Väntande</div>
+            </div>
+            <div className="invoice-item urgent">
+              <div className="invoice-info">
+                <strong>🔧 #2024-043</strong>
+                <p>Köksprojekt - Familjen Andersson</p>
+                <span className="invoice-date">Förfallen: 25 jun 2024</span>
+              </div>
+              <div className="invoice-amount overdue">15 000 kr</div>
+              <div className="invoice-status overdue">⚠️ Förfallen</div>
             </div>
           </div>
         </div>
@@ -1141,10 +1219,10 @@ export default function ByggPilotExact() {
               <div className="project-list-actions">
                 <span className="progress-text">{project.progress}%</span>
                 <button className="action-btn-small">
-                  <span className="material-symbols-outlined">edit</span>
+                  <span className="material-symbols-outlined project-menu-icon">settings</span>
                 </button>
                 <button className="action-btn-small">
-                  <span className="material-symbols-outlined">folder</span>
+                  <span className="material-symbols-outlined drive-folder-icon">folder_open</span>
                 </button>
               </div>
             </div>
