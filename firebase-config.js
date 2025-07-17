@@ -19,15 +19,41 @@ console.log('Current origin for OAuth:', window.location.origin)
 console.log('Required redirect URI:', `${window.location.origin}`)
 console.log('Required Firebase redirect URI:', `https://${firebaseConfig.authDomain}/__/auth/handler`)
 
-// Google OAuth scopes for ByggPilot
+// Google OAuth scopes för ByggPilot - Fullständig Google Workspace-integration
 export const googleScopes = [
-  'https://www.googleapis.com/auth/calendar',
-  'https://www.googleapis.com/auth/gmail.modify',
-  'https://www.googleapis.com/auth/documents',
+  // Drive - Fullständig åtkomst för att skapa mappar och hantera projektfiler
   'https://www.googleapis.com/auth/drive',
+  
+  // Calendar - Läsåtkomst för att visa kommande möten och deadlines  
+  'https://www.googleapis.com/auth/calendar.readonly',
+  
+  // Gmail - Läsåtkomst för att visa nya meddelanden från kunder
+  'https://www.googleapis.com/auth/gmail.readonly',
+  
+  // Gmail - Skicka mail (för att skicka rapporter och offerter)
+  'https://www.googleapis.com/auth/gmail.send',
+  
+  // Profil och email - Grundläggande användarinfo
   'https://www.googleapis.com/auth/userinfo.profile',
   'https://www.googleapis.com/auth/userinfo.email'
 ];
+
+// Konfigurera Google Auth Provider med alla scopes
+export const setupGoogleProvider = () => {
+  const provider = new GoogleAuthProvider();
+  
+  // Lägg till alla Google Workspace scopes
+  googleScopes.forEach(scope => {
+    provider.addScope(scope);
+  });
+  
+  // Tvinga användaren att välja konto för att säkerställa rätt behörigheter
+  provider.setCustomParameters({
+    prompt: 'select_account'
+  });
+  
+  return provider;
+};
 
 // Initialize Firebase
 console.log('Initializing Firebase app...')

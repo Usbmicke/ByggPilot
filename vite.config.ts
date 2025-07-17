@@ -1,10 +1,8 @@
 import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
 export default defineConfig({
-  define: {
-    'process.env.API_KEY': JSON.stringify(process.env.NEXT_PUBLIC_GOOGLE_API_KEY),
-    'process.env.GOOGLE_API_KEY': JSON.stringify(process.env.NEXT_PUBLIC_GOOGLE_API_KEY)
-  },
+  plugins: [react()],
   server: {
     fs: {
       // Exclude problematic directories

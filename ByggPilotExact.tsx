@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { signInWithRedirect, signInWithPopup, getRedirectResult, signOut } from 'firebase/auth'
-import { auth, googleProvider } from './firebase-config'
+import { auth, setupGoogleProvider } from './firebase-config'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import './app-exact.css'
 
@@ -58,15 +58,24 @@ export default function ByggPilotExact() {
   // Login success notification
   const [showLoginSuccess, setShowLoginSuccess] = useState(false)
   const [hasWelcomedUser, setHasWelcomedUser] = useState(false)
+  const [isInitialized, setIsInitialized] = useState(false)
+  
+  // Cookies/GDPR notification
+  const [showCookiesNotification, setShowCookiesNotification] = useState(false)
 
   const chatInputRef = useRef<HTMLInputElement>(null)
   const placeholderInterval = useRef<number | null>(null)
 
+  // Nya förbättrade placeholder-texter för chatten
   const placeholderTexts = [
-    "Skapa en KMA-plan för Villa Nygren...",
-    "Vad säger ABT 06 om vite?", 
-    "Ge mig en checklista för tätskikt i badrum...",
-    "Sammanställ alla foton från projektet Altanbygge."
+    "Hur gör jag en KMA-plan för badrumsrenovering?",
+    "Vilka bygglov behöver jag för altanbygge?", 
+    "Beräkna material för 25 kvm flisläggning...",
+    "Vad säger ABT 06 om försenade leveranser?",
+    "Skapa checklista för tätskikt i våtrum...",
+    "Hur fakturerar jag RUT-avdrag korrekt?",
+    "Vilka AFS-regler gäller för byggställning?",
+    "Sammanställ alla kostnader för Villa Andersson..."
   ]
 
   const projects: Project[] = [
@@ -133,30 +142,11 @@ export default function ByggPilotExact() {
     
     if (newExpanded) {
       stopPlaceholderAnimation()
-      // Add initial welcome message if no messages exist
-      if (chatMessages.length === 0) {
-        setTimeout(() => {
-          const welcomeMessage: ChatMessage = {
-            id: 'welcome-' + Date.now(),
-            message: 'Hej! ByggPilot här, din digitale kollega. Vad kan jag hjälpa dig med idag?\n\nFör att ge dig bästa resultat, kan du berätta lite om din roll och hur stort ert företag är?',
-            type: 'ai',
-            timestamp: new Date()
-          }
-          setChatMessages([welcomeMessage])
-          
-          // Add follow-up message after a brief delay
-          setTimeout(() => {
-            const followUpMessage: ChatMessage = {
-              id: 'followup-' + Date.now(),
-              message: '💡 **Tips:** Berätta kort om ditt projekt så kan jag ge bättre råd!\n\n📋 **Exempel:** "Renoverar badrum, behöver hjälp med KMA"',
-              type: 'ai',
-              timestamp: new Date()
-            }
-            setChatMessages(prev => [...prev, followUpMessage])
-          }, 2000)
-        }, 500)
-      }
-      setTimeout(() => chatInputRef.current?.focus(), 100)
+      // Auto-focus med smooth delay och scroll
+      setTimeout(() => {
+        chatInputRef.current?.focus()
+        scrollToBottom()
+      }, 150)
     } else {
       startPlaceholderAnimation()
     }
@@ -167,10 +157,74 @@ export default function ByggPilotExact() {
       toggleChat()
     }
   }
+  
+  // Navigation handler with chat auto-minimize
+  const handleNavigation = (view: string) => {
+    setCurrentView(view)
+    // Fäll ner chatten automatiskt vid byte av vy
+    if (isChatExpanded) {
+      setIsChatExpanded(false)
+      startPlaceholderAnimation()
+    }
+  }
+  
+  // Cookies notification handlers
+  const handleAcceptCookies = () => {
+    localStorage.setItem('cookies-accepted', 'true')
+    setShowCookiesNotification(false)
+  }
+  
+  const handleCustomizeCookies = () => {
+    // TODO: Implement cookie customization modal
+    alert('Funktionen för att anpassa cookies kommer snart!')
+    setShowCookiesNotification(false)
+  }
+
+  // Kopieringsfunktion för meddelanden
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      // Visa bekräftelse
+      const notification = document.createElement('div');
+      notification.textContent = 'Kopierat!';
+      notification.style.cssText = `
+        position: fixed;
+        bottom: 100px;
+        right: 20px;
+        background: #00BFFF;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-family: 'Poppins', sans-serif;
+        font-size: 14px;
+        z-index: 10000;
+        box-shadow: 0 4px 12px rgba(0, 191, 255, 0.3);
+        animation: fadeInOut 2s ease-in-out;
+      `;
+      
+      document.body.appendChild(notification);
+      setTimeout(() => document.body.removeChild(notification), 2000);
+    } catch (err) {
+      console.error('Kunde inte kopiera:', err);
+    }
+  };
+
+  // Auto-scroll till botten av chatten
+  const scrollToBottom = () => {
+    setTimeout(() => {
+      const messagesContainer = document.querySelector('.chat-messages-container');
+      if (messagesContainer) {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }
+    }, 100);
+  };
 
   const sendMessage = async () => {
     const userInput = chatInput.trim()
     if (!userInput && attachedFiles.length === 0) return
+
+    // Spara aktuell historik
+    const currentHistory = [...chatMessages]
 
     const newMessage: ChatMessage = {
       id: Date.now().toString(),
@@ -179,47 +233,62 @@ export default function ByggPilotExact() {
       timestamp: new Date()
     }
 
-    setChatMessages(prev => [...prev, newMessage])
+    // Lägg till användarens meddelande till historiken
+    const updatedHistory = [...currentHistory, newMessage]
+    setChatMessages(updatedHistory)
     setChatInput('')
     setIsLoading(true)
+
+    // Auto-scroll efter användarens meddelande
+    scrollToBottom()
 
     try {
       // Initialize Gemini AI
       const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY || '')
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
       
-      // Professional ByggPilot System Prompt v7.0
-      const systemPrompt = `Du är ByggPilot, en erfaren digital kollega för svenska byggföretagare. Du är expert på bygg- och installationsbranschen med djup kunskap inom ABT06, PBL, BBR, arbetsmiljölagen och KMA-planer.
-
-      KÄRNPERSONLIGHET:
-      - Professionell, kompetent och självsäker expert - inte undergiven assistent
-      - Lugn och förtroendeingivande, förstår hantverkarens stressiga vardag
-      - Kärnprincip 1: "Planeringen är A och O!"
-      - Kärnprincip 2: "Tydlig kommunikation och förväntanshantering är A och O!"
-
-      KONVERSATIONSREGLER (KRITISKA):
-      1. FÖRSTA INTRYCK: Välkomstmeddelande är alltid: "Hej! ByggPilot här, din digitale kollega. Vad kan jag hjälpa dig med idag?"
-      2. PROGRESSIV INFO: Aldrig komplett svar direkt - leverera i små, hanterbara delar
-      3. EN FRÅGA I TAGET: Varje svar ska avslutas med EN enda, tydlig och relevant motfråga
-      4. STRUKTURERAD INFO: Använd alltid listor, punkter och fetstil - aldrig textväggar
-      5. PROFESSIONELL TON: Tydligt språk utan teknisk jargong, inga emojis eller känslomässigt språk
-
-      DOMÄNEXPERTIS:
-      - Plan- och bygglagen (PBL) & Boverkets byggregler (BBR)
-      - Arbetsmiljölagen (AML) och AFS:er (särskilt AFS 2023:3 Bas-P/Bas-U)
-      - Standardavtal: AB 04, ABT 06, Hantverkarformuläret 17, ABS 18
-      - KMA-strukturering: K-Kvalitet, M-Miljö, A-Arbetsmiljö
-      - Kalkylering med svenska leverantörer (Beijer, Byggmax, etc.)
-
-      FRISKRIVNING: Du ger ALDRIG definitiv juridisk eller skatteteknisk rådgivning. Avsluta med: "För juridiskt bindande råd, konsultera alltid expert som jurist eller revisor."
-
-      Anpassa ditt första svar efter denna användarkontext:`
+      // Bygg konversationskontext från tidigare meddelanden
+      const conversationContext = updatedHistory
+        .filter(msg => msg.type === 'user' || msg.type === 'ai')
+        .slice(-6) // Ta senaste 6 meddelanden för kontext
+        .map(msg => `${msg.type === 'user' ? 'Användare' : 'ByggPilot'}: ${msg.message}`)
+        .join('\n')
       
-      const contextText = user.isLoggedIn 
-        ? `[Användarkontext: Användaren är inloggad som ${user.email} och har gett åtkomst till Google Workspace.]\n\n`
-        : ''
+      // ByggPilot Master-Prompt v7.0 - Large Action Model
+      const systemPrompt = `Du är ByggPilot, din digitala kollega i byggbranschen. Du är en erfaren, lugn och extremt kompetent expert som agerar proaktivt för att lösa administrativa uppgifter.
+
+KÄRNPERSONLIGHET:
+- Självsäker, rakt på sak och förtroendeingivande
+- Djupt empatisk inför hantverkarens stressiga vardag  
+- Fokus på att minska stress, skapa ordning och frigöra tid
+- Två kärnprinciper: "Planeringen är A och O!" och "Tydlig kommunikation är A och O!"
+
+KONVERSATIONSREGLER (ICKE-FÖRHANDLINGSBARA):
+🚫 ALDRIG komplett, uttömmande svar direkt
+🚫 ALDRIG långa textväggar eller listor
+🚫 Max 2-3 korta meningar per svar
+✅ Progressiv information i små, hanterbara delar
+✅ ALLTID avsluta med EN tydlig motfråga
+✅ Ta emot och agera på direkta kommandon
+
+TEXTFORMATERING:
+- Använd **fet text** för viktiga punkter
+- Separera listor med tomrader för luftighet
+- Aldrig ****text****text**** - använd radbrytningar istället
+- Strukturera med punkter och kortare stycken
+
+EXPERTKUNSKAP:
+Plan- och bygglagen (PBL), BBR, AML, AFS:er, AB 04, ABT 06, AMA
+Kalkylering, riskanalys (SWOT/Minirisk), KMA-planer (K-M-A struktur)
+Svenska leverantörer: Beijer, Byggmax, etc.
+
+ANVÄNDARKONTEXT: ${user.isLoggedIn ? `Inloggad som ${user.email}` : 'Inte inloggad'}
+
+${conversationContext ? `Tidigare konversation:\n${conversationContext}\n` : ''}
+
+VIKTIGT: Svara kort, tydligt och avsluta alltid med en relevant motfråga för att driva konversationen framåt.`
       
-      const fullPrompt = systemPrompt + '\n\n' + contextText + userInput
+      const fullPrompt = systemPrompt + '\n\nAnvändarfråga: ' + userInput
       
       const result = await model.generateContent(fullPrompt)
       const response = await result.response
@@ -231,16 +300,25 @@ export default function ByggPilotExact() {
         type: 'ai',
         timestamp: new Date()
       }
+      
+      // Lägg bara till AI:ns svar när det är klart
       setChatMessages(prev => [...prev, aiMessage])
+      
+      // Auto-scroll till botten efter AI-svar
+      scrollToBottom()
+      
     } catch (error) {
       console.error('Gemini API error:', error)
       const errorMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
-        message: 'Ursäkta, något gick fel med anslutningen till AI:n. Kontrollera att Gemini API-nyckeln är korrekt konfigurerad.',
+        message: 'Det blev ett tekniskt fel. Försök igen eller kontrollera internetanslutningen.',
         type: 'ai',
         timestamp: new Date()
       }
       setChatMessages(prev => [...prev, errorMessage])
+      
+      // Auto-scroll även vid fel
+      scrollToBottom()
     } finally {
       setIsLoading(false)
       setAttachedFiles([])
@@ -258,22 +336,22 @@ export default function ByggPilotExact() {
   const triggerWorkspaceOnboarding = () => {
     setIsChatExpanded(true)
     
-    // Add onboarding messages to chat
+    // Korta, tydliga onboarding-meddelanden
     const onboardingMessages: ChatMessage[] = [
       {
         id: Date.now().toString(),
-        message: 'Anslutningen lyckades! Nu när jag har tillgång till ditt Google Workspace kan jag bli din riktiga digitala kollega. Det betyder att jag kan hjälpa dig automatisera allt från att skapa projektmappar från nya mail till att sammanställa fakturaunderlag.',
+        message: 'Perfekt! Google Workspace är nu anslutet. Jag kan nu hjälpa dig med dina projekt på riktigt.',
         type: 'assistant',
         timestamp: new Date()
       },
       {
         id: (Date.now() + 1).toString(),
-        message: 'Som ett första steg för att skapa ordning och reda, vill du att jag skapar en standardiserad och effektiv mappstruktur i din Google Drive för alla dina projekt?',
+        message: 'Vill du att jag skapar en projektmappstruktur i din Google Drive?',
         type: 'assistant',
         timestamp: new Date(),
         buttons: [
           { text: 'Ja, skapa mappstruktur', action: 'create-folder-structure' },
-          { text: 'Nej tack, inte nu', action: 'skip-onboarding' }
+          { text: 'Nej tack', action: 'skip-onboarding' }
         ]
       }
     ]
@@ -284,27 +362,50 @@ export default function ByggPilotExact() {
 
   const handleOnboardingAction = async (action: string) => {
     if (action === 'create-folder-structure') {
-      // In a real implementation, this would call your backend API
+      // Visa loading-meddelande
+      const loadingMessage: ChatMessage = {
+        id: Date.now().toString(),
+        message: 'Skapar projektmappstruktur i Google Drive...',
+        type: 'assistant',
+        timestamp: new Date()
+      }
+      setChatMessages(prev => [...prev, loadingMessage])
+
+      // Anropa backend för att skapa mappstruktur
+      const result = await googleWorkspaceAPI.setupProjectStructure()
+      
       const confirmMessage: ChatMessage = {
         id: Date.now().toString(),
-        message: 'Klart! Jag har skapat din nya mappstruktur i Google Drive. Du hittar den under "ByggPilot - [Företagsnamn]". Är du redo att skapa ditt första projekt?',
+        message: result?.success ? 
+          'Klart! Projektmappstruktur skapad i Google Drive. Redo för första projektet?' :
+          'Kunde inte skapa mappstruktur just nu. Fortsätter utan.',
         type: 'assistant',
         timestamp: new Date(),
-        buttons: [
+        buttons: result?.success ? [
           { text: 'Ja, skapa projekt', action: 'create-first-project' },
           { text: 'Senare', action: 'finish-onboarding' }
-        ]
+        ] : undefined
       }
       setChatMessages(prev => [...prev, confirmMessage])
+      
     } else if (action === 'skip-onboarding' || action === 'finish-onboarding') {
       const finalMessage: ChatMessage = {
         id: Date.now().toString(),
-        message: 'Perfekt! Jag är nu redo att hjälpa dig med alla dina byggprojekt. Vad kan jag hjälpa dig med idag?',
+        message: 'Perfekt! Vad kan jag hjälpa dig med idag?',
         type: 'assistant',
         timestamp: new Date()
       }
       setChatMessages(prev => [...prev, finalMessage])
       setShowWorkspaceOnboarding(false)
+      
+    } else if (action === 'create-first-project') {
+      const projectMessage: ChatMessage = {
+        id: Date.now().toString(),
+        message: 'Vad heter projektet och vem är kunden? Jag skapar en projektmapp med mallar.',
+        type: 'assistant',
+        timestamp: new Date()
+      }
+      setChatMessages(prev => [...prev, projectMessage])
     }
   }
 
@@ -378,29 +479,26 @@ export default function ByggPilotExact() {
     console.log('Creating new project:', { projectName, customerName })
   }
 
-  // Auth functions
+  // Auth functions med popup-först strategi
   const handleGoogleSignIn = async () => {
-    // Debug: Log the OAUTH setting
     console.log('=== GOOGLE SIGN IN CLICKED ===')
-    console.log('VITE_DISABLE_OAUTH value:', import.meta.env.VITE_DISABLE_OAUTH)
-    console.log('VITE_DISABLE_OAUTH type:', typeof import.meta.env.VITE_DISABLE_OAUTH)
     console.log('Current domain:', window.location.hostname)
     
-    // Check if OAuth is disabled (only if explicitly set to 'true')
+    // Check if OAuth is disabled (endast för development)
     if (import.meta.env.VITE_DISABLE_OAUTH === 'true') {
       console.log('OAuth explicitly disabled, using test user')
       setUser({ isLoggedIn: true, email: 'test@example.com', name: 'Test User' })
       return
     }
 
-    // Check if we're on localhost - use demo mode for development
+    // Demo mode för localhost
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      console.log('Running on localhost, using demo mode for development')
+      console.log('Running on localhost, using demo mode')
       setUser({ isLoggedIn: true, email: 'dev@byggpilot.se', name: 'Utvecklare' })
       return
     }
 
-    // Check if Firebase is properly configured
+    // Check Firebase configuration
     if (!import.meta.env.VITE_FIREBASE_API_KEY || 
         !import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 
         !import.meta.env.VITE_FIREBASE_PROJECT_ID) {
@@ -411,16 +509,17 @@ export default function ByggPilotExact() {
 
     try {
       console.log('Attempting Google sign in with Firebase...')
-      console.log('Auth object:', auth)
-      console.log('Google provider:', googleProvider)
-      
       setIsAuthenticating(true)
       
-      // Try popup first for better UX
+      // Skapa Google provider med alla nödvändiga scopes
+      const googleProvider = setupGoogleProvider()
+      
+      // Försök popup först
       try {
         console.log('Trying popup sign in...')
         const result = await signInWithPopup(auth, googleProvider)
         console.log('Popup sign in successful:', result.user.email)
+        
         setUser({
           isLoggedIn: true,
           email: result.user.email,
@@ -430,37 +529,34 @@ export default function ByggPilotExact() {
         
         // Trigger Google Workspace onboarding
         triggerWorkspaceOnboarding()
-        setIsAuthenticating(false)
         showSuccessNotification()
         return
+        
       } catch (popupError: any) {
         console.log('Popup failed, trying redirect...', popupError.code)
         
-        // If popup fails (blocked, etc), fall back to redirect
+        // Om popup blockeras, använd redirect som fallback
         if (popupError.code === 'auth/popup-blocked' || 
             popupError.code === 'auth/popup-closed-by-user' ||
             popupError.code === 'auth/cancelled-popup-request') {
+          
           console.log('Using redirect method as fallback...')
           await signInWithRedirect(auth, googleProvider)
-          // Page will redirect, so code won't continue
-          return
+          return // Sidan kommer att redirecta
         } else {
-          throw popupError // Re-throw other errors
+          throw popupError // Re-throw andra fel
         }
       }
       
     } catch (error: any) {
       console.error('Auth error details:', error)
-      console.error('Error code:', error.code)
-      console.error('Error message:', error.message)
-      
       setIsAuthenticating(false)
       
-      // Handle specific OAuth errors
+      // Hantera specifika OAuth-fel
       if (error.code === 'auth/unauthorized-domain') {
         console.log('Domain not authorized in Firebase Console')
         alert(`Domänen ${window.location.hostname} är inte auktoriserad för OAuth.\n\nLägg till denna domän i Firebase Console:\nAuthentication → Settings → Authorized domains`)
-        // Fallback to demo mode
+        // Fallback till demo mode
         setUser({ isLoggedIn: true, email: 'demo@byggpilot.se', name: 'Demo Användare' })
         return
       } else if (error.code === 'auth/invalid-api-key' ||
@@ -472,6 +568,8 @@ export default function ByggPilotExact() {
       }
       
       alert(`Inloggningsfel: ${error.message}`)
+    } finally {
+      setIsAuthenticating(false)
     }
   }
 
@@ -507,20 +605,14 @@ export default function ByggPilotExact() {
         setTimeout(() => {
           const aiResponse: ChatMessage = {
             id: 'demo-ai-' + Date.now(),
-            message: `ByggPilot Demo
+            message: `Perfekt! Här är **ByggPilot** i aktion.
 
-🎯 **Dashboard**: Projektöversikt med status och framsteg
-📊 **Projekt**: Detaljerad hantering med Google Drive-koppling  
-📅 **Kalender**: Integration med Google Calendar
-📧 **Dokument**: Automatisk dokumenthantering
-💰 **Fakturering**: Skapa och hantera fakturor
+**Huvudfunktioner:**
+• Dashboard med projektöversikt
+• Google Drive-integration för filer
+• Automatisk dokumenthantering
 
-**Testa att fråga:**
-• "Skapa checklista för badrumsrenovering"
-• "Vad säger byggreglerna om ventilation?"
-• "Beräkna material för 50 kvm golv"
-
-✅ Demo-läge aktiverat`,
+Vad vill du testa först?`,
             type: 'ai',
             timestamp: new Date()
           }
@@ -530,8 +622,41 @@ export default function ByggPilotExact() {
     }, 100)
   }
 
-  // Initialize placeholder animation and check for redirect result
+  // Initialize chat messages once on mount
   useEffect(() => {
+    if (!isInitialized && chatMessages.length === 0) {
+      const welcomeMessage: ChatMessage = {
+        id: 'welcome-' + Date.now(),
+        message: 'Hej! Jag är **ByggPilot** - din digitala kollega i byggbranschen.',
+        type: 'ai',
+        timestamp: new Date()
+      };
+      
+      const followupMessage: ChatMessage = {
+        id: 'followup-' + Date.now(),
+        message: 'Vilken typ av projekt jobbar du med just nu?',
+        type: 'ai',
+        timestamp: new Date(Date.now() + 1000)
+      };
+
+      setChatMessages([welcomeMessage, followupMessage]);
+      setIsInitialized(true)
+      
+      // Show cookies notification after a delay if not already accepted
+      setTimeout(() => {
+        const cookiesAccepted = localStorage.getItem('cookies-accepted')
+        if (!cookiesAccepted) {
+          setShowCookiesNotification(true)
+        }
+      }, 3000)
+    }
+  }, [isInitialized, chatMessages.length])
+
+  // Initialize placeholder animation and auth state
+  useEffect(() => {
+    // Starta placeholder-animation direkt
+    startPlaceholderAnimation()
+
     // Auth persistence and login state management
     const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
       if (firebaseUser) {
@@ -544,8 +669,9 @@ export default function ByggPilotExact() {
         setCurrentView('dashboard')
         
         // Show success notification for new logins
-        if (!showLoginSuccess) {
+        if (!showLoginSuccess && !hasWelcomedUser) {
           setShowLoginSuccess(true)
+          setHasWelcomedUser(true)
           setTimeout(() => setShowLoginSuccess(false), 4000)
         }
       } else {
@@ -557,8 +683,14 @@ export default function ByggPilotExact() {
       }
     })
 
-    return () => unsubscribe()
-  }, [currentView, showLoginSuccess])
+    return () => {
+      unsubscribe()
+      // Rensa placeholder-animation när komponenten unmountar
+      if (placeholderInterval.current) {
+        clearInterval(placeholderInterval.current)
+      }
+    }
+  }, []) // Tom dependency array - körs bara en gång
 
   // Check for redirect result on mount
   useEffect(() => {
@@ -582,18 +714,15 @@ export default function ByggPilotExact() {
       <div className="header-left">
         <div className="logo">
           <div className="logo-icon">
-            <img 
-              src="/public/byggpilot-logo.svg" 
-              alt="ByggPilot" 
-              className="logo-image"
-              style={{ background: 'transparent' }}
-              onError={(e) => {
-                console.error('Logo failed to load')
-                e.currentTarget.src = '/public/logo-icon.svg'
-              }}
-            />
+            <svg width="32" height="32" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M20 75 L80 75 L85 85 L15 85 Z" fill="white"/>
+              <path d="M25 75 L75 75 L70 25 L30 25 Z" fill="white"/>
+              <path d="M30 25 L70 25 L65 15 L35 15 Z" fill="white"/>
+              <circle cx="50" cy="45" r="8" fill="#333"/>
+              <path d="M45 40 L55 40 L53 50 L47 50 Z" fill="#333"/>
+            </svg>
           </div>
-          <span className="logo-text">ByggPilot</span>
+          <span className="logo-text">BYGGPILOT</span>
         </div>
         <div className="user-info">
           {user.isLoggedIn ? (
@@ -616,7 +745,7 @@ export default function ByggPilotExact() {
                   <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                   <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                 </svg>
-                {isAuthenticating ? 'Omdirigerar till Google...' : 'Logga in med Google'}
+                {isAuthenticating ? 'Omdirigerar...' : 'Logga in med Google'}
               </button>
             </div>
           )}
@@ -632,52 +761,52 @@ export default function ByggPilotExact() {
         <div className="nav-items">
           <div 
             className={`nav-item ${currentView === 'dashboard' ? 'active' : ''}`}
-            onClick={() => setCurrentView('dashboard')}
+            onClick={() => handleNavigation('dashboard')}
           >
             <span className="material-symbols-outlined">dashboard</span>
-            <span>Dashboard</span>
+            <span>Översikt</span>
           </div>
           <div 
             className={`nav-item ${currentView === 'landing' ? 'active' : ''}`}
-            onClick={() => setCurrentView('landing')}
+            onClick={() => handleNavigation('landing')}
           >
             <span className="material-symbols-outlined">home</span>
             <span>Hem</span>
           </div>
           <div 
             className={`nav-item ${currentView === 'project' ? 'active' : ''}`}
-            onClick={() => setCurrentView('project')}
+            onClick={() => handleNavigation('project')}
           >
             <span className="material-symbols-outlined">construction</span>
             <span>Projekt</span>
           </div>
           <div 
             className={`nav-item ${currentView === 'calendar' ? 'active' : ''}`}
-            onClick={() => setCurrentView('calendar')}
+            onClick={() => handleNavigation('calendar')}
           >
             <span className="material-symbols-outlined">calendar_today</span>
             <span>Kalender</span>
           </div>
           <div 
             className={`nav-item ${currentView === 'documents' ? 'active' : ''}`}
-            onClick={() => setCurrentView('documents')}
+            onClick={() => handleNavigation('documents')}
           >
             <span className="material-symbols-outlined">description</span>
             <span>Dokument</span>
           </div>
           <div 
             className={`nav-item ${currentView === 'invoice' ? 'active' : ''}`}
-            onClick={() => setCurrentView('invoice')}
+            onClick={() => handleNavigation('invoice')}
           >
             <span className="material-symbols-outlined">receipt_long</span>
             <span>Fakturering</span>
           </div>
           <div 
             className={`nav-item ${currentView === 'how-it-works' ? 'active' : ''}`}
-            onClick={() => setCurrentView('how-it-works')}
+            onClick={() => handleNavigation('how-it-works')}
           >
             <span className="material-symbols-outlined">help</span>
-            <span>Så funkar ByggPilot</span>
+            <span>Så funkar det</span>
           </div>
         </div>
       </div>
@@ -687,7 +816,7 @@ export default function ByggPilotExact() {
         <div className="nav-items">
           <div 
             className={`nav-item ${currentView === 'settings' ? 'active' : ''}`}
-            onClick={() => setCurrentView('settings')}
+            onClick={() => handleNavigation('settings')}
           >
             <span className="material-symbols-outlined">settings</span>
             <span>Inställningar</span>
@@ -700,7 +829,7 @@ export default function ByggPilotExact() {
   const renderDashboardView = () => (
     <div className="dashboard-content">
       <div className="page-header">
-        <h1>🏗️ Dashboard</h1>
+        <h1>🏗️ Projektöversikt</h1>
         <p>Översikt av dina projekt och aktiviteter</p>
         <div className="status-indicator online">
           <span className="status-dot"></span>
@@ -1376,7 +1505,7 @@ export default function ByggPilotExact() {
               </label>
               <label className="nav-toggle-item">
                 <input type="checkbox" checked={true} onChange={() => {}} />
-                <span>Så funkar ByggPilot</span>
+                <span>Hjälp</span>
               </label>
             </div>
           </div>
@@ -1395,7 +1524,7 @@ export default function ByggPilotExact() {
               />
             </div>
             <div className="setting-item">
-              <label>E-post</label>
+              <label>Email</label>
               <input 
                 type="email" 
                 value={user.email || ''} 
@@ -1418,12 +1547,15 @@ export default function ByggPilotExact() {
           <h2>Prenumeration</h2>
           <div className="subscription-info">
             <div className="current-plan">
-              <span className="plan-badge">{isDemoMode ? 'Demo' : 'Gratis'}</span>
-              <h3>{isDemoMode ? 'Demo-läge' : 'Gratis användning'}</h3>
-              <p>{isDemoMode ? 'Du använder ByggPilot i demo-läge' : 'Uppgradera för full tillgång'}</p>
+              <p><strong>Nuvarande plan:</strong> Pilot (Gratis)</p>
+              <p>Inkluderar full tillgång till alla funktioner under testperioden.</p>
+              <div className="progress-bar-demo">
+                <div className="progress-fill-demo" style={{ width: '30%' }}></div>
+              </div>
+              <p>30 av 90 dagar kvar av testperioden.</p>
             </div>
             <button className="upgrade-btn">
-              <span className="material-symbols-outlined">upgrade</span>
+              <span className="material-symbols-outlined">workspace_premium</span>
               Uppgradera till Proffs
             </button>
           </div>
@@ -1433,14 +1565,14 @@ export default function ByggPilotExact() {
           <h2>Integrationer</h2>
           <div className="integration-item">
             <div className="integration-info">
-              <span className="material-symbols-outlined">cloud</span>
+              <img src="/google-logo.svg" alt="Google" className="integration-logo" />
               <div>
-                <h3>Google Workspace</h3>
-                <p>Anslut kalender, Gmail och Drive</p>
+                <strong>Google Workspace</strong>
+                <p>Ansluten som {user.email}</p>
               </div>
             </div>
-            <button className="integration-btn">
-              {user.isLoggedIn ? 'Ansluten' : 'Anslut'}
+            <button className="integration-btn disconnect">
+              Koppla från
             </button>
           </div>
         </div>
@@ -1449,11 +1581,15 @@ export default function ByggPilotExact() {
           <h2>Hjälp & Support</h2>
           <div className="help-links">
             <a href="#" className="help-link">
-              <span className="material-symbols-outlined">help</span>
+              <span className="material-symbols-outlined">help_outline</span>
               Vanliga frågor (FAQ)
             </a>
+            <a href="#" className="help-link">
+              <span className="material-symbols-outlined">school</span>
+              Videoguider
+            </a>
             <a href="mailto:support@byggpilot.se" className="help-link">
-              <span className="material-symbols-outlined">mail</span>
+              <span className="material-symbols-outlined">email</span>
               Kontakta support
             </a>
           </div>
@@ -1479,43 +1615,21 @@ export default function ByggPilotExact() {
       <div className="projects-list">
         {projects.map(project => (
           <div key={project.id} className="project-list-item">
-            <div className="project-list-header">
-              <div className="project-info">
-                <div 
-                  className="project-status-indicator"
-                  style={{ backgroundColor: project.color }}
-                ></div>
-                <div>
-                  <h3>{project.name}</h3>
-                  {project.customer && <p>Kund: {project.customer}</p>}
-                </div>
-              </div>
-              <div className="project-list-actions">
-                <span className="progress-text">{project.progress}%</span>
-                <button className="action-btn-small">
-                  <span className="material-symbols-outlined project-menu-icon">settings</span>
-                </button>
-                <button className="action-btn-small">
-                  <span className="material-symbols-outlined drive-folder-icon">folder_open</span>
-                </button>
-              </div>
+            <div className="project-list-info">
+              <div className="project-list-name">{project.name}</div>
+              <div className="project-list-customer">{project.customer}</div>
             </div>
-            <div className="project-progress">
-              <div className="progress-bar">
-                <div 
-                  className="progress-fill"
-                  style={{ 
-                    width: `${project.progress}%`,
-                    backgroundColor: project.color 
-                  }}
-                ></div>
-              </div>
+            <div className="project-list-status">
+              <span className={`status-badge ${project.status}`}>{project.status}</span>
             </div>
             {project.deadline && (
-              <div className="project-deadline">
+              <div className="project-list-deadline">
                 Deadline: {new Date(project.deadline).toLocaleDateString('sv-SE')}
               </div>
             )}
+            <div className="project-list-actions">
+              <button className="action-btn-small">Öppna</button>
+            </div>
           </div>
         ))}
       </div>
@@ -1544,24 +1658,21 @@ export default function ByggPilotExact() {
         <h2>Så här fungerar det i praktiken</h2>
         <div className="example-cards-grid">
           <div className="example-card">
-            <h3>Istället för att säga:</h3>
-            <p className="example-wrong">"Kan du hjälpa mig med ett projekt?"</p>
-            <h3>Säg så här:</h3>
-            <p className="example-right">"Skapa ett nytt badrumsprojekt för familjen Andersson på Storgatan 15, startdatum 15 mars"</p>
+            <span className="material-symbols-outlined">email</span>
+            <h3>1. Fånga uppdraget</h3>
+            <p>Videresänd ett mail från en kund eller ladda upp en bild på en ritning.</p>
           </div>
 
           <div className="example-card">
-            <h3>Istället för att säga:</h3>
-            <p className="example-wrong">"Vad kostar material?"</p>
-            <h3>Säg så här:</h3>
-            <p className="example-right">"Beräkna materialkostnad för kakel i ett 8 kvm badrum, mellanprisklass"</p>
+            <span className="material-symbols-outlined">auto_awesome</span>
+            <h3>2. Låt ByggPilot analysera</h3>
+            <p>Vår AI tolkar underlaget, ställer kontrollfrågor och skapar ett komplett ärende.</p>
           </div>
 
           <div className="example-card">
-            <h3>Istället för att säga:</h3>
-            <p className="example-wrong">"Kan du hjälpa mig med tidsplanering?"</p>
-            <h3>Säg så här:</h3>
-            <p className="example-right">"Skapa en tidsplan för köksprojektet hos Nilssons, 3 veckor, start måndag"</p>
+            <span className="material-symbols-outlined">checklist</span>
+            <h3>3. Agera på insikterna</h3>
+            <p>Få förslag på KMA-planer, checklistor och tidsplaner direkt i din dashboard.</p>
           </div>
         </div>
       </div>
@@ -1569,20 +1680,20 @@ export default function ByggPilotExact() {
       <div className="getting-started-section">
         <h2>Kom igång på 3 enkla steg</h2>
         <div className="steps-grid">
-          <div className="step-card">
+          <div className="step">
             <div className="step-number">1</div>
-            <h3>Anslut Google Workspace</h3>
-            <p>Logga in med ditt Google-konto för att synkronisera kalendrar, e-post och filer.</p>
+            <h3>Logga in med Google</h3>
+            <p>Anslut ditt konto för att integrera med Google Drive, Kalender och Gmail.</p>
           </div>
-          <div className="step-card">
+          <div className="step">
             <div className="step-number">2</div>
-            <h3>Skapa ditt första projekt</h3>
-            <p>Lägg till projektinformation så ByggPilot kan ge personliga råd och hjälpa med planering.</p>
+            <h3>Beskriv ditt företag</h3>
+            <p>Ge ByggPilot kontext om din verksamhet för skräddarsydda råd.</p>
           </div>
-          <div className="step-card">
+          <div className="step">
             <div className="step-number">3</div>
-            <h3>Börja chatta</h3>
-            <p>Ställ frågor, begär hjälp med kalkyler eller låt ByggPilot skapa rapporter åt dig.</p>
+            <h3>Börja automatisera</h3>
+            <p>Skicka in ditt första ärende och se magin hända.</p>
           </div>
         </div>
       </div>
@@ -1622,8 +1733,9 @@ export default function ByggPilotExact() {
         <div className="section-content">
           <h2>Känner du igen dig?</h2>
           <p>
-            Efter 20 år i branschen vet vi att administration stjäl tid från hantverket. 
-            ByggPilot är skapat av hantverkare, för hantverkare, för att lösa just det problemet.
+            Sena kvällar med pappersarbete. Svårt att hålla koll på alla regler och lagar. 
+            Oändliga timmar med att skapa offerter och KMA-planer. 
+            Vi har varit där. Byggbranschen är komplex, men din administration behöver inte vara det.
           </p>
         </div>
       </div>
@@ -1631,8 +1743,8 @@ export default function ByggPilotExact() {
       {/* Solution Section */}
       <div className="solution-section">
         <div className="section-content">
-          <h2>Så förenklar ByggPilot din vardag</h2>
-          <div className="solution-grid">
+          <h2>Din digitala kollega som aldrig tar ledigt</h2>
+          <div className="solution-cards-grid">
             <div className="solution-card">
               <div className="solution-icon">
                 <span className="material-symbols-outlined">gavel</span>
@@ -1677,7 +1789,7 @@ export default function ByggPilotExact() {
           </div>
         </div>
       </div>
-
+      
       {/* Trust Section */}
       <div className="trust-section">
         <div className="section-content">
@@ -1696,7 +1808,7 @@ export default function ByggPilotExact() {
             </div>
           </div>
         </div>
-      </div>
+           </div>
 
       {/* Future Section */}
       <div className="future-section">
@@ -1734,127 +1846,166 @@ export default function ByggPilotExact() {
     }
   }
 
-  const renderChatDrawer = () => (
-    <div id="chat-drawer" className={`chat-drawer ${isChatExpanded ? 'expanded' : ''}`}>
-      <div className="chat-drawer-content">
-        {isChatExpanded && (
-          <>
-            <div id="chat-messages" className="chat-messages">
-              {chatMessages.map(msg => (
-                <div key={msg.id} className={`chat-message ${msg.type}`}>
-                  {msg.message}
-                </div>
-              ))}
-              {isLoading && (
-                <div className="chat-message ai">
-                  <div className="loading-dots">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                  </div>
+  // Ny persistent chat-komponent
+  const renderPersistentChat = () => (
+    <div className={`persistent-chat ${isChatExpanded ? 'expanded' : ''}`}>
+      <div className="chat-container">
+        {/* Chat Header with Toggle Arrow */}
+        <div className="chat-header" onClick={toggleChat}>
+          <span>
+            <span className="material-symbols-outlined chat-icon">smart_toy</span>
+            ByggPilot Assistent
+          </span>
+          <button className="chat-toggle-btn-header">
+            <span className="material-symbols-outlined">
+              {isChatExpanded ? 'expand_more' : 'expand_less'}
+            </span>
+          </button>
+        </div>
+        <div className="chat-messages-container">
+          {chatMessages.map((msg, index) => (
+            <div key={msg.id || index} className={`chat-message ${msg.type}`}>
+              <div className="message-content">
+                <p dangerouslySetInnerHTML={{ __html: msg.message.replace(/\n/g, '<br />') }}></p>
+                <span className="timestamp">{new Date(msg.timestamp).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}</span>
+                {msg.type === 'ai' && (
+                  <button className="copy-btn" onClick={() => copyToClipboard(msg.message)}>
+                    <span className="material-symbols-outlined">content_copy</span>
+                  </button>
+                )}
+              </div>
+              {msg.buttons && (
+                <div className="message-buttons">
+                  {msg.buttons.map(btn => (
+                    <button key={btn.action} onClick={() => handleOnboardingAction(btn.action)}>
+                      {btn.text}
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
-            
-            {attachedFiles.length > 0 && (
-              <div id="attached-files-preview" className="attached-files-preview">
-                {attachedFiles.map((file, index) => (
-                  <div key={index} className="file-preview-item">
-                    <img src={URL.createObjectURL(file)} alt={file.name} />
-                    <button 
-                      className="remove-file-btn"
-                      onClick={() => setAttachedFiles(prev => prev.filter((_, i) => i !== index))}
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
+          ))}
+          {isLoading && (
+            <div className="chat-message assistant">
+              <div className="message-content">
+                <div className="typing-indicator">
+                  <span></span><span></span><span></span>
+                </div>
               </div>
-            )}
-          </>
-        )}
-
-        <div className="chat-input-wrapper">
-          <div className="chat-input-container">
-            <div className="chat-input-area">
-              <button 
-                id="chat-toggle-button"
-                className={`chat-toggle-button ${!isChatExpanded ? 'pulse' : ''}`}
-                onClick={toggleChat}
-              >
-                <span className="material-symbols-outlined">
-                  {isChatExpanded ? 'keyboard_arrow_down' : 'keyboard_arrow_up'}
-                </span>
-              </button>
-
-              <input
-                ref={chatInputRef}
-                id="chat-input"
-                type="text"
-                placeholder={placeholderText}
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                onFocus={handleChatInputFocus}
-                onKeyDown={handleKeyDown}
-                className="chat-input"
-              />
-
-              <button 
-                className="attachment-button"
-                onClick={() => document.getElementById('file-input')?.click()}
-              >
-                <span className="material-symbols-outlined">attach_file</span>
-              </button>
-
-              <button 
-                className="send-button"
-                onClick={sendMessage}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <div className="loading-indicator">
-                    <span className="material-symbols-outlined">hourglass_empty</span>
-                  </div>
-                ) : (
-                  <span className="material-symbols-outlined">send</span>
-                )}
-              </button>
-
-              <input
-                id="file-input"
-                type="file"
-                multiple
-                accept="image/*"
-                style={{ display: 'none' }}
-                onChange={(e) => {
-                  if (e.target.files) {
-                    setAttachedFiles(prev => [...prev, ...Array.from(e.target.files!)])
-                  }
-                }}
-              />
-            </div>
-          </div>
-          
-          {isChatExpanded && (
-            <div className="chat-disclaimer">
-              <p>ByggPilot kan göra misstag. Kontrollera viktig information.</p>
             </div>
           )}
         </div>
+        <div className="chat-input-area">
+          <button className="chat-toggle-btn-input" onClick={toggleChat}>
+            <span className="material-symbols-outlined">
+              {isChatExpanded ? 'expand_more' : 'expand_less'}
+            </span>
+          </button>
+          <input
+            ref={chatInputRef}
+            type="text"
+            className="chat-input"
+            placeholder={isChatExpanded ? "Skriv ditt meddelande här..." : placeholderText}
+            value={chatInput}
+            onChange={(e) => setChatInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onFocus={handleChatInputFocus}
+            disabled={isLoading}
+          />
+          <button className="send-btn" onClick={sendMessage} disabled={isLoading || (!chatInput && attachedFiles.length === 0)}>
+            <span className="material-symbols-outlined">send</span>
+          </button>
+        </div>
       </div>
     </div>
-  )
+  );
+
+  // Cookies/GDPR notification component
+  const renderCookiesNotification = () => {
+    if (!showCookiesNotification) return null
+    
+    return (
+      <div className="cookies-notification">
+        <div className="cookies-content">
+          <div className="cookies-text">
+            <h4>🍪 Cookies & Integritet</h4>
+            <p>Vi använder cookies för att förbättra din upplevelse och ansluta till Google Workspace. Du kan anpassa vilka cookies du vill acceptera.</p>
+          </div>
+          <div className="cookies-actions">
+            <button className="cookies-btn secondary" onClick={handleCustomizeCookies}>
+              Anpassa
+            </button>
+            <button className="cookies-btn primary" onClick={handleAcceptCookies}>
+              Acceptera alla
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+  const googleWorkspaceAPI = {
+    async listFiles() {
+      try {
+        const response = await fetch('/api/drive/list-files', {
+          method: 'POST',
+          headers: {
+
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user.email}` // I en riktig app skulle detta vara access token
+          }
+        })
+        return response.ok ? await response.json() : null
+      } catch (error) {
+        console.error('Error listing files:', error)
+        return null
+      }
+    },
+
+    async createFolder(folderName: string) {
+      try {
+        const response = await fetch('/api/drive/create-folder', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user.email}`
+          },
+          body: JSON.stringify({ folderName })
+        })
+        return response.ok ? await response.json() : null
+      } catch (error) {
+        console.error('Error creating folder:', error)
+        return null
+      }
+    },
+
+    async setupProjectStructure() {
+      try {
+        const response = await fetch('/api/drive/setup-project-structure', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user.email}`
+          }
+        })
+        return response.ok ? await response.json() : { success: false }
+      } catch (error) {
+        console.error('Error setting up project structure:', error)
+        return { success: false }
+      }
+    }
+  }
 
   return (
     <div className="app">
       {renderHeader()}
       <div className="main-layout">
         {renderSidebar()}
-        <main className={`page-content ${isChatExpanded ? 'hidden-by-chat' : ''}`}>
+        <main className={`page-content ${isChatExpanded ? 'chat-expanded' : ''}`}>
           {renderCurrentView()}
         </main>
       </div>
-      {renderChatDrawer()}
+      {renderCookiesNotification()}
+      {renderPersistentChat()}
     </div>
   )
 }
