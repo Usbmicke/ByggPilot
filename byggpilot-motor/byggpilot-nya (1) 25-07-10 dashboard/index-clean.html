@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ByggPilot - Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <link rel="stylesheet" href="index.css">
+    <!-- CACHE BUSTING: NO FIREBASE VERSION -->
+    <meta name="build-version" content="no-firebase-2025-01-18">
+    <meta name="cache-control" content="no-cache, no-store, must-revalidate">
+    <meta name="pragma" content="no-cache">
+    <meta name="expires" content="0">
+    <script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://esm.sh/@google/genai@^1.9.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body>
+    <!-- NO FIREBASE CODE IN THIS VERSION -->
+    <div id="cookie-consent-banner" class="cookie-consent-banner">
+        <div class="cookie-content">
+            <p>Vi använder cookies för att förbättra din upplevelse. Genom att fortsätta använda sidan godkänner du detta.</p>
+            <div class="cookie-actions">
+                <button class="btn" data-action="cookie-accept" data-choice="essential">Endast nödvändiga</button>
+                <button class="btn btn-primary" data-action="cookie-accept" data-choice="all">Godkänn alla</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <div class="app-layout">
+        <aside class="sidebar">
+            <header class="sidebar-header">
+                <div class="logo-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M22 10.5V12h-2v-1.5c0-2.06-1.35-3.83-3.27-4.58l-1.32-.51-.49-1.4A5.002 5.002 0 0 0 10.23 2H10c-2.76 0-5 2.24-5 5v1.5c0 .83.67 1.5 1.5 1.5S8 9.33 8 8.5V7c0-1.1.9-2 2-2h.23c1.12 0 2.1.75 2.47 1.81l.49 1.4 1.32.51C16.65 9.17 18 10.94 18 13v1.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V13h2v-1.5c0-1.74-1.43-3.15-3.17-3.15A3.18 3.18 0 0 0 18 10.5zM12 22a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2zM6.5 16h11c.83 0 1.5-.67 1.5-1.5v-3c0-.83-.67-1.5-1.5-1.5h-11C5.67 10 5 10.67 5 11.5v3c0 .83.67 1.5 1.5 1.5z"/>
+                    </svg>
+                </div>
+                <span>ByggPilot</span>
+            </header>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a class="active" data-action="show-view" data-view="dashboard"><span class="material-symbols-outlined">dashboard</span>Dashboard</a></li>
+                    <li><a data-action="show-view" data-view="projects"><span class="material-symbols-outlined">assignment</span>Projekt</a></li>
+                    <li><a data-action="show-view" data-view="ekonomi"><span class="material-symbols-outlined">payments</span>Ekonomi</a></li>
+                    <li><a data-action="show-view" data-view="kalender"><span class="material-symbols-outlined">calendar_month</span>Kalender</a></li>
+                    <li><a data-action="show-view" data-view="dokument"><span class="material-symbols-outlined">folder</span>Dokument</a></li>
+                    <li><a data-action="show-view" data-view="settings"><span class="material-symbols-outlined">settings</span>Inställningar</a></li>
+                </ul>
+            </nav>
+            <footer class="sidebar-footer">
+                <ul>
+                    <li><a data-action="show-help-modal" class="help-trigger"><span class="material-symbols-outlined">help</span>Hjälp/Info</a></li>
+                </ul>
+                <div class="user-profile-menu-container">
+                    <a data-action="show-profile" class="user-profile-summary">
+                        <div id="user-avatar" class="user-avatar"><span>G</span></div>
+                        <span id="user-name">Gäst</span>
+                        <span class="material-symbols-outlined">more_vert</span>
+                    </a>
+                    <div id="user-profile-menu" class="dropdown-menu">
+                        <a data-action="show-profile-details" class="dropdown-item">
+                            <span class="material-symbols-outlined">account_circle</span> Min Profil
+                         </a>
+                         <div class="dropdown-divider"></div>
+                         <div class="dropdown-header">Genvägar</div>
+                         <a data-action="open-drive" class="dropdown-item">
+                            <span class="material-symbols-outlined">folder</span> Öppna Google Drive
+                         </a>
+                         <a data-action="open-calendar" class="dropdown-item">
+                            <span class="material-symbols-outlined">calendar_month</span> Öppna Kalender
+                         </a>
+                         <a data-action="open-gmail" class="dropdown-item">
+                            <span class="material-symbols-outlined">mail</span> Öppna Gmail
+                         </a>
+                         <div id="logout-divider" class="dropdown-divider"></div>
+                         <a id="logout-button" data-action="sign-out" class="dropdown-item">
+                            <span class="material-symbols-outlined">logout</span> Logga ut
+                         </a>
+                    </div>
+                </div>
+            </footer>
+        </aside>
+
+        <main class="main-content">
+            <header class="main-header">
+                <button id="hamburger-menu" class="icon-btn hamburger-menu" data-action="toggle-sidebar"><span class="material-symbols-outlined">menu</span></button>
+                <div class="header-title">
+                    <h1 class="greeting">Välkommen!</h1>
+                    <p class="sub-greeting">Här är din översikt för dagen.</p>
+                </div>
+                <div class="header-actions">
+                    <button id="demo-mode-button" data-action="toggle-demo" class="btn">Testa Demo</button>
+                    <button id="google-signin-button" data-action="google-signin" class="google-signin-btn">
+                        <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google logo">
+                        <span>Logga in med Google</span>
+                    </button>
+                    <button data-action="create-new" data-details='{"type": "project"}' class="btn btn-primary"><span class="material-symbols-outlined">add</span>Skapa Nytt</button>
+                </div>
+            </header>
+
+            <main id="dashboard-container" class="page-content">
+                <!-- Content is rendered here by TSX -->
+            </main>
+
+            <div id="chat-drawer">
+                <div class="chat-drawer-content">
+                    <div id="chat-messages" class="chat-messages">
+                       <div class="welcome-message">
+                           <h3>Välkommen till ByggPilot</h3>
+                           <p>Din digitala kollega i byggbranschen. Ställ en fråga för att börja.</p>
+                       </div>
+                    </div>
+                     <div id="attached-files-preview"></div>
+                    <div class="chat-input-wrapper">
+                        <div class="chat-input-container">
+                            <div class="chat-input-area">
+                                <button id="chat-toggle-button" class="icon-btn" data-action="toggle-chat" aria-label="Fäll ut/ihop chatten">
+                                    <span class="material-symbols-outlined">expand_less</span>
+                                </button>
+                                 <button id="file-input-button" class="icon-btn" data-action="attach-file" aria-label="Bifoga fil">
+                                    <span class="material-symbols-outlined">attach_file</span>
+                                </button>
+                                <input type="file" id="file-input-hidden" style="display:none" multiple accept="image/png, image/jpeg">
+                                <button id="voice-input-button" class="icon-btn" aria-label="Starta röstinmatning">
+                                    <span class="material-symbols-outlined">mic</span>
+                                </button>
+                                <input type="text" id="chat-input" placeholder="">
+                                <button id="send-button" class="btn-send" aria-label="Skicka meddelande">
+                                    <span id="loading-indicator" class="loader" style="display: none;"></span>
+                                    <span id="send-icon" class="material-symbols-outlined">send</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="chat-disclaimer">
+                            ByggPilot är en AI-kollega som kan ge felaktiga förslag. Granska alltid viktig information självständigt.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="generic-modal" class="modal-overlay">
+        <!-- Modal content is injected here by TSX -->
+    </div>
+
+    <!-- TEMPLATES - ALL FIREBASE CODE REMOVED -->
+    <template id="project-card-actions-template">
+        <div class="project-card-actions">
+            <button class="icon-btn" data-action="open-project-folder" aria-label="Öppna projektmapp">
+                <span class="material-symbols-outlined">folder_open</span>
+            </button>
+        </div>
+    </template>
+
+    <template id="event-item-template">
+        <li class="event-item" data-action="open-event">
+            <div class="event-icon-container">
+                <span class="material-symbols-outlined"></span>
+            </div>
+            <div class="event-details">
+                <p class="event-title"></p>
+                <p class="event-subtitle"></p>
+            </div>
+        </li>
+    </template>
+    
+    <template id="project-card-template">
+        <div class="project-card" data-action="view-project">
+            <!-- Project Card Actions will be injected here -->
+            <div class="project-card-header">
+                <h3 class="project-name">Projektets Namn</h3>
+                <div class="status-tag">I fas</div>
+            </div>
+            <p class="customer-name">Kundens Namn</p>
+            <div class="project-card-footer">
+                <div class="progress-display">
+                    <span class="progress-percentage">0%</span>
+                    <div class="progress-bar">
+                        <div class="progress-bar-inner"></div>
+                    </div>
+                </div>
+                <div class="project-deadline">
+                    <span class="material-symbols-outlined">event</span>
+                    <span class="deadline-date">YYYY-MM-DD</span>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="task-item-template">
+        <li class="task-item">
+            <input type="checkbox" id="task-id-placeholder">
+            <label for="task-id-placeholder">Uppgiftstext</label>
+        </li>
+    </template>
+    
+    <template id="logged-out-dashboard-template">
+        <div class="logged-out-view">
+            <div class="logo-icon-large">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M22 10.5V12h-2v-1.5c0-2.06-1.35-3.83-3.27-4.58l-1.32-.51-.49-1.4A5.002 5.002 0 0 0 10.23 2H10c-2.76 0-5 2.24-5 5v1.5c0 .83.67 1.5 1.5 1.5S8 9.33 8 8.5V7c0-1.1.9-2 2-2h.23c1.12 0 2.1.75 2.47 1.81l.49 1.4 1.32.51C16.65 9.17 18 10.94 18 13v1.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V13h2v-1.5c0-1.74-1.43-3.15-3.17-3.15A3.18 3.18 0 0 0 18 10.5zM12 22a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2zM6.5 16h11c.83 0 1.5-.67 1.5-1.5v-3c0-.83-.67-1.5-1.5-1.5h-11C5.67 10 5 10.67 5 11.5v3c0 .83.67 1.5 1.5 1.5z"/>
+                </svg>
+            </div>
+            <h1>Sluta administrera. Börja bygga.</h1>
+            <p>ByggPilot är din intelligenta partner som automatiserar KMA, tidrapportering och projektdokumentation direkt i ditt Google-konto. Fråga mig om vad som helst nedan!</p>
+            <div class="logged-out-actions">
+                 <button data-action="google-signin" class="google-signin-btn">
+                    <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google logo">
+                    <span>Logga in för full åtkomst</span>
+                </button>
+                <button data-action="toggle-demo" class="btn">Eller testa demon</button>
+            </div>
+        </div>
+    </template>
+    
+    <!-- MORE TEMPLATES CONTINUE... NO FIREBASE CODE -->
+    
+    <script type="module" src="/src/main.tsx"></script>
+</body>
+</html>

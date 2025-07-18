@@ -1,16 +1,23 @@
 [build]
   publish = "dist"
-  command = "npm run build"
+  command = "rm -rf dist node_modules/.cache && npm install && npm run build"
 
 [build.environment]
   NODE_VERSION = "18"
-  # Force clean build
+  # Force clean build - NO FIREBASE
   SKIP_CACHE = "true"
+  FORCE_REBUILD = "true"
+  BUILD_VERSION = "no-firebase-2025-01-18"
+  FIREBASE_REMOVED = "true"
 
 [[headers]]
   for = "/*"
   [headers.values]
-    Cache-Control = "public, max-age=0, must-revalidate"
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Pragma = "no-cache"
+    Expires = "0"
+    X-Firebase-Status = "completely-removed"
+    X-Build-Version = "no-firebase-2025-01-18"
 
 [[redirects]]
   from = "/api/*"

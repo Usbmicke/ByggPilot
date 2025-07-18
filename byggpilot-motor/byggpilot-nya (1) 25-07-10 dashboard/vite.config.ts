@@ -5,10 +5,10 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        // Force new filenames to break cache
-        entryFileNames: `assets/[name]-[hash]-clean.js`,
-        chunkFileNames: `assets/[name]-[hash]-clean.js`,
-        assetFileNames: `assets/[name]-[hash]-clean.[ext]`
+        // AGGRESSIVE CACHE BUSTING - FORCE NETLIFY REBUILD WITHOUT FIREBASE
+        entryFileNames: `assets/[name]-[hash]-NOFIREBASE-2025.js`,
+        chunkFileNames: `assets/[name]-[hash]-FIREBASEREMOVED.js`,
+        assetFileNames: `assets/[name]-[hash]-CLEAN-NOFB.[ext]`
       }
     }
   },
