@@ -1,4 +1,5 @@
 import { GoogleGenAI, Chat, GenerateContentResponse, Part } from "@google/genai";
+import { initializeFirebase, getFirebaseAuth, getFirebaseDb } from './firebase/init';
 
 // --- START OF SYSTEM PROMPT ---
 const SYSTEM_PROMPT = `ByggPilot v2.0 - Den Intelligenta Byggpartnern
@@ -207,6 +208,16 @@ class ByggPilotApp {
     }
 
     private async init() {
+        // Initialize Firebase first
+        try {
+            console.log('🔥 Initializing Firebase...');
+            await initializeFirebase();
+            console.log('✅ Firebase initialization complete!');
+        } catch (error) {
+            console.error('❌ Firebase initialization failed:', error);
+            this.showToast('Firebase-anslutningen misslyckades. Vissa funktioner kan vara begränsade.', 'error');
+        }
+        
         this.initAuth();
         await this.initAI(); // Vänta på AI-initiering
         this.setupEventListeners();
