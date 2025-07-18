@@ -1,14 +1,15 @@
 [build]
-  publish = "dist"
-  command = "rm -rf dist node_modules/.cache && npm install && npm run build"
+  publish = "build"
+  command = "rm -rf dist build node_modules/.cache && npm install && npm run build"
 
 [build.environment]
   NODE_VERSION = "18"
-  # Force clean build - NO FIREBASE
+  # NUCLEAR CACHE BUST - FORCE COMPLETE REBUILD
   SKIP_CACHE = "true"
   FORCE_REBUILD = "true"
-  BUILD_VERSION = "no-firebase-2025-01-18"
-  FIREBASE_REMOVED = "true"
+  BUILD_VERSION = "v2-firebase-fixed-2025-01-19"
+  FIREBASE_FIXED = "true"
+  NEW_ARCHITECTURE = "true"
 
 [[headers]]
   for = "/*"

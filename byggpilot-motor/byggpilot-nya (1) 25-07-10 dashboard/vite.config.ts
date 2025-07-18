@@ -3,12 +3,13 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
   build: {
+    outDir: 'build', // ÄNDRAR FRÅN 'dist' TILL 'build' FÖR ATT BRYTA CACHE
     rollupOptions: {
       output: {
-        // AGGRESSIVE CACHE BUSTING - FORCE NETLIFY REBUILD WITHOUT FIREBASE
-        entryFileNames: `assets/[name]-[hash]-NOFIREBASE-2025.js`,
-        chunkFileNames: `assets/[name]-[hash]-FIREBASEREMOVED.js`,
-        assetFileNames: `assets/[name]-[hash]-CLEAN-NOFB.[ext]`
+        // HELT NYA FILNAMN SOM ALDRIG FUNNITS
+        entryFileNames: `v2/[name]-[hash]-FIREBASE-FIXED-2025.js`,
+        chunkFileNames: `v2/[name]-[hash]-NEW-ARCH.js`,
+        assetFileNames: `v2/[name]-[hash]-FINAL.[ext]`
       }
     }
   },
