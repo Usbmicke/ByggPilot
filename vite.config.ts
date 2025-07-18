@@ -8,5 +8,10 @@ export default defineConfig({
       // Exclude problematic directories
       deny: ['**/byggpilot-motor/**']
     }
+  },
+  build: {
+    rollupOptions: {
+      external: ['**/byggpilot-motor/**']
+    }
   }
 })

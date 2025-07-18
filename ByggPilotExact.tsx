@@ -60,6 +60,12 @@ export default function ByggPilotExact() {
   const [hasWelcomedUser, setHasWelcomedUser] = useState(false)
   const [isInitialized, setIsInitialized] = useState(false)
   
+  // Landing page integrated chat
+  const [isLandingChatOpen, setIsLandingChatOpen] = useState(false)
+  const [landingChatMessages, setLandingChatMessages] = useState<ChatMessage[]>([])
+  const [landingChatInput, setLandingChatInput] = useState('')
+  const [isLandingChatLoading, setIsLandingChatLoading] = useState(false)
+  
   // Cookies/GDPR notification
   const [showCookiesNotification, setShowCookiesNotification] = useState(false)
 
@@ -329,6 +335,102 @@ VIKTIGT: Svara kort, tydligt och avsluta alltid med en relevant motfråga för a
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       sendMessage()
+    }
+  }
+
+  // Landing Chat functions
+  const sendLandingMessage = async () => {
+    const userInput = landingChatInput.trim()
+    if (!userInput) return
+
+    const newMessage: ChatMessage = {
+      id: Date.now().toString(),
+      message: userInput,
+      type: 'user',
+      timestamp: new Date()
+    }
+
+    setLandingChatMessages(prev => [...prev, newMessage])
+    setLandingChatInput('')
+    setIsLandingChatLoading(true)
+
+    try {
+      const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY || '')
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
+      
+      const systemPrompt = `Du är ByggPilot - välkomstkompis och guide för nya användare. Du ska vara:
+- Varm, vänlig och välkomnande
+- Kort och tydlig (max 2-3 meningar)
+- Fokuserad på att hjälpa nya användare komma igång
+- Förklara kort vad ByggPilot kan hjälpa med
+
+Din uppgift är att välkomna användare och visa dem vad de kan göra med ByggPilot.`
+      
+      const result = await model.generateContent(systemPrompt + '\n\nAnvändarfråga: ' + userInput)
+      const response = await result.response
+      const text = response.text()
+
+      const aiMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        message: text,
+        type: 'ai',
+        timestamp: new Date()
+      }
+      
+      setLandingChatMessages(prev => [...prev, aiMessage])
+      
+    } catch (error) {
+      console.error('Landing chat error:', error)
+      const errorMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        message: 'Något gick fel. Försök igen!',
+        type: 'ai',
+        timestamp: new Date()
+      }
+      setLandingChatMessages(prev => [...prev, errorMessage])
+    } finally {
+      setIsLandingChatLoading(false)
+    }
+  }
+
+  const handleLandingChatKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      sendLandingMessage()
+    }
+  }
+
+  const toggleLandingChat = () => {
+    setIsLandingChatOpen(!isLandingChatOpen)
+    
+    // Lägg till välkomstmeddelande när chatten öppnas första gången
+    if (!isLandingChatOpen && landingChatMessages.length === 0) {
+      const welcomeMessage: ChatMessage = {
+        id: Date.now().toString(),
+        message: `Hej! 👋 Jag är ByggPilot och jag kan hjälpa dig med allt från projektplanering till administrativa uppgifter. Vad funderar du på?`,
+        type: 'ai',
+        timestamp: new Date()
+      }
+      setLandingChatMessages([welcomeMessage])
+    }
+  }
+
+  const handleLandingChatAction = (action: string) => {
+    const actionMessages: { [key: string]: string } = {
+      yes: 'Perfekt! Vad vill du börja med?',
+      no: 'Inga problem! Titta gärna runt först.',
+      help: 'Jag kan hjälpa dig med projektplanering, tidsrapporter, kalkyler och mycket mer!',
+      start: 'Bra! Låt oss komma igång. Vill du skapa ett nytt projekt eller se vad ByggPilot kan göra?'
+    }
+
+    if (actionMessages[action]) {
+      const actionMessage: ChatMessage = {
+        id: Date.now().toString(),
+        message: actionMessages[action],
+        type: 'ai',
+        timestamp: new Date()
+      }
+      setLandingChatMessages(prev => [...prev, actionMessage])
     }
   }
 
@@ -1829,6 +1931,118 @@ Vad vill du testa först?`,
           </button>
         </div>
       </div>
+
+      {/* Landing Chat Tab */}
+      <button 
+        className="chat-tab"
+        onClick={toggleLandingChat}
+        aria-label="Öppna chat"
+      >
+        <span className="material-symbols-outlined">chat</span>
+        <span className="chat-tab-text">Fråga ByggPilot</span>
+      </button>
+
+      {/* Landing Chat Overlay */}
+      {isLandingChatOpen && (
+        <div className="landing-chat-overlay">
+          <div className="landing-chat-container">
+            <div className="landing-chat-header">
+              <h3>💬 Chat med ByggPilot</h3>
+              <button 
+                className="close-chat-btn"
+                onClick={toggleLandingChat}
+                aria-label="Stäng chat"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <div className="landing-chat-messages">
+              {landingChatMessages.map((message) => (
+                <div key={message.id} className={`chat-message ${message.type}`}>
+                  <div className="message-content">
+                    {message.message}
+                    {message.type === 'ai' && (
+                      <div className="message-actions">
+                        <button 
+                          className="action-btn yes"
+                          onClick={() => handleLandingChatAction('yes')}
+                        >
+                          👍 Ja
+                        </button>
+                        <button 
+                          className="action-btn no"
+                          onClick={() => handleLandingChatAction('no')}
+                        >
+                          👎 Nej
+                        </button>
+                        <button 
+                          className="action-btn help"
+                          onClick={() => handleLandingChatAction('help')}
+                        >
+                          ❓ Mer info
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="message-time">
+                    {message.timestamp.toLocaleTimeString('sv-SE', { 
+                      hour: '2-digit', 
+                      minute: '2-digit' 
+                    })}
+                  </div>
+                </div>
+              ))}
+              
+              {isLandingChatLoading && (
+                <div className="chat-message ai">
+                  <div className="message-content">
+                    <div className="typing-indicator">
+                      <span></span>
+                      <span></span>
+                      <span></span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="landing-chat-input-area">
+              <div className="chat-input-container">
+                <input
+                  type="text"
+                  className="landing-chat-input"
+                  placeholder="Skriv din fråga här..."
+                  value={landingChatInput}
+                  onChange={(e) => setLandingChatInput(e.target.value)}
+                  onKeyDown={handleLandingChatKeyDown}
+                />
+                <div className="chat-actions">
+                  <button 
+                    className="attach-btn"
+                    title="Bifoga fil"
+                  >
+                    <span className="material-symbols-outlined">attach_file</span>
+                  </button>
+                  <button 
+                    className="voice-btn"
+                    title="Röstinmatning"
+                  >
+                    <span className="material-symbols-outlined">mic</span>
+                  </button>
+                  <button 
+                    className="send-btn"
+                    onClick={sendLandingMessage}
+                    disabled={!landingChatInput.trim() || isLandingChatLoading}
+                  >
+                    <span className="material-symbols-outlined">send</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 
