@@ -1,20 +1,35 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
 :root {
-    --background-color: #121212;
-    --secondary-bg: #1A1A1A;
-    --card-bg: #242424;
-    --text-color: #EAEAEA;
-    --text-muted: #AAAAAA;
-    --primary-accent: #00BFFF; /* DeepSkyBlue */
-    --primary-accent-hover: #00A8E0;
-    --border-color: #333333;
-    --status-green: #28a745;
-    --status-yellow: #ffc107;
-    --status-red: #dc3545;
+    /* Exakt enligt specifikation */
+    --background-color: #1a202c; /* Mörk gråblå */
+    --card-background-color: #2d3748; /* Något ljusare gråblå */
+    --text-color: #EAEAEA; /* Ljusgrå/Vit */
+    --primary-accent-color: #00BFFF; /* Cyan/Blå - ENDAST för primära handlingar/knappar */
+    --status-success-color: #38A169; /* Grön - ENDAST för statusindikatorer, progress-bars, slutförda uppgifter */
+    
+    /* Utökade färger för funktionalitet */
+    --secondary-bg: #1a202c; /* Samma som background för sidopaneler */
+    --modal-bg: var(--card-background-color);
+    --primary-accent-hover: #0099CC;
+    --text-muted: #A0AEC0;
+    --text-dark: #000000;
+    --border-color: #4A5568;
+    
+    /* Status färger */
+    --status-green: var(--status-success-color);
+    --status-yellow: #FFD700;
+    --status-red: #FF4757;
+    
+    /* Glöd-effekter enligt specifikation */
     --glow-color: rgba(0, 191, 255, 0.4);
-    --input-glow: 0 0 8px var(--glow-color);
+    --input-glow: 0 0 15px 5px var(--glow-color);
+    
+    /* Typography enligt specifikation */
     --font-family: 'Poppins', sans-serif;
+    
+    /* Transition-effekter enligt specifikation */
+    --transition-standard: all 0.2s ease;
 }
 
 /* --- GENERAL & RESET --- */
@@ -39,7 +54,7 @@ body {
     flex-direction: column;
     padding: 1rem;
     z-index: 20;
-    transition: transform 0.3s ease-in-out;
+    transition: var(--transition-standard);
 }
 .sidebar-header {
     padding: 0.5rem 0.5rem 1.5rem 0.5rem;
@@ -50,7 +65,7 @@ body {
     font-size: 1.2rem;
     font-weight: 600;
 }
-.logo-icon { width: 32px; height: 32px; color: var(--primary-accent); }
+.logo-icon { width: 32px; height: 32px; color: var(--primary-accent-color); }
 .sidebar-nav { flex-grow: 1; overflow-y: auto; }
 .sidebar-nav ul, .sidebar-footer ul { list-style: none; }
 .sidebar-nav a, .sidebar-footer a {
@@ -63,16 +78,17 @@ body {
     text-decoration: none;
     color: var(--text-muted);
     font-weight: 500;
-    transition: all 0.2s ease;
+    transition: var(--transition-standard);
 }
 .sidebar-nav a:hover, .sidebar-footer a:hover {
-    background-color: var(--card-bg);
+    background-color: var(--card-background-color);
     color: var(--text-color);
+    box-shadow: 0 0 15px 5px rgba(0, 191, 255, 0.2);
 }
 .sidebar-nav a.active {
-    background-color: var(--primary-accent);
-    color: #000;
-    box-shadow: 0 0 15px var(--glow-color);
+    background-color: var(--primary-accent-color);
+    color: var(--text-dark);
+    box-shadow: 0 0 15px 5px var(--glow-color);
 }
 .sidebar-footer {
     margin-top: auto;
@@ -91,12 +107,12 @@ body {
     cursor: pointer;
     transition: background-color 0.2s ease;
 }
-.user-profile-summary:hover { background-color: var(--card-bg); }
+.user-profile-summary:hover { background-color: var(--card-background-color); }
 .user-avatar {
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background-color: var(--primary-accent);
+    background-color: var(--primary-accent-color);
     color: #000;
     display: grid;
     place-items: center;
@@ -112,7 +128,7 @@ body {
     bottom: 110%;
     left: 0;
     width: 100%;
-    background-color: var(--card-bg);
+    background-color: var(--card-background-color);
     border: 1px solid var(--border-color);
     border-radius: 6px;
     padding: 0.5rem 0;
@@ -175,7 +191,7 @@ body {
 
 /* --- BUTTONS & FORMS --- */
 .btn {
-    background-color: var(--card-bg);
+    background-color: var(--card-background-color);
     color: var(--text-color);
     border: 1px solid var(--border-color);
     padding: 0.6rem 1.2rem;
@@ -189,16 +205,37 @@ body {
     gap: 0.5rem;
     text-decoration: none;
 }
-.btn:hover { background-color: #383838; }
+.btn:hover { 
+    background-color: var(--card-background-color); 
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
 .btn-primary {
-    background-color: var(--primary-accent);
-    color: #000;
-    border-color: var(--primary-accent);
+    background-color: var(--primary-accent-color);
+    color: var(--text-dark);
+    border-color: var(--primary-accent-color);
+    font-weight: 600;
+    box-shadow: 0 0 10px var(--glow-color);
 }
 .btn-primary:hover {
     background-color: var(--primary-accent-hover);
     border-color: var(--primary-accent-hover);
-    box-shadow: 0 0 15px var(--glow-color);
+    box-shadow: 0 0 15px 5px var(--glow-color);
+    transform: translateY(-2px);
+}
+
+/* Sekundär knapp - Grön för bekräftelser och positiva handlingar */
+.btn-secondary {
+    background-color: var(--status-success-color);
+    color: var(--text-dark);
+    border-color: var(--status-success-color);
+    font-weight: 600;
+}
+.btn-secondary:hover {
+    background-color: #2F855A;
+    border-color: #2F855A;
+    box-shadow: 0 0 15px 5px rgba(56, 161, 105, 0.4);
+    transform: translateY(-2px);
 }
 .btn-danger {
     background-color: var(--status-red);
@@ -218,7 +255,7 @@ body {
     display: grid;
     place-items: center;
 }
-.icon-btn:hover { background-color: var(--card-bg); color: var(--text-color); }
+.icon-btn:hover { background-color: var(--card-background-color); color: var(--text-color); }
 
 .google-signin-btn {
     background-color: #FFFFFF;
@@ -246,7 +283,7 @@ body {
 
 .form-input {
     width: 100%;
-    background: var(--card-bg);
+    background: var(--card-background-color);
     border: 1px solid var(--border-color);
     color: var(--text-color);
     padding: 0.8rem;
@@ -256,7 +293,7 @@ body {
 }
 .form-input:focus {
     outline: none;
-    border-color: var(--primary-accent);
+    border-color: var(--primary-accent-color);
     box-shadow: var(--input-glow);
 }
 .form-group { margin-bottom: 1.5rem; }
@@ -289,11 +326,103 @@ body {
 }
 #chat-messages { flex-grow: 1; overflow-y: auto; padding: 1.5rem; display: none; }
 #chat-drawer.expanded #chat-messages { display: block; }
-.chat-message { margin-bottom: 1rem; padding: 0.8rem 1.2rem; border-radius: 12px; max-width: 85%; word-wrap: break-word; line-height: 1.6; }
+.chat-message { 
+    margin-bottom: 1rem; 
+    padding: 0.8rem 1.2rem; 
+    border-radius: 12px; 
+    max-width: 85%; 
+    word-wrap: break-word; 
+    line-height: 1.6;
+    position: relative;
+}
 .chat-message p:last-child { margin-bottom: 0; }
 .chat-message ul, .chat-message ol { padding-left: 1.2rem; }
-.chat-message.user { background-color: var(--primary-accent); color: #000; margin-left: auto; border-bottom-right-radius: 2px; }
-.chat-message.ai { background-color: var(--card-bg); color: var(--text-color); margin-right: auto; border-bottom-left-radius: 2px; }
+.chat-message.user { background-color: var(--primary-accent-color); color: #000; margin-left: auto; border-bottom-right-radius: 2px; }
+.chat-message.ai { background-color: var(--card-background-color); color: var(--text-color); margin-right: auto; border-bottom-left-radius: 2px; }
+
+/* Kopieringsknapp för varje meddelande - enligt specifikation */
+.chat-message .copy-message-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: rgba(0, 0, 0, 0.5);
+    color: var(--text-color);
+    border: none;
+    border-radius: 4px;
+    padding: 0.25rem;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+.chat-message:hover .copy-message-btn {
+    opacity: 1;
+}
+.chat-message.user .copy-message-btn {
+    background: rgba(0, 0, 0, 0.3);
+}
+
+/* Inramade innehållsboxar - enligt specifikation */
+.ai-content-box {
+    background-color: rgba(0, 191, 255, 0.05);
+    border: 1px solid rgba(0, 191, 255, 0.2);
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 0.5rem 0;
+    position: relative;
+}
+.ai-content-box .copy-content-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: var(--primary-accent-color);
+    color: var(--text-dark);
+    border: none;
+    border-radius: 4px;
+    padding: 0.25rem 0.5rem;
+    cursor: pointer;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    transition: var(--transition-standard);
+}
+.ai-content-box .copy-content-btn:hover {
+    background-color: var(--primary-accent-hover);
+    box-shadow: 0 0 8px 2px var(--glow-color);
+}
+
+/* Tänker-indikator enligt specifikation */
+.thinking-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-muted);
+    font-style: italic;
+    padding: 0.5rem 0;
+}
+.thinking-dots {
+    display: flex;
+    gap: 0.25rem;
+}
+.thinking-dots span {
+    width: 6px;
+    height: 6px;
+    background-color: var(--primary-accent-color);
+    border-radius: 50%;
+    animation: thinking-pulse 1.4s infinite ease-in-out;
+}
+.thinking-dots span:nth-child(1) { animation-delay: -0.32s; }
+.thinking-dots span:nth-child(2) { animation-delay: -0.16s; }
+.thinking-dots span:nth-child(3) { animation-delay: 0s; }
+
+@keyframes thinking-pulse {
+    0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+    40% { opacity: 1; transform: scale(1); }
+}
 .welcome-message { text-align: center; padding: 2rem; color: var(--text-muted); }
 .chat-message.error-message { background-color: var(--status-red); color: white; }
 #attached-files-preview {
@@ -328,13 +457,13 @@ body {
 }
 .chat-input-wrapper { padding: 1rem 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); margin-top: auto; }
 .chat-input-container {
-    background-color: var(--card-bg);
+    background-color: var(--card-background-color);
     border: 1px solid var(--border-color);
     border-radius: 28px;
     padding: 0.25rem 0.5rem;
     transition: all 0.2s ease;
 }
-.chat-input-container:focus-within { box-shadow: var(--input-glow); border-color: var(--primary-accent); }
+.chat-input-container:focus-within { box-shadow: var(--input-glow); border-color: var(--primary-accent-color); }
 .chat-input-area { display: flex; align-items: center; gap: 0.5rem; }
 #chat-toggle-button { animation: pulse 2s infinite; }
 #chat-toggle-button .material-symbols-outlined { transition: transform 0.3s ease; }
@@ -351,7 +480,7 @@ body {
 }
 #chat-input::placeholder { color: var(--text-muted); font-style: italic;}
 .btn-send {
-    background-color: var(--primary-accent);
+    background-color: var(--primary-accent-color);
     color: black;
     border: none;
     border-radius: 50%;
@@ -390,7 +519,7 @@ body {
 .project-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
 .project-card {
     position: relative;
-    background: var(--card-bg);
+    background: var(--card-background-color);
     border-radius: 8px;
     padding: 1rem;
     border-left: 4px solid var(--status-green);
@@ -409,7 +538,7 @@ body {
 .progress-display { flex-grow: 1; }
 .progress-percentage { font-size: 0.9rem; font-weight: 500; color: var(--text-color); }
 .progress-bar { width: 100%; height: 6px; background-color: var(--border-color); border-radius: 3px; overflow: hidden; margin-top: 0.25rem; }
-.progress-bar-inner { height: 100%; background-color: var(--primary-accent); border-radius: 3px; }
+.progress-bar-inner { height: 100%; background-color: var(--status-success-color); border-radius: 3px; }
 .project-deadline { display: flex; align-items: center; gap: 0.4rem; color: var(--text-muted); font-size: 0.85rem; }
 .project-deadline .material-symbols-outlined { font-size: 1.1rem; }
 .project-card-actions {
@@ -434,16 +563,16 @@ body {
     cursor: pointer;
     transition: background-color 0.2s ease;
 }
-.event-item:hover { background-color: var(--card-bg); }
+.event-item:hover { background-color: var(--card-background-color); }
 .event-icon-container {
     width: 36px;
     height: 36px;
-    background-color: var(--card-bg);
+    background-color: var(--card-background-color);
     border-radius: 50%;
     display: grid;
     place-items: center;
 }
-.event-icon-container .material-symbols-outlined { color: var(--primary-accent); }
+.event-icon-container .material-symbols-outlined { color: var(--primary-accent-color); }
 .event-title { font-weight: 500; color: var(--text-color); }
 .event-subtitle { font-size: 0.85rem; color: var(--text-muted); }
 
@@ -470,7 +599,7 @@ body {
     background: var(--secondary-bg);
 }
 .task-item input:checked + label { color: var(--text-color); text-decoration: line-through; }
-.task-item input:checked + label:before { background-color: var(--primary-accent); border-color: var(--primary-accent); }
+.task-item input:checked + label:before { background-color: var(--primary-accent-color); border-color: var(--primary-accent-color); }
 .task-item input:checked + label:after {
     content: '✔';
     position: absolute;
@@ -494,7 +623,7 @@ body {
     padding: 2rem;
 }
 .logo-icon-large { margin-bottom: 1.5rem; }
-.logo-icon-large svg, .logo-icon-large .material-symbols-outlined { width: 64px; height: 64px; color: var(--primary-accent); }
+.logo-icon-large svg, .logo-icon-large .material-symbols-outlined { width: 64px; height: 64px; color: var(--primary-accent-color); }
 .logged-out-view h1 { font-size: 1.8rem; color: var(--text-color); margin-bottom: 0.5rem; }
 .logged-out-view p { max-width: 500px; color: var(--text-muted); line-height: 1.6; margin-bottom: 2rem; }
 .logged-out-actions { display: flex; flex-direction: column; gap: 1rem; align-items: center; }
@@ -507,8 +636,8 @@ body {
 .help-section { padding: 4rem 1rem; border-top: 1px solid var(--border-color); }
 .help-section h2 { text-align: center; font-size: 2rem; margin-bottom: 3rem; }
 .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; }
-.feature-box { background: var(--card-bg); padding: 2rem; border-radius: 8px; text-align: center; }
-.feature-box .material-symbols-outlined { font-size: 3rem; color: var(--primary-accent); margin-bottom: 1rem; }
+.feature-box { background: var(--card-background-color); padding: 2rem; border-radius: 8px; text-align: center; }
+.feature-box .material-symbols-outlined { font-size: 3rem; color: var(--primary-accent-color); margin-bottom: 1rem; }
 .founder-vision { text-align: center; }
 .founder-vision blockquote { font-size: 1.2rem; font-style: italic; color: var(--text-muted); max-width: 800px; margin: 0 auto 1rem auto; }
 .founder-signature { font-weight: 600; }
@@ -523,17 +652,17 @@ body {
 .switch input { opacity: 0; width: 0; height: 0; }
 .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border-color); transition: .4s; border-radius: 28px; }
 .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
-input:checked + .slider { background-color: var(--primary-accent); }
+input:checked + .slider { background-color: var(--primary-accent-color); }
 input:checked + .slider:before { transform: translateX(22px); }
 .management-item { justify-content: space-between; padding: 0.5rem; border-radius: 4px; }
-.management-item:hover { background-color: var(--card-bg); }
+.management-item:hover { background-color: var(--card-background-color); }
 .add-form { display: flex; gap: 0.5rem; margin-top: 1rem; }
 .add-form input[type="text"] { flex-grow: 1; }
 
 /* --- INVOICE VIEW --- */
 .invoice-view { max-width: 800px; margin: 0 auto; }
 .invoice-view p { color: var(--text-muted); margin-bottom: 2rem; }
-.invoice-summary { margin-top: 2rem; padding: 1.5rem; background-color: var(--card-bg); border-radius: 8px; min-height: 100px; }
+.invoice-summary { margin-top: 2rem; padding: 1.5rem; background-color: var(--card-background-color); border-radius: 8px; min-height: 100px; }
 
 /* --- MODAL --- */
 .modal-overlay {
@@ -571,10 +700,10 @@ input:checked + .slider:before { transform: translateX(22px); }
 /* --- ONBOARDING WIDGET --- */
 .onboarding-widget {
     margin-bottom: 2rem;
-    border: 1px solid var(--primary-accent);
+    border: 1px solid var(--primary-accent-color);
     box-shadow: var(--input-glow);
 }
-.onboarding-widget .widget-header h2 { color: var(--primary-accent); }
+.onboarding-widget .widget-header h2 { color: var(--primary-accent-color); }
 .onboarding-widget .task-item label { cursor: default; } /* Non-interactive */
 
 /* --- COOKIE BANNER --- */
@@ -583,7 +712,7 @@ input:checked + .slider:before { transform: translateX(22px); }
     bottom: -100%;
     left: 0;
     width: 100%;
-    background-color: var(--card-bg);
+    background-color: var(--card-background-color);
     border-top: 1px solid var(--border-color);
     z-index: 100;
     padding: 1rem;
@@ -611,12 +740,17 @@ input:checked + .slider:before { transform: translateX(22px); }
     gap: 0.5rem;
 }
 .toast {
-    background-color: var(--primary-accent);
-    color: #000;
+    background-color: var(--primary-accent-color);
+    color: var(--text-dark);
     padding: 1rem 1.5rem;
     border-radius: 6px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     animation: slideIn 0.3s ease, fadeOut 0.5s ease 4.5s forwards;
+    font-weight: 500;
+}
+.toast.error {
+    background-color: var(--status-red);
+    color: white;
 }
 @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
 @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
@@ -633,4 +767,226 @@ input:checked + .slider:before { transform: translateX(22px); }
     .main-header { flex-wrap: wrap; }
     .header-actions { margin-left: 0; width: 100%; justify-content: flex-end; padding-top: 1rem;}
     .hamburger-menu { display: block; }
+}
+
+/* --- GOOGLE INTEGRATION ENHANCEMENTS --- */
+.modal-content {
+    background-color: var(--modal-bg);
+    border-radius: 8px;
+    max-width: 600px;
+    width: 90%;
+    margin: 0 auto;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+    border: 1px solid var(--border-color);
+}
+
+.modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2 {
+    margin: 0;
+    color: var(--text-color);
+    font-size: 1.3rem;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.8rem;
+}
+
+/* --- FILE ITEMS --- */
+.file-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background-color: var(--card-background-color);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    margin-bottom: 0.8rem;
+    transition: all 0.3s ease;
+}
+
+.file-item:hover {
+    background-color: var(--modal-bg);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.file-item .material-symbols-outlined {
+    color: var(--primary-accent-color);
+    font-size: 2rem;
+}
+
+/* --- HJÄLPMODAL enligt specifikation --- */
+.help-modal {
+    max-width: 900px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.help-modal .modal-body {
+    padding: 2rem 3rem;
+    line-height: 1.7;
+}
+
+.help-modal h2 {
+    color: var(--primary-accent-color);
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+}
+
+.help-modal h3 {
+    color: var(--text-color);
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    font-weight: 500;
+}
+
+.help-modal p {
+    margin-bottom: 1.5rem;
+    color: var(--text-color);
+}
+
+.help-modal .example-card {
+    background-color: var(--card-background-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    border-left: 4px solid var(--primary-accent-color);
+}
+
+.help-modal .example-card h4 {
+    color: var(--primary-accent-color);
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.help-modal .example-card p {
+    margin-bottom: 0.5rem;
+    color: var(--text-muted);
+}
+
+.help-modal .feature-highlight {
+    background: linear-gradient(135deg, rgba(0, 191, 255, 0.1), rgba(56, 161, 105, 0.1));
+    border: 1px solid rgba(0, 191, 255, 0.3);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+}
+
+/* Luftig layout enligt specifikation */
+.help-modal .content-section {
+    margin-bottom: 3rem;
+}
+
+.help-modal .vision-text {
+    font-size: 1.1rem;
+    font-style: italic;
+    color: var(--primary-accent-color);
+    text-align: center;
+    margin: 2rem 0;
+    padding: 1rem;
+    border: 1px solid rgba(0, 191, 255, 0.3);
+    border-radius: 8px;
+    background: rgba(0, 191, 255, 0.05);
+}
+
+.file-info {
+    flex-grow: 1;
+}
+
+.file-info strong {
+    color: var(--text-color);
+    display: block;
+    margin-bottom: 0.2rem;
+}
+
+.file-info small {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+/* --- FORM GROUPS --- */
+.form-group {
+    margin-bottom: 1.2rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.4rem;
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    background-color: var(--card-background-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    padding: 0.8rem;
+    border-radius: 4px;
+    font-family: var(--font-family);
+    transition: all 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--primary-accent-color);
+    box-shadow: var(--input-glow);
+}
+
+/* --- GOOGLE INTEGRATION STATUS --- */
+.google-integration-status {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 1rem;
+    background-color: var(--card-background-color);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    margin-bottom: 1rem;
+}
+
+.google-integration-status.connected {
+    border-color: var(--secondary-accent);
+    background-color: rgba(0, 255, 135, 0.1);
+}
+
+.google-integration-status .status-icon {
+    color: var(--secondary-accent);
+    font-size: 1.5rem;
+}
+
+.project-card.has-drive-folder {
+    position: relative;
+}
+
+.project-card.has-drive-folder::before {
+    content: "";
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    width: 8px;
+    height: 8px;
+    background-color: var(--secondary-accent);
+    border-radius: 50%;
+    box-shadow: 0 0 4px var(--secondary-accent);
 }

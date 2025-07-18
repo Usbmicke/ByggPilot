@@ -45,16 +45,15 @@
                 <ul>
                     <li><a class="active" data-action="show-view" data-view="dashboard"><span class="material-symbols-outlined">dashboard</span>Dashboard</a></li>
                     <li><a data-action="show-view" data-view="projects"><span class="material-symbols-outlined">assignment</span>Projekt</a></li>
-                    <li><a data-action="show-view" data-view="dokument"><span class="material-symbols-outlined">folder_managed</span>Dokument</a></li>
-                    <li><a data-action="show-view" data-view="slutfaktura"><span class="material-symbols-outlined">request_quote</span>Slutfaktura</a></li>
-                    <li><a data-action="show-view" data-view="revisor"><span class="material-symbols-outlined">receipt_long</span>Revisor Samlingar</a></li>
-                    <li><a data-action="show-view" data-view="team"><span class="material-symbols-outlined">groups</span>Team</a></li>
+                    <li><a data-action="show-view" data-view="ekonomi"><span class="material-symbols-outlined">payments</span>Ekonomi</a></li>
+                    <li><a data-action="show-view" data-view="kalender"><span class="material-symbols-outlined">calendar_month</span>Kalender</a></li>
+                    <li><a data-action="show-view" data-view="dokument"><span class="material-symbols-outlined">folder</span>Dokument</a></li>
+                    <li><a data-action="show-view" data-view="settings"><span class="material-symbols-outlined">settings</span>Inställningar</a></li>
                 </ul>
             </nav>
             <footer class="sidebar-footer">
                 <ul>
-                    <li><a data-action="show-view" data-view="help"><span class="material-symbols-outlined">help</span>Hjälp & Guider</a></li>
-                    <li><a data-action="show-view" data-view="settings"><span class="material-symbols-outlined">settings</span>Inställningar</a></li>
+                    <li><a data-action="show-help-modal" class="help-trigger"><span class="material-symbols-outlined">help</span>Hjälp/Info</a></li>
                 </ul>
                 <div class="user-profile-menu-container">
                     <a data-action="show-profile" class="user-profile-summary">
@@ -484,7 +483,6 @@
     </template>
 
 
-    <script src="index.tsx" type="module"></script>
-<script type="module" src="/index.tsx"></script>
+    <script type="module" src="/src/main.tsx"></script>
 </body>
 </html>

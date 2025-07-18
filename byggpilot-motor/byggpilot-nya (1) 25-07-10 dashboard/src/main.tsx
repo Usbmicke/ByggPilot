@@ -16,7 +16,7 @@ Alltid Bekräftelse: Innan du utför en oåterkallelig handling (skickar mail/fa
 Kontextmedvetenhet: Förstå alltid vilket projekt en fråga, ett dokument eller ett kommando tillhör. Om oklart, fråga: "Vilket projekt gäller detta?".`;
 // --- END OF SYSTEM PROMPT ---
 
-// API Base URL
+// API Base URL - använder proxy i utvecklingsläge
 const API_BASE_URL = 'http://localhost:3001';
 
 // Google Integration Types
@@ -203,12 +203,12 @@ class ByggPilotApp {
         this.userAvatarElement = document.getElementById('user-avatar') as HTMLElement;
 
         this.loadState();
-        this.init();
+        this.init().catch(console.error); // Hantera async init
     }
 
-    private init() {
+    private async init() {
         this.initAuth();
-        this.initAI();
+        await this.initAI(); // Vänta på AI-initiering
         this.setupEventListeners();
         this.setupSpeechRecognition();
         this.handleCookieConsent();
@@ -275,14 +275,20 @@ class ByggPilotApp {
         this.saveAndRender();
     }
 
-    private initAI() {
+    private async initAI() {
         try {
-            const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+            // Hämta API-nyckel från backend (Secret Manager)
+            const response = await fetch(`${API_BASE_URL}/api/config/gemini-key`);
             
-            if (!apiKey || apiKey === 'your_gemini_api_key_here') {
-                console.warn("Gemini API key not configured. AI chat features will be limited.");
-                this.addMessage("ByggPilot AI är inte konfigurerad. För att aktivera AI-funktioner, lägg till din Gemini API-nyckel i .env-filen.", 'ai', true);
-                return;
+            if (!response.ok) {
+                throw new Error('Could not retrieve API configuration from backend');
+            }
+            
+            const config = await response.json();
+            const apiKey = config.apiKey;
+            
+            if (!apiKey) {
+                throw new Error('Gemini API key not available');
             }
             
             const ai = new GoogleGenAI({ apiKey });
@@ -294,9 +300,11 @@ class ByggPilotApp {
             });
             
             this.addMessage("ByggPilot AI är redo att hjälpa dig! Skriv dina frågor eller kommandon här.", 'ai');
+            console.log("Gemini AI initialized successfully using Secret Manager");
+            
         } catch (error) {
             console.error("Failed to initialize Gemini AI:", error);
-            this.addMessage("Kunde inte starta den digitala kollegan. Kontrollera din API-nyckel i .env-filen.", 'ai', true);
+            this.addMessage("ByggPilot AI är inte tillgänglig just nu. Kontrollera att Secret Manager är korrekt konfigurerat.", 'ai', true);
         }
     }
     
@@ -382,6 +390,7 @@ class ByggPilotApp {
             case 'open-calendar': this.showToast("Öppnar Google Kalender..."); break;
             case 'open-gmail': this.showToast("Öppnar Gmail..."); break;
             case 'send-email': this.showEmailModal(details); break;
+            case 'show-help-modal': this.showHelpModal(); break;
         }
     }
 
@@ -1207,6 +1216,75 @@ class ByggPilotApp {
         this.genericModal.classList.add('active');
     }
 
+    private showHelpModal() {
+        this.genericModal.innerHTML = `
+            <div class="modal-content help-modal">
+                <div class="modal-header">
+                    <h2>Så funkar ByggPilot</h2>
+                    <button class="btn" data-action="close-modal">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="content-section">
+                        <p>Vi vet att administration är nödvändigt, men det ska inte behöva stjäla dina kvällar eller ta fokus från det du gör bäst – att driva dina projekt framåt.</p>
+                        
+                        <div class="vision-text">
+                            Tänk om man kunde skapa en digital kollega som alltid finns tillgänglig, direkt i fickan?
+                        </div>
+                    </div>
+
+                    <div class="content-section">
+                        <h3>Så här använder du ByggPilot:</h3>
+                        
+                        <div class="example-card">
+                            <h4>Istället för att:</h4>
+                            <p>"Jag måste skapa en mapp för det nya projektet, sedan skriva en offert, komma ihåg att följa upp..."</p>
+                            <h4>Säg så här:</h4>
+                            <p>"Skapa ett nytt projekt för Villa Andersson på Storgatan 15"</p>
+                        </div>
+
+                        <div class="example-card">
+                            <h4>Istället för att:</h4>
+                            <p>"Var ska jag lägga alla kvitton? Vilka handlingar behöver revisorn?"</p>
+                            <h4>Säg så här:</h4>
+                            <p>"Hjälp mig organisera mina kvitton för december"</p>
+                        </div>
+
+                        <div class="example-card">
+                            <h4>Istället för att:</h4>
+                            <p>"Jag måste kolla väderprognosen för nästa vecka och planera om..."</p>
+                            <h4>Säg så här:</h4>
+                            <p>"Kommer det regna på onsdag? Ska vi flytta betonggjutningen?"</p>
+                        </div>
+                    </div>
+
+                    <div class="content-section">
+                        <h3>Vad ByggPilot kan hjälpa dig med:</h3>
+                        <div class="feature-highlight">
+                            <ul>
+                                <li><strong>Projekthantering:</strong> Skapa mappar, hantera deadlines, följ upp framsteg</li>
+                                <li><strong>Ekonomi:</strong> Offerter, fakturor, bokföringsunderlag</li>
+                                <li><strong>Kommunikation:</strong> E-post till kunder, uppföljning, påminnelser</li>
+                                <li><strong>Dokumentation:</strong> Organisera filer, bilder, ritningar</li>
+                                <li><strong>Planering:</strong> Väderprognos, schemaläggning, riskanalys</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="content-section">
+                        <h3>Tips för bästa resultat:</h3>
+                        <p>Var konkret i dina frågor och kommandon. ByggPilot förstår svenska byggtermer och kan hantera allt från "Skapa KMA-plan" till "Vad kostar det att bygga en altan?"</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" data-action="close-modal">Förstått!</button>
+                </div>
+            </div>
+        `;
+        this.genericModal.classList.add('active');
+    }
+
     private showToast(message: string, type: 'info' | 'error' = 'info') {
         const container = document.getElementById('toast-container');
         if (!container) return;
@@ -1391,10 +1469,86 @@ class ByggPilotApp {
         const messageElement = document.createElement('div');
         messageElement.classList.add('chat-message', sender);
         if (isError) messageElement.classList.add('error-message');
-        messageElement.innerHTML = sender === 'ai' ? parseMarkdown(text) : `<p>${text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>`;
+        
+        if (sender === 'ai') {
+            const processedContent = this.processAIContent(parseMarkdown(text));
+            messageElement.innerHTML = processedContent;
+        } else {
+            messageElement.innerHTML = `<p>${text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>`;
+        }
+        
+        // Lägg till kopieringsknapp för varje meddelande enligt specifikation
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'copy-message-btn';
+        copyBtn.innerHTML = '<span class="material-symbols-outlined">content_copy</span>';
+        copyBtn.title = 'Kopiera meddelande';
+        copyBtn.onclick = () => this.copyToClipboard(text);
+        messageElement.appendChild(copyBtn);
         
         this.chatMessages.appendChild(messageElement);
         this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+    }
+
+    private processAIContent(html: string): string {
+        // Identifiera innehåll som ska vara i inramade boxar (checklistor, riskanalyser, etc.)
+        const patterns = [
+            /(<ul>[\s\S]*?<\/ul>)/g,  // Listor
+            /(<ol>[\s\S]*?<\/ol>)/g,  // Numrerade listor
+            /(<pre><code>[\s\S]*?<\/code><\/pre>)/g,  // Kodblock
+        ];
+        
+        let processedHtml = html;
+        
+        patterns.forEach(pattern => {
+            processedHtml = processedHtml.replace(pattern, (match) => {
+                const boxId = 'box-' + Math.random().toString(36).substr(2, 9);
+                return `<div class="ai-content-box" data-content="${boxId}">
+                    <button class="copy-content-btn" onclick="window.byggpilot.copyContentBox('${boxId}')" title="Kopiera innehåll">
+                        <span class="material-symbols-outlined">content_copy</span>
+                    </button>
+                    ${match}
+                </div>`;
+            });
+        });
+        
+        return processedHtml;
+    }
+
+    private copyToClipboard(text: string) {
+        navigator.clipboard.writeText(text).then(() => {
+            this.showToast('Kopierat till urklipp!');
+        }).catch(() => {
+            this.showToast('Kunde inte kopiera text', 'error');
+        });
+    }
+
+    public copyContentBox(boxId: string) {
+        const box = document.querySelector(`[data-content="${boxId}"]`);
+        if (box) {
+            const textContent = box.textContent || '';
+            this.copyToClipboard(textContent);
+        }
+    }
+
+    private showThinkingIndicator() {
+        const thinkingDiv = document.createElement('div');
+        thinkingDiv.className = 'thinking-indicator';
+        thinkingDiv.innerHTML = `
+            <span>ByggPilot tänker</span>
+            <div class="thinking-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        `;
+        thinkingDiv.id = 'thinking-indicator';
+        this.chatMessages.appendChild(thinkingDiv);
+        this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+    }
+
+    private removeThinkingIndicator() {
+        const thinking = document.getElementById('thinking-indicator');
+        if (thinking) thinking.remove();
     }
 
     private async sendMessage() {
@@ -1403,6 +1557,9 @@ class ByggPilotApp {
 
         this.addMessage(userInput, 'user');
         this.chatInput.value = '';
+        
+        // Visa "tänker"-indikator enligt specifikation
+        this.showThinkingIndicator();
         
         this.loadingIndicator.style.display = 'inline-block';
         this.sendIcon.style.display = 'none';
@@ -1421,9 +1578,16 @@ class ByggPilotApp {
 
             const response: GenerateContentResponse = await this.chat.sendMessage({ message: parts });
             
+            this.removeThinkingIndicator();
+            
+        if (response.text) {
             this.addMessage(response.text, 'ai');
+        } else {
+            this.addMessage("Jag fick inget svar från AI-tjänsten.", 'ai', true);
+        }
         } catch (error) {
             console.error("Gemini API error:", error);
+            this.removeThinkingIndicator();
             this.addMessage("Ursäkta, något gick fel med anslutningen till AI:n.", 'ai', true);
         } finally {
             this.state.attachedFiles = [];
@@ -1437,5 +1601,9 @@ class ByggPilotApp {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    new ByggPilotApp();
+    const app = new ByggPilotApp();
+    // Gör kopieringsfunktionen globalt tillgänglig enligt specifikation
+    (window as any).byggpilot = {
+        copyContentBox: (boxId: string) => app.copyContentBox(boxId)
+    };
 });
