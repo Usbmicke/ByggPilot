@@ -4,6 +4,13 @@
 
 [build.environment]
   NODE_VERSION = "18"
+  # Force clean build
+  SKIP_CACHE = "true"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
 
 [[redirects]]
   from = "/api/*"
