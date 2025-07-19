@@ -288,8 +288,8 @@ class ByggPilotApp {
 
     private async initAI() {
         try {
-            // Hämta API-nyckel från backend (Secret Manager)
-            const response = await fetch(`${API_BASE_URL}/api/config/gemini-key`);
+            // Hämta API-nyckel från Netlify Function (Secret Manager)
+            const response = await fetch('/.netlify/functions/gemini-key');
             
             if (!response.ok) {
                 throw new Error('Could not retrieve API configuration from backend');
@@ -408,7 +408,7 @@ class ByggPilotApp {
     // --- AUTHENTICATION ---
     private async handleGoogleSignIn() {
         try {
-            const response = await fetch(`${API_BASE_URL}/auth/google`);
+            const response = await fetch('/.netlify/functions/auth');
             const data = await response.json();
             
             if (data.authUrl) {

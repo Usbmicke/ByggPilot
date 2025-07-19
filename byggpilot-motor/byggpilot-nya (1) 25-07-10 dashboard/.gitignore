@@ -36,3 +36,6 @@ firebase.json
 *.njsproj
 *.sln
 *.sw?
+
+service-account*.json
+service-account-base64.txt

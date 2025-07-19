@@ -11,8 +11,36 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Initialize Secret Manager client
-const secretClient = new SecretManagerServiceClient();
+// Initialize Secret Manager client with proper credentials
+let secretClient;
+
+// Konfiguration för Google Cloud Service Account
+function initializeSecretManagerClient() {
+  try {
+    // Använd GOOGLE_CREDENTIALS som direktiv JSON (som du la in i Netlify)
+    if (process.env.GOOGLE_CREDENTIALS) {
+      console.log('🔧 Using GOOGLE_CREDENTIALS from environment');
+      const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+      secretClient = new SecretManagerServiceClient({
+        credentials: credentials,
+        projectId: credentials.project_id
+      });
+      console.log('✅ Secret Manager client initialized with provided credentials');
+    } else {
+      // Fallback för lokal utveckling
+      console.log('🔧 Using default Google credentials (local development)');
+      secretClient = new SecretManagerServiceClient();
+      console.log('✅ Secret Manager client initialized with default credentials');
+    }
+  } catch (error) {
+    console.error('❌ Failed to initialize Secret Manager client:', error.message);
+    // Skapa en dummy klient som inte kommer att fungera men förhindrar crashes
+    secretClient = new SecretManagerServiceClient();
+  }
+}
+
+// Initiera Secret Manager klient
+initializeSecretManagerClient();
 
 // CORS konfiguration
 app.use(cors({

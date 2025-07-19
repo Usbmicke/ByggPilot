@@ -2,14 +2,23 @@
   publish = "build"
   command = "rm -rf dist build node_modules/.cache && npm install && npm run build"
 
+[functions]
+  directory = "netlify/functions"
+  # Function timeout settings
+  external_node_modules = ["@google-cloud/secret-manager", "googleapis"]
+  node_bundler = "esbuild"
+  # Error handling and debugging
+  included_files = ["netlify/functions/**/*.js"]
+
 [build.environment]
   NODE_VERSION = "18"
   # NUCLEAR CACHE BUST - FORCE COMPLETE REBUILD
   SKIP_CACHE = "true"
   FORCE_REBUILD = "true"
-  BUILD_VERSION = "v2-firebase-fixed-2025-01-19"
-  FIREBASE_FIXED = "true"
-  NEW_ARCHITECTURE = "true"
+  BUILD_VERSION = "netlify-functions-firebase-2025-01-19"
+  FIREBASE_ENABLED = "true"
+  FUNCTIONS_ARCHITECTURE = "true"
+  SECRET_MANAGER_SUPPORT = "true"
 
 [[headers]]
   for = "/*"
@@ -17,8 +26,9 @@
     Cache-Control = "no-cache, no-store, must-revalidate"
     Pragma = "no-cache"
     Expires = "0"
-    X-Firebase-Status = "completely-removed"
-    X-Build-Version = "no-firebase-2025-01-18"
+    X-Firebase-Status = "firebase-enabled"
+    X-Build-Version = "netlify-functions-2025-01-19"
+    X-Functions-Support = "enabled"
 
 [[redirects]]
   from = "/api/*"
