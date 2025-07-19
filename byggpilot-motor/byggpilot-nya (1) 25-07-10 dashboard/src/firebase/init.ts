@@ -32,8 +32,8 @@ export const initializeFirebase = (): Promise<{
 
       console.log('🔧 Fetching Firebase configuration from Secret Manager...');
       
-      // Hämta Firebase config från vår nya Netlify Function
-      const response = await fetch('/.netlify/functions/get-firebase-config');
+      // Hämta Firebase config från vår nya Netlify Function (via API redirect)
+      const response = await fetch('/api/get-firebase-config');
       
       if (!response.ok) {
         throw new Error(`Failed to fetch Firebase config: ${response.status} ${response.statusText}`);
