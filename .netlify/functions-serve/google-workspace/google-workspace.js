@@ -1,0 +1,1 @@
+module.exports = require('./Users/usbmi/OneDrive/Desktop/byggpilot-nya/netlify/functions/google-workspace.js')
