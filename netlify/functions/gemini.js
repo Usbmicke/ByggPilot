@@ -59,7 +59,7 @@ async function getSecret(secretName) {
 }
 
 // Huvudfunktion för Gemini API-anrop
-exports.handler = async (event, context) => {
+export const handler = async (event, context) => {
   // Initialisera Secret Manager om inte redan gjort
   if (!secretClient) {
     initializeSecretManagerClient();

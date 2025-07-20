@@ -1,0 +1,80 @@
+functionsDirectory = "C:\\Users\\usbmi\\OneDrive\\Desktop\\byggpilot-nya (1) 25-07-10 dashboard\\netlify\\functions"
+functionsDirectoryOrigin = "config"
+headersOrigin = "config"
+redirectsOrigin = "config"
+plugins = []
+
+[build]
+publish = "C:\\Users\\usbmi\\OneDrive\\Desktop\\byggpilot-nya (1) 25-07-10 dashboard\\dist"
+publishOrigin = "config"
+commandOrigin = "config"
+command = "npm install && npm run build"
+functions = "C:\\Users\\usbmi\\OneDrive\\Desktop\\byggpilot-nya (1) 25-07-10 dashboard\\netlify\\functions"
+
+[build.environment]
+NODE_VERSION = "18"
+SKIP_CACHE = "true"
+FORCE_REBUILD = "true"
+BUILD_VERSION = "netlify-functions-firebase-2025-01-19-FINAL-FIX"
+FIREBASE_ENABLED = "true"
+FUNCTIONS_ARCHITECTURE = "true"
+SECRET_MANAGER_SUPPORT = "true"
+
+[build.processing]
+
+[build.processing.css]
+
+[build.processing.html]
+
+[build.processing.images]
+
+[build.processing.js]
+
+[build.services]
+
+[dev]
+command = "npm run dev"
+port = 5173.0
+publish = "dist"
+
+[functions]
+
+[functions."*"]
+included_files = ["netlify/functions/**/*.js"]
+node_bundler = "esbuild"
+external_node_modules = ["@google-cloud/secret-manager", "googleapis"]
+
+[[headers]]
+for = "/*"
+
+[headers.values]
+Cache-Control = "no-cache, no-store, must-revalidate"
+Pragma = "no-cache"
+Expires = "0"
+X-Firebase-Status = "firebase-enabled"
+X-Build-Version = "netlify-functions-2025-01-19"
+X-Functions-Support = "enabled"
+
+[[redirects]]
+from = "/api/*"
+to = "/.netlify/functions/:splat"
+status = 200.0
+force = false
+
+[redirects.query]
+
+[redirects.conditions]
+
+[redirects.headers]
+
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200.0
+force = false
+
+[redirects.query]
+
+[redirects.conditions]
+
+[redirects.headers]

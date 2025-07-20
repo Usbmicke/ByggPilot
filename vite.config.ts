@@ -3,7 +3,7 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
   build: {
-    outDir: 'build', // ÄNDRAR FRÅN 'dist' TILL 'build' FÖR ATT BRYTA CACHE
+    outDir: 'dist', // ÄNDRAR TILLBAKA TILL 'dist' FÖR NETLIFY
     rollupOptions: {
       output: {
         // HELT NYA FILNAMN SOM ALDRIG FUNNITS

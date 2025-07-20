@@ -98,6 +98,7 @@ export async function handler(event, context) {
       };
     }
 
+    // Parse the secret response
     const secretData = JSON.parse(secretResponse.body);
     const apiKey = secretData.value;
 
