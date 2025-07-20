@@ -243,12 +243,18 @@ class ByggPilotApp {
         }
         
         this.initAuth();
-        await this.initAI(); // Vänta på AI-initiering
+        
+        // Setup event listeners FIRST to ensure buttons work even if AI fails
         this.setupEventListeners();
         this.setupSpeechRecognition();
         this.handleCookieConsent();
         this.startPlaceholderAnimation();
         this.checkAuthStatus();
+        
+        // Initialize AI last, and don't block other functionality if it fails
+        this.initAI().catch(error => {
+            console.error('❌ AI initialization failed, but app continues to work:', error);
+        });
     }
     
     private initAuth() {
@@ -298,6 +304,13 @@ class ByggPilotApp {
                 this.state.onboarding.completed = true;
                 this.showToast(`Välkommen, ${userData.name}!`);
                 if (this.state.isDemoMode) this.toggleDemoMode(false);
+                
+                // Skicka personlig välkomsthälsning till AI när användaren loggar in
+                setTimeout(() => {
+                    if (this.isAiReady) {
+                        this.addMessage(`Hej ${userData.name.split(' ')[0]}! 👋 Jag är din AI-assistent här på ByggPilot. Jag hjälper dig med administrativa uppgifter, projekthantering och byggfrågor. Vad kan jag hjälpa dig med idag?`, 'ai');
+                    }
+                }, 1000);
             } else {
                 // Session expired or invalid
                 this.handleSignOut();
