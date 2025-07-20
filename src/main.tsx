@@ -1687,33 +1687,16 @@ class ByggPilotApp {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // Visa laddningsindikator under Firebase-initialisering
-    const loadingElement = document.createElement('div');
-    loadingElement.id = 'app-loading';
-    loadingElement.innerHTML = `
-        <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
-                    background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-                    text-align: center; z-index: 10000;">
-            <div style="margin-bottom: 15px;">🔥 Initialiserar ByggPilot...</div>
-            <div style="width: 40px; height: 40px; border: 3px solid #f3f3f3; border-top: 3px solid #007bff; 
-                        border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
-        </div>
-        <style>
-            @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        </style>
-    `;
-    document.body.appendChild(loadingElement);
-
+    // Dold Firebase-initialisering utan synlig laddningsindikator
+    // (användaren ska inte se teknisk laddning)
+    
     try {
-        // Vänta på Firebase-initialisering före app-start
+        // Tyst Firebase-initialisering i bakgrunden
         console.log('🔥 Initializing Firebase...');
         await initializeFirebase();
         console.log('✅ Firebase ready! Starting ByggPilot app...');
         
-        // Ta bort laddningsindikator
-        loadingElement.remove();
-        
-        // Starta applikationen
+        // Starta applikationen direkt
         const app = new ByggPilotApp();
         
         // Gör kopieringsfunktionen globalt tillgänglig enligt specifikation
@@ -1723,7 +1706,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         
     } catch (error) {
         console.error('❌ Critical Firebase initialization failed:', error);
-        loadingElement.innerHTML = `
+        
+        // Skapa diskret felmeddelande endast vid kritiskt fel
+        const errorElement = document.createElement('div');
+        errorElement.innerHTML = `
             <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
                         background: #fff3cd; color: #856404; padding: 20px; border-radius: 10px; 
                         box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center; z-index: 10000;
@@ -1736,5 +1722,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </button>
             </div>
         `;
+        document.body.appendChild(errorElement);
     }
 });
