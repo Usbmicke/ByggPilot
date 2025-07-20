@@ -750,7 +750,7 @@ class ByggPilotApp {
             return;
         }
 
-        const canAccessContent = this.state.user.isLoggedIn || this.state.isDemoMode || this.state.projects.length > 0;
+        const canAccessContent = this.state.user.isLoggedIn || this.state.isDemoMode;
         
         switch (this.state.currentView) {
             case 'dashboard':
