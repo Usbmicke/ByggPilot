@@ -1,7 +1,9 @@
 /**
- * Netlify Function: Hämta Gemini API-nyckel för frontend
- * Enkel fallback som bara använder environment variables
+ * Netlify Function: Hämta Gemini API-nyckel från Google Secret Manager
+ * Använder Firebase-konfiguration som redan finns på Netlify
  */
+const { SecretManagerServiceClient } = require('@google-cloud/secret-manager');
+
 exports.handler = async (event, context) => {
   // CORS headers
   const headers = {
@@ -21,36 +23,68 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    console.log('🔍 Looking for Gemini API key in environment variables');
+    console.log('🔍 Initializing Secret Manager client...');
     
-    // Använd environment variable som finns på Netlify
-    const apiKey = process.env.GEMINI_API_KEY;
+    // Hämta Firebase service account från Netlify environment
+    const serviceAccountBase64 = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
+    
+    if (!serviceAccountBase64) {
+      console.log('❌ FIREBASE_SERVICE_ACCOUNT_BASE64 not found');
+      return {
+        statusCode: 503,
+        headers,
+        body: JSON.stringify({ 
+          error: 'Firebase configuration not available',
+          details: 'FIREBASE_SERVICE_ACCOUNT_BASE64 environment variable not set'
+        })
+      };
+    }
+
+    // Dekoda service account
+    const serviceAccount = JSON.parse(Buffer.from(serviceAccountBase64, 'base64').toString('utf8'));
+    
+    // Skapa Secret Manager client med service account credentials
+    const client = new SecretManagerServiceClient({
+      credentials: serviceAccount,
+      projectId: serviceAccount.project_id
+    });
+
+    console.log('🗝️ Fetching Gemini API key from Secret Manager...');
+    
+    // Hämta Gemini API-nyckel från Secret Manager
+    const secretName = `projects/${serviceAccount.project_id}/secrets/GEMINI_API_KEY/versions/latest`;
+    
+    const [version] = await client.accessSecretVersion({
+      name: secretName
+    });
+
+    const apiKey = version.payload?.data?.toString();
     
     if (apiKey) {
-      console.log('✅ Found GEMINI_API_KEY in environment variables');
+      console.log('✅ Successfully retrieved Gemini API key from Secret Manager');
       return {
         statusCode: 200,
         headers,
         body: JSON.stringify({ 
           apiKey: apiKey,
-          source: 'environment-variable',
+          source: 'google-secret-manager',
           success: true
         })
       };
     }
 
-    console.log('❌ GEMINI_API_KEY not found in environment variables');
+    console.log('❌ Gemini API key not found in Secret Manager');
     return {
       statusCode: 503,
       headers,
       body: JSON.stringify({ 
         error: 'Gemini API key not available',
-        details: 'GEMINI_API_KEY environment variable not set'
+        details: 'Secret not found in Google Secret Manager'
       })
     };
 
   } catch (error) {
-    console.error('❌ Error in gemini-key function:', error);
+    console.error('❌ Error accessing Secret Manager:', error);
     
     return {
       statusCode: 500,

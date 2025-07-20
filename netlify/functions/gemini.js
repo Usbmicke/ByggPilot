@@ -1,7 +1,9 @@
 /**
  * Netlify Function: Gemini AI-chat för ByggPilot
- * Enkel implementering som använder environment variables
+ * Använder Google Secret Manager för säker API-nyckel hantering
  */
+const { SecretManagerServiceClient } = require('@google-cloud/secret-manager');
+
 exports.handler = async (event, context) => {
   // CORS headers
   const headers = {
@@ -32,17 +34,49 @@ exports.handler = async (event, context) => {
   try {
     console.log('🤖 Gemini AI request received');
     
-    // Get API key from environment
-    const apiKey = process.env.GEMINI_API_KEY;
+    // Hämta Firebase service account från Netlify environment
+    const serviceAccountBase64 = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
+    
+    if (!serviceAccountBase64) {
+      console.log('❌ FIREBASE_SERVICE_ACCOUNT_BASE64 not found');
+      return {
+        statusCode: 503,
+        headers,
+        body: JSON.stringify({ 
+          error: 'Firebase configuration not available',
+          details: 'FIREBASE_SERVICE_ACCOUNT_BASE64 environment variable not set'
+        })
+      };
+    }
+
+    // Dekoda service account
+    const serviceAccount = JSON.parse(Buffer.from(serviceAccountBase64, 'base64').toString('utf8'));
+    
+    // Skapa Secret Manager client
+    const client = new SecretManagerServiceClient({
+      credentials: serviceAccount,
+      projectId: serviceAccount.project_id
+    });
+
+    console.log('🗝️ Fetching Gemini API key from Secret Manager...');
+    
+    // Hämta API-nyckel från Secret Manager
+    const secretName = `projects/${serviceAccount.project_id}/secrets/GEMINI_API_KEY/versions/latest`;
+    
+    const [version] = await client.accessSecretVersion({
+      name: secretName
+    });
+
+    const apiKey = version.payload?.data?.toString();
     
     if (!apiKey) {
-      console.log('❌ GEMINI_API_KEY not found in environment variables');
+      console.log('❌ Gemini API key not found in Secret Manager');
       return {
         statusCode: 503,
         headers,
         body: JSON.stringify({ 
           error: 'AI service not configured',
-          details: 'GEMINI_API_KEY environment variable not set'
+          details: 'Gemini API key not found in Google Secret Manager'
         })
       };
     }
@@ -98,7 +132,7 @@ Användarens meddelande: ${userMessage}`
     }
 
     const data = await response.json();
-    console.log('✅ Gemini API response received');
+    console.log('✅ Gemini AI response generated successfully');
 
     // Extract the response text
     const aiResponse = data?.candidates?.[0]?.content?.parts?.[0]?.text || 'Ingen respons från AI:n';
