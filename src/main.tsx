@@ -1544,7 +1544,12 @@ class ByggPilotApp {
     }
 
     private processAIContent(html: string): string {
-        // Identifiera innehåll som ska vara i inramade boxar (checklistor, riskanalyser, etc.)
+        // Hantera specialtaggar för checklistor enligt specifikationen
+        html = html.replace(/<checklist>([\s\S]*?)<\/checklist>/g, (_, content) => {
+            return `<div class="checklist-container">${content}</div>`;
+        });
+        
+        // Identifiera innehåll som ska vara i inramade boxar (listor, riskanalyser, etc.)
         const patterns = [
             /(<ul>[\s\S]*?<\/ul>)/g,  // Listor
             /(<ol>[\s\S]*?<\/ol>)/g,  // Numrerade listor
@@ -1630,8 +1635,8 @@ class ByggPilotApp {
         try {
             // Bygg meddelanden för API-anropet (inklusive attachments om det finns)
             const messages = this.chatHistory.map(msg => ({
-                role: msg.role,
-                content: msg.content
+                role: msg.role === 'assistant' ? 'model' : msg.role, // Gemini använder 'model' istället för 'assistant'
+                parts: [{ text: msg.content }]
             }));
 
             // Lägg till användarkontext om inloggad
@@ -1640,15 +1645,16 @@ class ByggPilotApp {
                 contextPrefix = `[Användarkontext: Användaren är inloggad som ${this.state.user.email} och har gett åtkomst till Google Kalender och Gmail.]\n\n`;
             }
 
-            // Säkert AI-anrop via Netlify Function
+            // Säkert AI-anrop via Netlify Function med fullständig konversationshistorik
             const response = await fetch('/.netlify/functions/gemini', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
+                    systemPrompt: SYSTEM_PROMPT,
                     messages: messages,
-                    prompt: contextPrefix + userInput
+                    newMessage: contextPrefix + userInput
                 })
             });
 

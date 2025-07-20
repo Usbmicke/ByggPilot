@@ -1,5 +1,6 @@
 // Plats: netlify/functions/gemini.js
 const { SecretManagerServiceClient } = require('@google-cloud/secret-manager');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const getSecret = async (secretName) => {
   try {
@@ -26,6 +27,8 @@ exports.handler = async (event) => {
   }
 
   try {
+    const { systemPrompt, messages, newMessage } = JSON.parse(event.body);
+    
     const geminiApiKey = await getSecret('GEMINI_API_KEY');
 
     if (!geminiApiKey) {
@@ -33,19 +36,52 @@ exports.handler = async (event) => {
       return { statusCode: 500, headers, body: JSON.stringify({ error: 'Server configuration error: Missing Gemini API key' })};
     }
     
-    // HÄR KOMMER DIN RIKTIGA GEMINI-LOGIK SENARE.
-    // Vi simulerar ett lyckat anrop och svar.
+    // Initiera Google Generative AI
+    const genAI = new GoogleGenerativeAI(geminiApiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+    // Bygg konversationshistorik för Gemini
+    const history = [];
+    
+    // Lägg till systemprompten som första meddelande
+    if (systemPrompt) {
+      history.push({
+        role: 'user',
+        parts: [{ text: systemPrompt }]
+      });
+      history.push({
+        role: 'model',
+        parts: [{ text: 'Jag förstår. Jag är ByggPilot, din digitala kollega i byggbranschen. Jag kommer att agera som en expert projektledare och intelligent assistent som hjälper dig med administrativa uppgifter, regelverket och praktiska byggfrågor. Hur kan jag hjälpa dig idag?' }]
+      });
+    }
+    
+    // Lägg till befintlig chatthistorik
+    if (messages && messages.length > 0) {
+      history.push(...messages);
+    }
+
+    // Starta chat-session med historik
+    const chat = model.startChat({ history });
+    
+    // Skicka det nya meddelandet
+    const result = await chat.sendMessage(newMessage);
+    const response = await result.response;
+    const aiResponse = response.text();
+    
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({ 
         success: true, 
-        response: "AI-systemet är nu online och svarar korrekt." 
+        response: aiResponse 
       }),
     };
 
   } catch (error) {
     console.error('❌ Unhandled exception in gemini function:', error);
-    return { statusCode: 500, headers, body: JSON.stringify({ error: 'Internal Server Error' }) };
+    return { statusCode: 500, headers, body: JSON.stringify({ 
+      error: 'Internal Server Error',
+      details: error.message 
+    }) };
   }
 };

@@ -425,6 +425,17 @@ body {
 }
 .welcome-message { text-align: center; padding: 2rem; color: var(--text-muted); }
 .chat-message.error-message { background-color: var(--status-red); color: white; }
+
+/* --- SPECIALFORMATERING FÖR CHECKLISTOR --- */
+.checklist-container {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-left: 3px solid var(--primary-accent-color);
+    padding: 1rem;
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
+    border-radius: 8px;
+    white-space: pre-wrap;
+}
 #attached-files-preview {
     display: flex;
     gap: 0.5rem;
