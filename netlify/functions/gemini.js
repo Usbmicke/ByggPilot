@@ -63,8 +63,8 @@ exports.handler = async (event) => {
     // Starta chat-session med historik
     const chat = model.startChat({ history });
     
-    // Skicka det nya meddelandet - Gemini förväntar sig text i ett objekt
-    const result = await chat.sendMessage({ text: newMessage });
+    // Skicka det nya meddelandet som en array av parts (Gemini standard format)
+    const result = await chat.sendMessage([{ text: newMessage }]);
     const response = await result.response;
     const aiResponse = response.text();
     
