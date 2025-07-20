@@ -769,6 +769,9 @@ class ByggPilotApp {
         (document.getElementById('logout-button') as HTMLElement).style.display = isLoggedIn ? 'flex' : 'none';
         (document.getElementById('logout-divider') as HTMLElement).style.display = isLoggedIn ? 'block' : 'none';
         
+        // Dölj "Skapa Nytt"-knappen för utloggade användare (utom i demoläge)
+        (document.getElementById('create-new-button') as HTMLElement).style.display = (isLoggedIn || isDemo) ? 'flex' : 'none';
+        
         if (isLoggedIn && name) {
             this.userNameElement.textContent = name;
             this.userAvatarElement.innerHTML = avatarUrl ? `<img src="${avatarUrl}" alt="Användarprofilbild">` : `<span>${name.charAt(0).toUpperCase()}</span>`;

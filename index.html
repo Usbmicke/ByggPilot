@@ -38,9 +38,7 @@
         <aside class="sidebar">
             <header class="sidebar-header">
                 <div class="logo-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M22 10.5V12h-2v-1.5c0-2.06-1.35-3.83-3.27-4.58l-1.32-.51-.49-1.4A5.002 5.002 0 0 0 10.23 2H10c-2.76 0-5 2.24-5 5v1.5c0 .83.67 1.5 1.5 1.5S8 9.33 8 8.5V7c0-1.1.9-2 2-2h.23c1.12 0 2.1.75 2.47 1.81l.49 1.4 1.32.51C16.65 9.17 18 10.94 18 13v1.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V13h2v-1.5c0-1.74-1.43-3.15-3.17-3.15A3.18 3.18 0 0 0 18 10.5zM12 22a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2zM6.5 16h11c.83 0 1.5-.67 1.5-1.5v-3c0-.83-.67-1.5-1.5-1.5h-11C5.67 10 5 10.67 5 11.5v3c0 .83.67 1.5 1.5 1.5z"/>
-                    </svg>
+                    <img src="/bygggpilot logga.png" alt="ByggPilot logotyp" style="width: 24px; height: 24px; filter: brightness(0) invert(1);">
                 </div>
                 <span>ByggPilot</span>
             </header>
@@ -101,7 +99,7 @@
                         <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google logo">
                         <span>Logga in med Google</span>
                     </button>
-                    <button data-action="create-new" data-details='{"type": "project"}' class="btn btn-primary"><span class="material-symbols-outlined">add</span>Skapa Nytt</button>
+                    <button id="create-new-button" data-action="create-new" data-details='{"type": "project"}' class="btn btn-primary"><span class="material-symbols-outlined">add</span>Skapa Nytt</button>
                 </div>
             </header>
 
@@ -447,21 +445,28 @@
 
     <template id="onboarding-create-project-template">
         <div class="modal-content">
-            <h2>Grymt! Låt oss skapa ditt första projekt.</h2>
-            <p>Detta ger dig en "quick win" och fyller din dashboard med relevant information från start.</p>
-            <form id="onboarding-project-form">
-                <div class="form-group">
-                    <label for="onboarding-project-name">Vad heter projektet?</label>
-                    <input type="text" id="onboarding-project-name" class="form-input" placeholder="T.ex. Nymålning hos familjen Svensson" required>
-                </div>
-                <div class="form-group">
-                    <label for="onboarding-customer-name">Vem är beställare?</label>
-                    <input type="text" id="onboarding-customer-name" class="form-input" placeholder="T.ex. Anna Svensson" required>
-                </div>
-                <div class="modal-actions">
-                     <button type="submit" class="btn btn-primary">Skapa Projekt & Starta</button>
-                </div>
-            </form>
+            <div class="modal-header">
+                <h2>Grymt! Låt oss skapa ditt första projekt.</h2>
+                <button class="icon-btn close-modal-btn" data-action="close-modal" aria-label="Stäng modal">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Detta ger dig en "quick win" och fyller din dashboard med relevant information från start.</p>
+                <form id="onboarding-project-form">
+                    <div class="form-group">
+                        <label for="onboarding-project-name">Vad heter projektet?</label>
+                        <input type="text" id="onboarding-project-name" class="form-input" placeholder="T.ex. Nymålning hos familjen Svensson" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="onboarding-customer-name">Vem är beställare?</label>
+                        <input type="text" id="onboarding-customer-name" class="form-input" placeholder="T.ex. Anna Svensson" required>
+                    </div>
+                    <div class="modal-actions">
+                         <button type="submit" class="btn btn-primary">Skapa Projekt & Starta</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </template>
 
