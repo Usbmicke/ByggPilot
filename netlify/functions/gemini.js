@@ -102,6 +102,12 @@ export const handler = async (event) => {
     // Lägg till systemprompten som första meddelande om den finns
     if (systemPrompt) {
       history.push({
+        role: 'user',
+        parts: [{ text: systemPrompt }]
+      });
+      // Lägg till ett "förstått"-svar från modellen för att sätta tonen
+      history.push({
+        role: 'model',
         parts: [{ text: 'Jag förstår. Jag är ByggPilot, din digitala kollega i byggbranschen. Jag kommer att agera som en expert projektledare och intelligent assistent som hjälper dig med administrativa uppgifter, regelverket och praktiska byggfrågor. Hur kan jag hjälpa dig idag?' }]
       });
     }
@@ -137,4 +143,3 @@ export const handler = async (event) => {
     })};
   }
 };
-
