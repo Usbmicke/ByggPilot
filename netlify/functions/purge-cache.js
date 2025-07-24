@@ -1,6 +1,6 @@
-import { purgeCache } from "@netlify/functions";
+const { purgeCache } = require("@netlify/functions");
 
-export default async (req, context) => {
+exports.handler = async (req, context) => {
   try {
     console.log('🧹 Purging Netlify CDN cache...');
     
