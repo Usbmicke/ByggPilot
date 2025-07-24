@@ -1,6 +1,6 @@
 // Plats: netlify/functions/gemini.js
-import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+const { SecretManagerServiceClient } = require('@google-cloud/secret-manager');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 // --- Förbättrad klient- och hemlighets-hantering ---
 
@@ -55,7 +55,7 @@ const getSecret = async (secretName) => {
   }
 };
 
-export const handler = async (event) => {
+exports.handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Content-Type': 'application/json',

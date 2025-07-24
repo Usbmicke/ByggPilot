@@ -1,5 +1,5 @@
-import { google } from 'googleapis';
-import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
+const { google } = require('googleapis');
+const { SecretManagerServiceClient } = require('@google-cloud/secret-manager');
 
 // --- Förbättrad klient- och hemlighets-hantering ---
 
@@ -74,15 +74,15 @@ async function initializeOAuth() {
 const SCOPES = [
   'https://www.googleapis.com/auth/userinfo.email',
   'https://www.googleapis.com/auth/userinfo.profile',
-  'https://www.googleapis.com/auth/drive.file',
-  'https://www.googleapis.com/auth/gmail.send',
-  'https://www.googleapis.com/auth/gmail.metadata'
+  'https://www.googleapis.com/auth/drive.file', // För att skapa mappstruktur
+  'https://www.googleapis.com/auth/gmail.readonly', // För att LÄSA mailinnehåll
+  'https://www.googleapis.com/auth/calendar.events' // För att SKAPA kalenderhändelser
 ];
 
 /**
  * Netlify Function: Google OAuth Authorization
  */
-export async function handler(event, context) {
+exports.handler = async (event, context) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
