@@ -11,7 +11,7 @@
   included_files = ["netlify/functions/**/*.js"]
 
 [build.environment]
-  NODE_VERSION = "18"
+  NODE_VERSION = "20"
   # NUCLEAR CACHE BUST - FORCE COMPLETE REBUILD
   SKIP_CACHE = "true"
   FORCE_REBUILD = "true"
