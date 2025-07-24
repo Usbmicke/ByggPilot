@@ -1,21 +1,21 @@
-functionsDirectory = "C:\\Users\\usbmi\\OneDrive\\Desktop\\byggpilot-nya (1) 25-07-10 dashboard\\netlify\\functions"
+functionsDirectory = "C:\\Users\\usbmi\\OneDrive\\Desktop\\byggpilot-nya (1) 25-07-10 dashboard\\ByggPilot\\netlify\\functions"
 functionsDirectoryOrigin = "config"
 headersOrigin = "config"
 redirectsOrigin = "config"
 plugins = []
 
 [build]
-publish = "C:\\Users\\usbmi\\OneDrive\\Desktop\\byggpilot-nya (1) 25-07-10 dashboard\\dist"
+publish = "C:\\Users\\usbmi\\OneDrive\\Desktop\\byggpilot-nya (1) 25-07-10 dashboard\\ByggPilot\\dist"
 publishOrigin = "config"
 commandOrigin = "config"
 command = "npm install && npm run build"
-functions = "C:\\Users\\usbmi\\OneDrive\\Desktop\\byggpilot-nya (1) 25-07-10 dashboard\\netlify\\functions"
+functions = "C:\\Users\\usbmi\\OneDrive\\Desktop\\byggpilot-nya (1) 25-07-10 dashboard\\ByggPilot\\netlify\\functions"
 
 [build.environment]
-NODE_VERSION = "18"
+NODE_VERSION = "20"
 SKIP_CACHE = "true"
 FORCE_REBUILD = "true"
-BUILD_VERSION = "netlify-functions-firebase-2025-01-19-FINAL-FIX"
+BUILD_VERSION = "netlify-firebase-ui-fix-2025-07-20-FINAL"
 FIREBASE_ENABLED = "true"
 FUNCTIONS_ARCHITECTURE = "true"
 SECRET_MANAGER_SUPPORT = "true"
