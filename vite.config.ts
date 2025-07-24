@@ -17,11 +17,15 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        target: 'http://localhost:8888', // Netlify dev server
         changeOrigin: true
       },
       '/auth': {
-        target: 'http://localhost:3001',
+        target: 'http://localhost:8888', // Netlify dev server
+        changeOrigin: true
+      },
+      '/.netlify': {
+        target: 'http://localhost:8888', // Proxy alla Netlify Functions
         changeOrigin: true
       }
     }

@@ -2,11 +2,32 @@
 const { SecretManagerServiceClient } = require('@google-cloud/secret-manager');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
+// Förbättrad: Hantera både Netlify och lokal utveckling
 const getSecret = async (secretName) => {
+  let credentials = null;
+  let projectId = null;
+  let secretClient = null;
   try {
-    const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
-    const projectId = credentials.project_id;
-    const secretClient = new SecretManagerServiceClient({ credentials });
+    if (process.env.GOOGLE_CREDENTIALS) {
+      // Netlify/produktion: credentials från miljövariabel
+      credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+      projectId = credentials.project_id;
+      secretClient = new SecretManagerServiceClient({ credentials });
+    } else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+      // Lokal utveckling: credentials från fil
+      secretClient = new SecretManagerServiceClient();
+      // Försök hämta projektId från filen
+      try {
+        const credFile = require(process.env.GOOGLE_APPLICATION_CREDENTIALS);
+        projectId = credFile.project_id;
+      } catch (e) {
+        console.error('❌ Kunde inte läsa GOOGLE_APPLICATION_CREDENTIALS-filen:', e);
+        return null;
+      }
+    } else {
+      console.error('❌ Inga Google credentials hittades i miljövariablerna.');
+      return null;
+    }
     const name = `projects/${projectId}/secrets/${secretName}/versions/latest`;
     const [version] = await secretClient.accessSecretVersion({ name });
     return version.payload.data.toString();
@@ -30,15 +51,19 @@ exports.handler = async (event) => {
     const { systemPrompt, messages, newMessage } = JSON.parse(event.body);
     
     const geminiApiKey = await getSecret('GEMINI_API_KEY');
-
     if (!geminiApiKey) {
-      console.error("CRITICAL: GEMINI_API_KEY not found in Secret Manager or permissions are missing.");
+      console.error("CRITICAL: GEMINI_API_KEY not found in Secret Manager eller permissions saknas.");
       return { statusCode: 500, headers, body: JSON.stringify({ error: 'Server configuration error: Missing Gemini API key' })};
     }
-    
     // Initiera Google Generative AI
-    const genAI = new GoogleGenerativeAI(geminiApiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    let genAI, model;
+    try {
+      genAI = new GoogleGenerativeAI(geminiApiKey);
+      model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    } catch (err) {
+      console.error('❌ Fel vid initiering av GoogleGenerativeAI:', err);
+      return { statusCode: 500, headers, body: JSON.stringify({ error: 'Failed to initialize Gemini AI', details: err.message })};
+    }
 
     // Bygg konversationshistorik för Gemini
     const history = [];
