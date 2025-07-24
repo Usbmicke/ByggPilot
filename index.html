@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ByggPilot - Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
-    <link rel="stylesheet" href="index.css">
     <!-- CACHE BUSTING: NO FIREBASE VERSION - 2025-01-18 -->
     <meta name="build-version" content="no-firebase-2025-01-18-CLEAN">
     <meta name="firebase-status" content="completely-removed">
     <meta name="cache-control" content="no-cache, no-store, must-revalidate">
     <meta name="pragma" content="no-cache">
     <meta name="expires" content="0">
+
     <script type="importmap">
 {
   "imports": {
@@ -19,7 +19,8 @@
   }
 }
 </script>
-<link rel="stylesheet" href="/index.css">
+  <script type="module" crossorigin src="/v2/index-BNRb7Un9-FIREBASE-FIXED-2025.js"></script>
+  <link rel="stylesheet" crossorigin href="/v2/index-Ca-8tcrU-FINAL.css">
 </head>
 <body>
     <div id="cookie-consent-banner" class="cookie-consent-banner">
@@ -38,9 +39,9 @@
         <aside class="sidebar">
             <header class="sidebar-header">
                 <div class="logo-icon">
-                    <img src="/bygggpilot logga.png" alt="ByggPilot logotyp" style="width: 24px; height: 24px; filter: brightness(0) invert(1);">
+                    <img src="/public/byggpilot-logga-vit.png" alt="ByggPilot logotyp" style="width: 28px; height: 28px; vertical-align: middle; margin-right: 6px;">
                 </div>
-                <span>ByggPilot</span>
+                <span style="vertical-align: middle; font-weight: bold; font-size: 1.2em;">ByggPilot</span>
             </header>
             <nav class="sidebar-nav">
                 <ul>
@@ -89,9 +90,9 @@
         <main class="main-content">
             <header class="main-header">
                 <button id="hamburger-menu" class="icon-btn hamburger-menu" data-action="toggle-sidebar"><span class="material-symbols-outlined">menu</span></button>
-                <div class="header-title">
-                    <h1 class="greeting">Välkommen!</h1>
-                    <p class="sub-greeting">Här är din översikt för dagen.</p>
+                <div class="header-title" style="display: flex; align-items: center; gap: 10px;">
+                    <img src="/public/byggpilot-logga-vit.png" alt="ByggPilot logotyp" style="width: 32px; height: 32px; vertical-align: middle;">
+                    <h1 class="greeting" style="margin: 0;">ByggPilot</h1>
                 </div>
                 <div class="header-actions">
                     <button id="demo-mode-button" data-action="toggle-demo" class="btn">Testa Demo</button>
@@ -491,6 +492,5 @@
     </template>
 
 
-    <script type="module" src="/src/main.tsx"></script>
 </body>
 </html>
