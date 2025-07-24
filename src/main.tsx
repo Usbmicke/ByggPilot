@@ -450,26 +450,10 @@ class ByggPilotApp {
         try {
             const response = await fetch('/.netlify/functions/auth');
             const data = await response.json();
+            
             if (data.authUrl) {
-                // Försök öppna popup först
-                const width = 500;
-                const height = 600;
-                const left = window.screenX + (window.outerWidth - width) / 2;
-                const top = window.screenY + (window.outerHeight - height) / 2;
-                const popup = window.open(
-                    data.authUrl,
-                    'GoogleSignIn',
-                    `width=${width},height=${height},left=${left},top=${top},resizable,scrollbars=yes,status=1`
-                );
-                if (!popup || popup.closed || typeof popup.closed === 'undefined') {
-                    // Popup blockerat, använd redirect istället
-                    window.location.href = data.authUrl;
-                } else {
-                    // Fokusera popup och poll:a om den stängs (valfritt)
-                    popup.focus();
-                    // Visa info till användaren
-                    this.showToast("Fönster för Google-inloggning öppnat. Om inget händer, kontrollera popup-blockerare.");
-                }
+                // Redirect to Google OAuth
+                window.location.href = data.authUrl;
             } else {
                 throw new Error('Failed to get authorization URL');
             }
