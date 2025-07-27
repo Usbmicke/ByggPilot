@@ -15,8 +15,10 @@ export default function DashboardLayout({
       <Sidebar />
       <div className="flex-1 flex flex-col">
         <Header />
+        {/* Denna div blir den scrollbara föräldern för både main och chatten */}
         <div className="flex-1 relative overflow-y-auto">
-          <main className="p-6 md:p-10">
+          {/* Main-innehållet behöver padding i botten för att inte döljas av chatten */}
+          <main className="p-6 md:p-10 pb-[95px]">
             {children}
           </main>
           <Chat />
