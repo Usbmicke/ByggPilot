@@ -18,7 +18,7 @@ export const ProjectCard = ({ name, customer, status, progress, nextEvent }: Pro
     };
 
     return (
-        <div className={`bg-card-background-color p-4 rounded-lg shadow-lg border-l-4 ${statusInfo[status].color} flex flex-col gap-3`}>
+        <div className={`bg-card-background-color p-4 rounded-lg shadow-lg border-l-4 ${statusInfo[status].color} flex flex-col gap-3 transition-all hover:transform hover:-translate-y-1 hover:shadow-glow cursor-pointer`}>
             <div className="flex justify-between items-start">
                 <div>
                     <h3 className="font-bold text-md">{name}</h3>

@@ -6,6 +6,12 @@ const nextConfig = {
     // i vissa fall. Den talar om för Next.js att bilder kan finnas på samma domän.
     domains: [], 
   },
+  output: 'standalone',
+  experimental: {
+    // This option disables the creation of symbolic links, which can cause
+    // issues on Windows, especially in environments like OneDrive.
+    serverComponentsExternalPackages: ['@google-cloud/secret-manager', 'googleapis'],
+  },
 };
 
 export default nextConfig;

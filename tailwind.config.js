@@ -28,6 +28,7 @@ module.exports = {
       },
       boxShadow: {
         'input-glow': '0 0 15px 5px rgba(0, 191, 255, .4)',
+        'glow': '0 0 15px 5px rgba(0, 191, 255, 0.3)',
       },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",

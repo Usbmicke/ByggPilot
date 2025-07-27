@@ -23,16 +23,18 @@ export const Sidebar = () => {
             </div>
             <nav className="flex-grow">
                 <ul className="space-y-2">
-                    <li><a href="#" className="flex items-center gap-3 px-4 py-2 rounded-md bg-cyan-500/20 text-text-color font-semibold"><HomeIcon /> Översikt</a></li>
-                    <li><a href="#" className="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-card-background-color text-text-muted hover:text-text-color transition-colors"><ProjectsIcon /> Projekt</a></li>
-                    <li><a onClick={() => window.open('https://drive.google.com', '_blank')} className="cursor-pointer flex items-center gap-3 px-4 py-2 rounded-md hover:bg-card-background-color text-text-muted hover:text-text-color transition-colors"><DocumentIcon /> Dokument</a></li>
-                    <li><a href="#" className="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-card-background-color text-text-muted hover:text-text-color transition-colors"><CustomersIcon /> Kunder</a></li>
+                    {/* Aktiv länk med konstant glow */}
+                    <li><a href="#" className="flex items-center gap-3 px-4 py-2 rounded-md bg-primary-accent text-text-dark font-semibold shadow-glow transition-all"><HomeIcon /> Översikt</a></li>
+                    {/* Inaktiva länkar med glow vid hover */}
+                    <li><a href="#" className="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-card-background-color text-text-muted hover:text-text-color hover:shadow-glow transition-all"><ProjectsIcon /> Projekt</a></li>
+                    <li><a onClick={() => window.open('https://drive.google.com', '_blank')} className="cursor-pointer flex items-center gap-3 px-4 py-2 rounded-md hover:bg-card-background-color text-text-muted hover:text-text-color hover:shadow-glow transition-all"><DocumentIcon /> Dokument</a></li>
+                    <li><a href="#" className="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-card-background-color text-text-muted hover:text-text-color hover:shadow-glow transition-all"><CustomersIcon /> Kunder</a></li>
                 </ul>
             </nav>
             <div className="pt-4 border-t border-border-color space-y-2">
-                 <a href="#" className="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-card-background-color text-text-muted hover:text-text-color transition-colors"><SettingsIcon /> Inställningar</a>
-                 <a href="#" className="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-card-background-color text-text-muted hover:text-text-color transition-colors"><HelpIcon /> Hjälp & Guider</a>
-                <button onClick={logout} className="flex items-center w-full gap-3 px-4 py-2 rounded-md hover:bg-red-500/20 text-text-muted hover:text-text-color transition-colors">
+                 <a href="#" className="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-card-background-color text-text-muted hover:text-text-color hover:shadow-glow transition-all"><SettingsIcon /> Inställningar</a>
+                 <a href="#" className="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-card-background-color text-text-muted hover:text-text-color hover:shadow-glow transition-all"><HelpIcon /> Hjälp & Guider</a>
+                <button onClick={logout} className="flex items-center w-full gap-3 px-4 py-2 rounded-md hover:bg-red-500/20 text-text-muted hover:text-text-color hover:shadow-glow transition-all">
                     <LogoutIcon /> Logga ut
                 </button>
             </div>

@@ -39,3 +39,6 @@ firebase.json
 
 service-account*.json
 service-account-base64.txt
+
+# Local Netlify folder
+.netlify

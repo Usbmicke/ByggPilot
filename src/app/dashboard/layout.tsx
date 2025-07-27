@@ -13,16 +13,14 @@ export default function DashboardLayout({
   return (
     <div className="flex h-screen bg-background-color text-text-color font-poppins overflow-hidden">
       <Sidebar />
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col relative"> {/* Lägg till relative här */}
         <Header />
-        {/* Denna div blir den scrollbara föräldern för både main och chatten */}
-        <div className="flex-1 relative overflow-y-auto">
-          {/* Main-innehållet behöver padding i botten för att inte döljas av chatten */}
-          <main className="p-6 md:p-10 pb-[95px]">
+        <div className="flex-1 overflow-y-auto pb-[95px]"> {/* Behåll scroll och padding */}
+          <main className="p-6 md:p-10">
             {children}
           </main>
-          <Chat />
         </div>
+        <Chat /> {/* Flytta chatten hit */}
       </div>
     </div>
   )

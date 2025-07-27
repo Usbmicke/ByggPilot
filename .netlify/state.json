@@ -1,3 +1,21 @@
 {
-	"siteId": "7af70e9c-903e-4172-bf0a-37a53e2104a6"
+	"siteId": "7af70e9c-903e-4172-bf0a-37a53e2104a6",
+	"geolocation": {
+		"data": {
+			"city": "Sundsvall",
+			"country": {
+				"code": "SE",
+				"name": "Sweden"
+			},
+			"subdivision": {
+				"code": "Y",
+				"name": "Västernorrland County"
+			},
+			"timezone": "Europe/Stockholm",
+			"latitude": 62.3924,
+			"longitude": 17.3006,
+			"postalCode": "857 33"
+		},
+		"timestamp": 1753645473845
+	}
 }

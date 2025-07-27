@@ -15,10 +15,10 @@ export const Header = () => {
             <div className="flex items-center gap-4">
                 <button 
                     onClick={() => console.log('Skapa Nytt klickad!')}
-                    className="btn btn-primary flex items-center">
+                    className="bg-primary-accent text-text-dark font-bold py-2 px-4 rounded-md flex items-center shadow-glow animate-pulse transition-all hover:bg-primary-accent-hover">
                     <AddIcon /> Skapa Nytt
                 </button>
-                <button className="relative p-2 hover:bg-card-background-color rounded-full">
+                <button className="relative p-2 hover:bg-card-background-color rounded-full hover:shadow-glow transition-all">
                     <BellIcon />
                     <span className="absolute top-2 right-2 block h-2 w-2 rounded-full bg-red-500"></span>
                 </button>

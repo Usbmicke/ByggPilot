@@ -2,6 +2,8 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
+import { useAuth } from '../app/AuthContext'; // Korrigerad sökväg
+import { useChat } from '../app/ChatContext'; // Korrigerad sökväg
 
 // --- Ikoner ---
 const ChevronUpIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>;
@@ -45,7 +47,14 @@ const ThinkingIndicator = () => (
 );
 
 export const Chat = () => {
-    const [isExpanded, setIsExpanded] = useState(false);
+    const { user } = useAuth(); // Hämta användarstatus
+    const { isChatOpen, toggleChat } = useChat(); // Hämta chatt-status från context
+
+    // Byt ut lokal state mot global context för att styra om chatten är expanderad
+    // const [isExpanded, setIsExpanded] = useState(false);
+    const isExpanded = isChatOpen;
+    const setIsExpanded = (value: boolean) => toggleChat(value);
+
     const [inputValue, setInputValue] = useState("");
     const [messages, setMessages] = useState<React.ReactNode[]>([]);
     const [isThinking, setIsThinking] = useState(false);
@@ -82,11 +91,14 @@ export const Chat = () => {
         setIsThinking(true);
 
         try {
-            // Anropar den publika API-vägen, som Netlify kommer att omdirigera.
+            // Skicka med demo-flagga om användaren inte är inloggad
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: userQuery }),
+                body: JSON.stringify({ 
+                    prompt: userQuery,
+                    demo: !user 
+                }),
             });
 
             if (!response.ok) {
@@ -113,8 +125,16 @@ export const Chat = () => {
         }
     };
 
+    // Visa bara chatten om användaren är inloggad, eller om den har tvingats öppen via context
+    if (!user && !isChatOpen) {
+        return null;
+    }
+
+    // Välj positioneringsklass baserat på sida
+    const positionClass = pathname === '/' ? 'fixed' : 'sticky';
+
     return (
-        <div id="chat-drawer" className={`sticky bottom-0 bg-secondary-bg border-t border-border-color z-10 flex flex-col transition-height duration-300 ease-in-out ${isExpanded ? 'h-full' : 'h-[95px]'}`}>
+        <div id="chat-drawer" className={`${positionClass} bottom-0 bg-secondary-bg border-t border-border-color z-10 flex flex-col transition-height duration-300 ease-in-out ${isExpanded ? 'h-full' : 'h-[95px]'} ${pathname === '/dashboard' ? 'w-full' : 'left-0 right-0'}`}>
             <div className="flex-grow overflow-hidden flex flex-col">
                 
                 {/* Header för chattfönstret, synlig när expanderad */}
@@ -149,9 +169,13 @@ export const Chat = () => {
                             <ChevronUpIcon />
                         </button>
                         
-                        {/* 3. Återställer ikon-layouten för att fixa inmatningsbuggen. */}
-                        <button className="icon-btn p-2"><AttachmentIcon /></button>
-                        <button className="icon-btn p-2"><MicIcon /></button>
+                        {/* Inloggade användare ser alla knappar */}
+                        {user && (
+                            <>
+                                <button className="icon-btn p-2"><AttachmentIcon /></button>
+                                <button className="icon-btn p-2"><MicIcon /></button>
+                            </>
+                        )}
 
                         <input 
                             // 3. Koppla ref:en till inmatningsfältet.
@@ -170,7 +194,7 @@ export const Chat = () => {
                         </button>
                     </div>
                     <div className={`chat-disclaimer text-xs text-text-muted text-center pt-3 ${isExpanded ? 'block' : 'hidden'}`}>
-                        ByggPilot är en AI-kollega som kan ge felaktiga förslag. Granska alltid viktig information självständigt.
+                        {user ? "ByggPilot kan ge felaktiga förslag. Granska alltid viktig information." : "Detta är en demo. Logga in för att låsa upp alla funktioner och ansluta till ditt Google-konto."}
                     </div>
                 </div>
             </div>

@@ -9,6 +9,14 @@
 [build.environment]
   NODE_VERSION = "18"
 
+# Development server settings
+[dev]
+  # Command to start the Next.js development server
+  command = "npm run dev"
+  # The port will be automatically detected from the framework
+  # Specify the framework to ensure correct handling
+  framework = "next"
+
 [[headers]]
   for = "/*"
   [headers.values]
