@@ -31,6 +31,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
+      // setLoading(false) tas om hand av onAuthStateChanged
     } catch (error) {
       console.error("Popup login failed:", error);
       setLoading(false);

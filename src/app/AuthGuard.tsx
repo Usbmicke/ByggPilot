@@ -27,8 +27,18 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     }
   }, [user, loading, router, pathname]);
 
-  if (loading || (!user && protectedRoutes.includes(pathname)) || (user && publicRoutes.includes(pathname))) {
-    return <div className="h-screen w-full flex items-center justify-center bg-background-color text-text-color">Autentiserar...</div>;
+  if (loading) {
+    return <div className="h-screen w-full flex items-center justify-center bg-background-color text-text-color">Laddar...</div>;
+  }
+
+  // Om vi är på en skyddad route och inte har en användare, rendera ingenting (eftersom vi omdirigerar)
+  if (!user && protectedRoutes.includes(pathname)) {
+    return null; 
+  }
+
+  // Om vi är på en publik route och har en användare, rendera ingenting (eftersom vi omdirigerar)
+  if (user && publicRoutes.includes(pathname)) {
+    return null;
   }
 
   return <>{children}</>;
