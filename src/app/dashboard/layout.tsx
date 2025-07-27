@@ -13,14 +13,15 @@ export default function DashboardLayout({
   return (
     <div className="flex h-screen bg-background-color text-text-color font-poppins overflow-hidden">
       <Sidebar />
-      <div className="flex-1 flex flex-col relative"> {/* Lägg till relative här */}
+      <div className="flex-1 flex flex-col">
         <Header />
-        <div className="flex-1 overflow-y-auto pb-[95px]"> {/* Behåll scroll och padding */}
-          <main className="p-6 md:p-10">
+        <div className="flex-1 relative overflow-y-auto">
+          <main className="p-6 md:p-10 pb-[95px]">
             {children}
           </main>
+          {/* Chatten läggs tillbaka här för att fungera korrekt på dashboarden */}
+          <Chat />
         </div>
-        <Chat /> {/* Flytta chatten hit */}
       </div>
     </div>
   )

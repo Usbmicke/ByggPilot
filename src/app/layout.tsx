@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
-import { Chat } from "../components/Chat"; // Korrigerad sökväg
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,7 +20,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <Providers>
           {children}
-          <Chat />
+          {/* Chatten tas bort härifrån för att placeras i respektive sidlayout */}
         </Providers>
       </body>
     </html>

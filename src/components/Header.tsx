@@ -15,7 +15,7 @@ export const Header = () => {
             <div className="flex items-center gap-4">
                 <button 
                     onClick={() => console.log('Skapa Nytt klickad!')}
-                    className="bg-primary-accent text-text-dark font-bold py-2 px-4 rounded-md flex items-center shadow-glow animate-pulse transition-all hover:bg-primary-accent-hover">
+                    className="bg-card-background-color text-text-color font-bold py-2 px-4 rounded-md flex items-center transition-all hover:bg-gray-600">
                     <AddIcon /> Skapa Nytt
                 </button>
                 <button className="relative p-2 hover:bg-card-background-color rounded-full hover:shadow-glow transition-all">

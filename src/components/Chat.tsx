@@ -134,7 +134,7 @@ export const Chat = () => {
     const positionClass = pathname === '/' ? 'fixed' : 'sticky';
 
     return (
-        <div id="chat-drawer" className={`${positionClass} bottom-0 bg-secondary-bg border-t border-border-color z-10 flex flex-col transition-height duration-300 ease-in-out ${isExpanded ? 'h-full' : 'h-[95px]'} ${pathname === '/dashboard' ? 'w-full' : 'left-0 right-0'}`}>
+        <div id="chat-drawer" className={`${positionClass} bottom-0 left-0 right-0 bg-secondary-bg border-t border-border-color z-10 flex flex-col transition-height duration-300 ease-in-out ${isExpanded ? 'h-full' : 'h-[95px]'}`}>
             <div className="flex-grow overflow-hidden flex flex-col">
                 
                 {/* Header för chattfönstret, synlig när expanderad */}

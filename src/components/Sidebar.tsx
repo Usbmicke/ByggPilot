@@ -23,8 +23,8 @@ export const Sidebar = () => {
             </div>
             <nav className="flex-grow">
                 <ul className="space-y-2">
-                    {/* Aktiv länk med konstant glow */}
-                    <li><a href="#" className="flex items-center gap-3 px-4 py-2 rounded-md bg-primary-accent text-text-dark font-semibold shadow-glow transition-all"><HomeIcon /> Översikt</a></li>
+                    {/* Tar bort shadow-glow för en renare look */}
+                    <li><a href="#" className="flex items-center gap-3 px-4 py-2 rounded-md bg-card-background-color text-text-color font-semibold transition-all"><HomeIcon /> Översikt</a></li>
                     {/* Inaktiva länkar med glow vid hover */}
                     <li><a href="#" className="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-card-background-color text-text-muted hover:text-text-color hover:shadow-glow transition-all"><ProjectsIcon /> Projekt</a></li>
                     <li><a onClick={() => window.open('https://drive.google.com', '_blank')} className="cursor-pointer flex items-center gap-3 px-4 py-2 rounded-md hover:bg-card-background-color text-text-muted hover:text-text-color hover:shadow-glow transition-all"><DocumentIcon /> Dokument</a></li>
