@@ -1,7 +1,7 @@
 'use client';
 
 import { AuthProvider } from './AuthContext';
-import { AuthGuard } from './AuthGuard';
+import AuthGuard from './AuthGuard';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
