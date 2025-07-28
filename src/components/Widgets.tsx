@@ -2,6 +2,7 @@
 'use client';
 import React from 'react';
 import { ProjectCard } from './ProjectCard';
+import { useAuth } from '../app/AuthContext'; // Importera useAuth för WelcomeWidget
 
 // Ikoner
 const CheckIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
@@ -16,13 +17,17 @@ const WidgetWrapper = ({ title, children }: { title: string, children: React.Rea
     </div>
 );
 
-export const WelcomeWidget = ({ name }: { name: string }) => (
-    <div className="text-center mb-10">
-        <CheckIcon />
-        <h1 className="text-3xl font-bold mt-4">Du har inget som kräver din omedelbara uppmärksamhet.</h1>
-        <p className="text-text-muted">Snyggt jobbat, {name}!</p>
-    </div>
-);
+export const WelcomeWidget = () => { // Ändrad för att hämta namn från useAuth
+    const { user } = useAuth();
+    const name = user?.displayName || ""; // Använd display name om tillgängligt, annars tom sträng
+    return (
+        <div className="text-center mb-10">
+            <CheckIcon />
+            <h1 className="text-3xl font-bold mt-4">Du har inget som kräver din omedelbara uppmärksamhet.</h1>
+            <p className="text-text-muted">Snyggt jobbat{name ? ", " + name : ""}!</p>
+        </div>
+    );
+};
 
 export const TodoWidget = () => (
     <WidgetWrapper title="Att Göra">
@@ -53,3 +58,15 @@ export const EventsWidget = () => (
         </ul>
     </WidgetWrapper>
 );
+
+// Den samlande Widgets-komponenten som importeras i page.tsx
+export const Widgets = () => { // Exporteras som named export
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <WelcomeWidget /> {/* Rendera WelcomeWidget */}
+            <TodoWidget /> {/* Rendera TodoWidget */}
+            <ProjectsWidget /> {/* Rendera ProjectsWidget */}
+            <EventsWidget /> {/* Rendera EventsWidget */}
+        </div>
+    );
+};

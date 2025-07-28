@@ -50,8 +50,7 @@ export const Chat = () => {
     const { user } = useAuth(); // Hämta användarstatus
     const { isChatOpen, toggleChat } = useChat(); // Hämta chatt-status från context
 
-    // Byt ut lokal state mot global context för att styra om chatten är expanderad
-    // const [isExpanded, setIsExpanded] = useState(false);
+    // Använd global context för att styra om chatten är expanderad
     const isExpanded = isChatOpen;
     const setIsExpanded = (value: boolean) => toggleChat(value);
 
@@ -60,7 +59,7 @@ export const Chat = () => {
     const [isThinking, setIsThinking] = useState(false);
     const pathname = usePathname();
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    // 1. Skapa en ref för inmatningsfältet.
+    // Skapa en ref för inmatningsfältet.
     const inputRef = useRef<HTMLInputElement>(null);
 
     // Fäll ner chatten vid byte av sida
@@ -69,7 +68,7 @@ export const Chat = () => {
     // Scrolla till senaste meddelandet
     useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
-    // 2. Återfokusera på inmatningsfältet när chatten expanderas.
+    // Återfokusera på inmatningsfältet när chatten expanderas.
     useEffect(() => {
         if (isExpanded) {
             inputRef.current?.focus();
@@ -91,7 +90,7 @@ export const Chat = () => {
         setIsThinking(true);
 
         try {
-            // Skicka med demo-flagga om användaren inte är inloggad
+            // KORRIGERING: Anropa den lokala Next.js API-routen på /api/chat
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -126,12 +125,12 @@ export const Chat = () => {
     };
 
     // Visa bara chatten om användaren är inloggad, eller om den har tvingats öppen via context
+    // Denna logik styr nu om chatten renderas alls, inte positioneringen
+    const positionClass = pathname === '/' ? 'fixed' : 'sticky';
+
     if (!user && !isChatOpen) {
         return null;
     }
-
-    // Välj positioneringsklass baserat på sida
-    const positionClass = pathname === '/' ? 'fixed' : 'sticky';
 
     return (
         <div id="chat-drawer" className={`${positionClass} bottom-0 left-0 right-0 bg-secondary-bg border-t border-border-color z-10 flex flex-col transition-height duration-300 ease-in-out ${isExpanded ? 'h-full' : 'h-[95px]'}`}>
@@ -162,23 +161,21 @@ export const Chat = () => {
                 </div>
 
                 <div className="chat-input-wrapper p-4 border-t border-white/10 mt-auto">
-                    {/* 1. Tar bort glow-effekten: 'focus-within:shadow-input-glow' är borttagen. */}
+                    {/* Tar bort glow-effekten och lägger till puls-animation. */}
                     <div className="chat-input-container bg-card-background-color border border-border-color rounded-full p-1 flex items-center gap-2 focus-within:border-primary-accent">
-                        {/* 2. Lägger till puls-animation: 'animate-pulse' läggs till när chatten är hopfälld. */}
                         <button onClick={() => setIsExpanded(!isExpanded)} className={`icon-btn p-2 transition-transform duration-300 ${!isExpanded ? 'animate-pulse' : ''}`} style={{ transform: isExpanded ? 'rotate(180deg)' : 'none' }}>
                             <ChevronUpIcon />
                         </button>
                         
                         {/* Inloggade användare ser alla knappar */}
                         {user && (
-                            <>
+                            <>(
                                 <button className="icon-btn p-2"><AttachmentIcon /></button>
                                 <button className="icon-btn p-2"><MicIcon /></button>
                             </>
                         )}
 
                         <input 
-                            // 3. Koppla ref:en till inmatningsfältet.
                             ref={inputRef}
                             type="text" 
                             id="chat-input" 

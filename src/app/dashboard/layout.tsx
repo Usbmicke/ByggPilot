@@ -2,7 +2,7 @@
 'use client';
 import { Sidebar } from '../../components/Sidebar';
 import { Header } from '../../components/Header';
-import { Chat } from '../../components/Chat';
+import { Chat } from '../../components/Chat'; // Lägg tillbaka import av Chat
 import React from 'react';
 
 export default function DashboardLayout({
@@ -19,7 +19,7 @@ export default function DashboardLayout({
           <main className="p-6 md:p-10 pb-[95px]">
             {children}
           </main>
-          {/* Chatten läggs tillbaka här för att fungera korrekt på dashboarden */}
+          {/* Chatten läggs tillbaka här */}
           <Chat />
         </div>
       </div>

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
+// Ta bort import av Chat härifrån
+// import { Chat } from '../components/Chat';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,8 +21,10 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <Providers>
+          {/* Huvudinnehållet för sidan */}
           {children}
-          {/* Chatten tas bort härifrån för att placeras i respektive sidlayout */}
+          {/* Chatten hanteras nu i respektive sidlayout igen */}
+          {/* <Chat /> */}
         </Providers>
       </body>
     </html>
