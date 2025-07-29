@@ -1,10 +1,9 @@
 // src/components/Chat.tsx
 'use client';
-import React, { useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '../app/AuthContext';
-import { useChat as useVercelChat, Message } from 'ai/react'; // Byt namn för att undvika konflikt
-import { useChat } from '../app/ChatContext'; // Importera den korrekta useChat
+import { useChat as useVercelChat, Message } from 'ai/react';
 
 // --- Ikoner ---
 const ChevronUpIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>;
@@ -37,7 +36,7 @@ const ThinkingIndicator = () => (
 
 export const Chat = () => {
     const { user } = useAuth();
-    const { isChatOpen: isExpanded, toggleChat: setIsExpanded } = useChat();
+    const [isExpanded, setIsExpanded] = useState(false); // Använd lokal state
 
     const { messages, input, handleInputChange, handleSubmit, isLoading, setMessages } = useVercelChat({
         api: '/api/chat',
@@ -55,8 +54,7 @@ export const Chat = () => {
 
     useEffect(() => { if (isExpanded) { inputRef.current?.focus(); } }, [isExpanded]);
     useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
-    useEffect(() => { setIsExpanded(false); }, [pathname]);
-
+    
     const handleNewChat = () => {
         setMessages([]);
         setIsExpanded(true);
@@ -70,8 +68,11 @@ export const Chat = () => {
 
     const positionClass = pathname === '/' ? 'fixed' : 'sticky';
 
+    // Justerad logik för att visa/dölja
     if (!user && !isExpanded) {
-        return null;
+        // Om användaren inte är inloggad och chatten inte är manuellt expanderad, visa den inte.
+        // Detta behöver kanske justeras beroende på önskat beteende på landningssidan.
+        // return null; 
     }
 
     return (
