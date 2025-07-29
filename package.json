@@ -13,6 +13,9 @@
     "@google/generative-ai": "^0.24.1",
     "ai": "^4.3.19",
     "firebase": "^10.12.2",
+    "firebase-admin": "^13.4.0",
+    "googleapis": "^154.1.0",
+    "nanoid": "^5.1.5",
     "next": "^14.2.30",
     "react": "^18",
     "react-dom": "^18"

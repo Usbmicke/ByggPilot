@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '../app/AuthContext';
 import { useChat as useVercelChat, Message } from 'ai/react';
+import { nanoid } from 'nanoid';
 
 // --- Ikoner ---
 const ChevronUpIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>;
@@ -20,11 +21,75 @@ const UserMessage = ({ text }: { text: string }) => (
     </div>
 );
 
-const AiMessage = ({ children }: { children: React.ReactNode }) => (
-    <div className="chat-message ai mr-auto bg-card-background-color text-text-color rounded-xl p-3 max-w-[85%] whitespace-pre-wrap">
-        {children}
-    </div>
-);
+const AiMessage = ({ children, append, user }: { children: React.ReactNode, append: (message: Message) => Promise<any>, user: any }) => {
+    
+    const handleButtonClick = async (buttonText: string) => {
+        // Lägg till användarens "klick" som ett meddelande i chatten
+        append({ id: nanoid(), role: 'user', content: buttonText });
+
+        if (buttonText === 'Ja, skapa mappstruktur') {
+            try {
+                if (!user) throw new Error("Användare inte inloggad.");
+                const token = await user.getIdToken();
+                
+                append({ id: nanoid(), role: 'assistant', content: "Ok, jag påbörjar skapandet av mappstrukturen. Detta kan ta en liten stund..." });
+
+                const response = await fetch('/api/create-drive-structure', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.details || 'Något gick fel på servern.');
+                }
+
+                append({
+                    id: nanoid(),
+                    role: 'assistant',
+                    content: "Klart! Jag har skapat din nya mappstruktur i Google Drive. Du hittar den under 'ByggPilot - " + (user.displayName || 'Ditt Företag') + "'. Är du redo att skapa ditt första projekt?\n[Ja, skapa ett nytt projekt]\n[Nej, jag är klar för nu]"
+                });
+
+            } catch (error) {
+                console.error("Fel vid skapande av mappstruktur:", error);
+                const errorMessage = error instanceof Error ? error.message : 'Okänt fel';
+                append({
+                    id: nanoid(),
+                    role: 'assistant',
+                    content: `Ursäkta, jag kunde inte skapa mappstrukturen. Fel: ${errorMessage}`
+                });
+            }
+        }
+    };
+
+    const renderMessageContent = (content: string) => {
+        const buttonRegex = /\[([^\]]+)\]/g;
+        const parts = content.split(buttonRegex);
+
+        return parts.map((part, index) => {
+            if (index % 2 === 1) {
+                return (
+                    <button
+                        key={index}
+                        onClick={() => handleButtonClick(part)}
+                        className="block w-full text-left bg-white/10 hover:bg-white/20 p-3 my-2 rounded-lg transition-colors"
+                    >
+                        {part}
+                    </button>
+                );
+            }
+            return <p key={index} className="inline">{part}</p>;
+        });
+    };
+
+    return (
+        <div className="chat-message ai mr-auto bg-card-background-color text-text-color rounded-xl p-3 max-w-[85%] whitespace-pre-wrap">
+            {typeof children === 'string' ? renderMessageContent(children) : children}
+        </div>
+    );
+};
+
 
 const ThinkingIndicator = () => (
     <div className="chat-message ai mr-auto bg-card-background-color text-text-color rounded-xl p-3 max-w-[85%] flex items-center gap-2">
@@ -36,9 +101,9 @@ const ThinkingIndicator = () => (
 
 export const Chat = () => {
     const { user } = useAuth();
-    const [isExpanded, setIsExpanded] = useState(false); // Använd lokal state
+    const [isExpanded, setIsExpanded] = useState(false);
 
-    const { messages, input, handleInputChange, handleSubmit, isLoading, setMessages } = useVercelChat({
+    const { messages, input, handleInputChange, handleSubmit, isLoading, setMessages, append } = useVercelChat({
         api: '/api/chat',
         body: {
             demo: !user,
@@ -54,6 +119,28 @@ export const Chat = () => {
 
     useEffect(() => { if (isExpanded) { inputRef.current?.focus(); } }, [isExpanded]);
     useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
+
+    useEffect(() => {
+        const hasSeenOnboarding = sessionStorage.getItem('hasSeenOnboarding');
+        if (user && !hasSeenOnboarding && messages.length === 0) {
+            sessionStorage.setItem('hasSeenOnboarding', 'true');
+            setTimeout(() => {
+                append({
+                    id: nanoid(),
+                    role: 'assistant',
+                    content: "Anslutningen lyckades! Nu när jag har tillgång till ditt Google Workspace kan jag bli din riktiga digitala kollega. Det betyder att jag kan hjälpa dig att automatisera allt från att skapa projektmappar från nya mail till att sammanställa fakturaunderlag."
+                });
+            }, 500);
+            setTimeout(() => {
+                append({
+                    id: nanoid(),
+                    role: 'assistant',
+                    content: "Som ett första steg för att skapa ordning och reda, vill du att jag skapar en standardiserad och effektiv mappstruktur i din Google Drive för alla dina projekt?\n[Ja, skapa mappstruktur]\n[Nej tack, inte nu]"
+                });
+                setIsExpanded(true);
+            }, 1500);
+        }
+    }, [user, messages.length, append]);
     
     const handleNewChat = () => {
         setMessages([]);
@@ -68,10 +155,7 @@ export const Chat = () => {
 
     const positionClass = pathname === '/' ? 'fixed' : 'sticky';
 
-    // Justerad logik för att visa/dölja
     if (!user && !isExpanded) {
-        // Om användaren inte är inloggad och chatten inte är manuellt expanderad, visa den inte.
-        // Detta behöver kanske justeras beroende på önskat beteende på landningssidan.
         // return null; 
     }
 
@@ -79,7 +163,6 @@ export const Chat = () => {
         <div id="chat-drawer" className={`${positionClass} bottom-0 left-0 right-0 bg-secondary-bg border-t border-border-color z-10 flex flex-col transition-height duration-300 ease-in-out ${isExpanded ? 'h-full' : 'h-[95px]'}`}>
             <div className="flex-grow overflow-hidden flex flex-col">
                 
-                {/* Header för chattfönstret, synlig när expanderad */}
                 {isExpanded && (
                     <div className="flex justify-between items-center p-2 border-b border-border-color">
                         <h3 className="text-lg font-semibold pl-4">Chatt</h3>
@@ -99,7 +182,10 @@ export const Chat = () => {
                     ) : (
                         messages.map((m: Message) => (
                             <div key={m.id}>
-                                {m.role === 'user' ? <UserMessage text={m.content} /> : <AiMessage><p>{m.content}</p></AiMessage>}
+                                {m.role === 'user' 
+                                    ? <UserMessage text={m.content} /> 
+                                    : <AiMessage append={append} user={user}>{m.content}</AiMessage>
+                                }
                             </div>
                         ))
                     )}

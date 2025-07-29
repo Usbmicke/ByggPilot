@@ -642,6 +642,9 @@ video {
 .block{
   display: block;
 }
+.inline{
+  display: inline;
+}
 .flex{
   display: flex;
 }
@@ -945,6 +948,9 @@ video {
 .bg-white\/5{
   background-color: rgb(255 255 255 / 0.05);
 }
+.bg-white\/10{
+  background-color: rgb(255 255 255 / 0.1);
+}
 .object-cover{
   -o-object-fit: cover;
      object-fit: cover;
@@ -1231,6 +1237,10 @@ body {
 .hover\:bg-secondary-bg:hover{
   --tw-bg-opacity: 1;
   background-color: rgb(26 32 44 / var(--tw-bg-opacity, 1));
+}
+
+.hover\:bg-white\/20:hover{
+  background-color: rgb(255 255 255 / 0.2);
 }
 
 .hover\:text-text-color:hover{
