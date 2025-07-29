@@ -1,17 +1,18 @@
 // src/components/Chat.tsx
 'use client';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
-import { useAuth } from '../app/AuthContext'; // Korrigerad sökväg
-import { useChat } from '../app/ChatContext'; // Korrigerad sökväg
+import { useAuth } from '../app/AuthContext';
+import { useChat as useVercelChat, Message } from 'ai/react'; // Byt namn för att undvika konflikt
+import { useChat } from '../app/ChatContext'; // Importera den korrekta useChat
 
 // --- Ikoner ---
 const ChevronUpIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>;
 const AttachmentIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>;
 const MicIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-14 0m7 8v3m0 0H9m3 0h3m-3-3a3 3 0 01-3-3V6a3 3 0 016 0v5a3 3 0 01-3 3z" /></svg>;
 const SendIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>;
-const CopyIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>;
 const NewChatIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>;
+
 
 // --- Meddelandekomponenter ---
 const UserMessage = ({ text }: { text: string }) => (
@@ -21,20 +22,8 @@ const UserMessage = ({ text }: { text: string }) => (
 );
 
 const AiMessage = ({ children }: { children: React.ReactNode }) => (
-    <div className="chat-message ai mr-auto bg-card-background-color text-text-color rounded-xl p-3 max-w-[85%]">
+    <div className="chat-message ai mr-auto bg-card-background-color text-text-color rounded-xl p-3 max-w-[85%] whitespace-pre-wrap">
         {children}
-    </div>
-);
-
-const Checklist = ({ content }: { content: string }) => (
-    <div className="checklist-container bg-white/5 border-l-4 border-primary-accent p-4 my-2 rounded-lg whitespace-pre-wrap relative group">
-        <button 
-            onClick={() => navigator.clipboard.writeText(content)}
-            className="absolute top-2 right-2 bg-black/50 text-white p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-        >
-            <CopyIcon />
-        </button>
-        <code>{content}</code>
     </div>
 );
 
@@ -47,88 +36,41 @@ const ThinkingIndicator = () => (
 );
 
 export const Chat = () => {
-    const { user } = useAuth(); // Hämta användarstatus
-    const { isChatOpen, toggleChat } = useChat(); // Hämta chatt-status från context
+    const { user } = useAuth();
+    const { isChatOpen: isExpanded, toggleChat: setIsExpanded } = useChat();
 
-    // Använd global context för att styra om chatten är expanderad
-    const isExpanded = isChatOpen;
-    const setIsExpanded = (value: boolean) => toggleChat(value);
+    const { messages, input, handleInputChange, handleSubmit, isLoading, setMessages } = useVercelChat({
+        api: '/api/chat',
+        body: {
+            demo: !user,
+        },
+        onError: (err) => {
+            console.error("Fel från useChat-hook:", err);
+        }
+    });
 
-    const [inputValue, setInputValue] = useState("");
-    const [messages, setMessages] = useState<React.ReactNode[]>([]);
-    const [isThinking, setIsThinking] = useState(false);
     const pathname = usePathname();
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    // Skapa en ref för inmatningsfältet.
     const inputRef = useRef<HTMLInputElement>(null);
 
-    // Fäll ner chatten vid byte av sida
-    useEffect(() => { setIsExpanded(false); }, [pathname]);
-
-    // Scrolla till senaste meddelandet
+    useEffect(() => { if (isExpanded) { inputRef.current?.focus(); } }, [isExpanded]);
     useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
-
-    // Återfokusera på inmatningsfältet när chatten expanderas.
-    useEffect(() => {
-        if (isExpanded) {
-            inputRef.current?.focus();
-        }
-    }, [isExpanded]);
+    useEffect(() => { setIsExpanded(false); }, [pathname]);
 
     const handleNewChat = () => {
         setMessages([]);
-        setIsExpanded(true); // Håll chatten öppen
+        setIsExpanded(true);
+    };
+    
+    const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        if (!input.trim()) return;
+        handleSubmit(e);
     };
 
-    const handleSendMessage = async () => {
-        if (!inputValue.trim()) return;
-
-        const newUserMessage = <UserMessage key={messages.length} text={inputValue} />;
-        setMessages(prev => [...prev, newUserMessage]);
-        const userQuery = inputValue;
-        setInputValue("");
-        setIsThinking(true);
-
-        try {
-            // KORRIGERING: Anropa den lokala Next.js API-routen på /api/chat
-            const response = await fetch('/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    prompt: userQuery,
-                    demo: !user 
-                }),
-            });
-
-            if (!response.ok) {
-                throw new Error(`Nätverksfel: ${response.status}`);
-            }
-
-            const data = await response.json();
-            
-            // Antag att svaret har en 'text' och en valfri 'checklist'
-            const newAiMessage = (
-                <AiMessage key={messages.length + 1}>
-                    <p>{data.text}</p>
-                    {data.checklist && <Checklist content={data.checklist} />}
-                </AiMessage>
-            );
-            setMessages(prev => [...prev, newAiMessage]);
-
-        } catch (error) {
-            console.error("Fel vid anrop till chatt-API:", error);
-            const errorMessage = <AiMessage key={messages.length + 1}><p>Ursäkta, något gick fel. Försök igen.</p></AiMessage>;
-            setMessages(prev => [...prev, errorMessage]);
-        } finally {
-            setIsThinking(false);
-        }
-    };
-
-    // Visa bara chatten om användaren är inloggad, eller om den har tvingats öppen via context
-    // Denna logik styr nu om chatten renderas alls, inte positioneringen
     const positionClass = pathname === '/' ? 'fixed' : 'sticky';
 
-    if (!user && !isChatOpen) {
+    if (!user && !isExpanded) {
         return null;
     }
 
@@ -148,30 +90,32 @@ export const Chat = () => {
                 )}
 
                 <div id="chat-messages" className={`flex-grow overflow-y-auto p-4 space-y-4 ${isExpanded ? 'block' : 'hidden'}`}>
-                    {messages.length === 0 ? (
+                    {messages.length === 0 && !isLoading ? (
                         <div className="welcome-message text-center p-8 text-text-muted">
                             <h3 className="font-semibold text-lg">Välkommen till ByggPilot</h3>
                             <p>Din digitala kollega i byggbranschen. Ställ en fråga för att börja.</p>
                         </div>
                     ) : (
-                        messages.map((msg, index) => <div key={index}>{msg}</div>)
+                        messages.map((m: Message) => (
+                            <div key={m.id}>
+                                {m.role === 'user' ? <UserMessage text={m.content} /> : <AiMessage><p>{m.content}</p></AiMessage>}
+                            </div>
+                        ))
                     )}
-                    {isThinking && <ThinkingIndicator />}
+                    {isLoading && <ThinkingIndicator />}
                     <div ref={messagesEndRef} />
                 </div>
 
-                <div className="chat-input-wrapper p-4 border-t border-white/10 mt-auto">
-                    {/* Tar bort glow-effekten och lägger till puls-animation. */}
+                <form onSubmit={handleFormSubmit} className="chat-input-wrapper p-4 border-t border-white/10 mt-auto">
                     <div className="chat-input-container bg-card-background-color border border-border-color rounded-full p-1 flex items-center gap-2 focus-within:border-primary-accent">
-                        <button onClick={() => setIsExpanded(!isExpanded)} className={`icon-btn p-2 transition-transform duration-300 ${!isExpanded ? 'animate-pulse' : ''}`} style={{ transform: isExpanded ? 'rotate(180deg)' : 'none' }}>
+                        <button type="button" onClick={() => setIsExpanded(!isExpanded)} className={`icon-btn p-2 transition-transform duration-300 ${!isExpanded ? 'animate-pulse' : ''}`} style={{ transform: isExpanded ? 'rotate(180deg)' : 'none' }}>
                             <ChevronUpIcon />
                         </button>
                         
-                        {/* Inloggade användare ser alla knappar */}
                         {user && (
-                            <>(
-                                <button className="icon-btn p-2"><AttachmentIcon /></button>
-                                <button className="icon-btn p-2"><MicIcon /></button>
+                            <>
+                                <button type="button" className="icon-btn p-2"><AttachmentIcon /></button>
+                                <button type="button" className="icon-btn p-2"><MicIcon /></button>
                             </>
                         )}
 
@@ -181,19 +125,18 @@ export const Chat = () => {
                             id="chat-input" 
                             placeholder="Fråga ByggPilot..." 
                             className="flex-grow bg-transparent border-none outline-none text-text-color text-base p-2"
-                            value={inputValue}
-                            onChange={(e) => setInputValue(e.target.value)}
+                            value={input}
+                            onChange={handleInputChange}
                             onFocus={() => setIsExpanded(true)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                         />
-                        <button onClick={handleSendMessage} className="btn-send bg-primary-accent text-text-dark rounded-full w-10 h-10 grid place-items-center disabled:bg-border-color disabled:cursor-not-allowed" disabled={!inputValue.trim()}>
+                        <button type="submit" className="btn-send bg-primary-accent text-text-dark rounded-full w-10 h-10 grid place-items-center disabled:bg-border-color disabled:cursor-not-allowed" disabled={!input.trim() || isLoading}>
                             <SendIcon />
                         </button>
                     </div>
                     <div className={`chat-disclaimer text-xs text-text-muted text-center pt-3 ${isExpanded ? 'block' : 'hidden'}`}>
                         {user ? "ByggPilot kan ge felaktiga förslag. Granska alltid viktig information." : "Detta är en demo. Logga in för att låsa upp alla funktioner och ansluta till ditt Google-konto."}
                     </div>
-                </div>
+                </form>
             </div>
         </div>
     );
