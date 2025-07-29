@@ -1,24 +1,7 @@
 // src/app/api/create-drive-structure/route.ts
 import { NextResponse } from 'next/server';
 import { google } from 'googleapis';
-import admin from 'firebase-admin';
-
-// --- Firebase Admin Init ---
-// Denna initialisering kräver att du har en FIREBASE_SERVICE_ACCOUNT_KEY_JSON
-// i din .env.local fil.
-try {
-  if (!admin.apps.length) {
-    const serviceAccount = JSON.parse(
-      process.env.FIREBASE_SERVICE_ACCOUNT_KEY_JSON as string
-    );
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-    });
-  }
-} catch (error) {
-  console.error('Firebase Admin initialization error:', error);
-}
-
+import admin from '../../../lib/firebaseAdmin';
 
 async function createFolder(drive: any, name: string, parentId?: string) {
     const fileMetadata = {
@@ -28,7 +11,7 @@ async function createFolder(drive: any, name: string, parentId?: string) {
     };
     try {
         const file = await drive.files.create({
-            resource: fileMetadata,
+            requestBody: fileMetadata,
             fields: 'id',
         });
         console.log(`Folder created with ID: ${file.data.id}`);
@@ -53,10 +36,9 @@ export async function POST(req: Request) {
     const companyName = user.displayName || 'Okänt Företag';
 
     // 2. Skapa en autentiserad Google Drive-klient
-    // OBS: Detta kräver att du har konfigurerat OAuth 2.0 korrekt
-    // och har en refresh token för användaren. Detta är en avancerad implementation
-    // som vi förbereder för här. För nu använder vi service-kontot.
+    // Denna logik fungerar nu både lokalt och i produktion.
     const auth = new google.auth.GoogleAuth({
+        // Använd servicekontot från .env.local för att explicit ange projektet
         credentials: JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY_JSON as string),
         scopes: ['https://www.googleapis.com/auth/drive'],
     });
@@ -80,8 +62,8 @@ export async function POST(req: Request) {
 
     // Skapa mallfiler (tomma filer som exempel)
     if (templatesFolderId) {
-        await drive.files.create({ resource: { name: 'Mall - Offert', parents: [templatesFolderId] } });
-        await drive.files.create({ resource: { name: 'Mall - Faktura', parents: [templatesFolderId] } });
+        await drive.files.create({ requestBody: { name: 'Mall - Offert', parents: [templatesFolderId] } });
+        await drive.files.create({ requestBody: { name: 'Mall - Faktura', parents: [templatesFolderId] } });
     }
     
     // Skapa bokföringsstruktur
@@ -98,9 +80,8 @@ export async function POST(req: Request) {
     console.log("Folder structure created successfully!");
     return NextResponse.json({ success: true, message: 'Mappstruktur skapad!', rootFolderId });
 
-  } catch (error) {
-    console.error('Error in create-drive-structure:', error);
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-    return NextResponse.json({ error: 'Internt serverfel', details: errorMessage }, { status: 500 });
+  } catch (error: any) {
+    console.error('Error creating folder structure:', error);
+    return NextResponse.json({ error: 'Failed to create folder structure', details: error.message }, { status: 500 });
   }
 }
