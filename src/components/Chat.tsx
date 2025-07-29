@@ -27,6 +27,14 @@ const AiMessage = ({ children, append, user }: { children: React.ReactNode, appe
         // Lägg till användarens "klick" som ett meddelande i chatten
         append({ id: nanoid(), role: 'user', content: buttonText });
 
+        // NYTT: Hantera omdirigering för Google-autentisering
+        if (buttonText === 'Ja, ge behörighet') {
+            append({ id: nanoid(), role: 'assistant', content: "Ok, jag skickar dig till Google för att godkänna anslutningen. Vi ses snart igen!" });
+            // Omdirigera till vår API-route som startar OAuth-flödet
+            window.location.href = '/api/auth/google';
+            return; 
+        }
+
         if (buttonText === 'Ja, skapa mappstruktur') {
             try {
                 if (!user) throw new Error("Användare inte inloggad.");
@@ -128,14 +136,14 @@ export const Chat = () => {
                 append({
                     id: nanoid(),
                     role: 'assistant',
-                    content: "Anslutningen lyckades! Nu när jag har tillgång till ditt Google Workspace kan jag bli din riktiga digitala kollega. Det betyder att jag kan hjälpa dig att automatisera allt från att skapa projektmappar från nya mail till att sammanställa fakturaunderlag."
+                    content: "Välkommen! För att jag ska kunna agera som din digitala kollega och automatisera uppgifter i ditt Google Workspace behöver jag din tillåtelse att komma åt Google Drive, Gmail och Kalender."
                 });
             }, 500);
             setTimeout(() => {
                 append({
                     id: nanoid(),
                     role: 'assistant',
-                    content: "Som ett första steg för att skapa ordning och reda, vill du att jag skapar en standardiserad och effektiv mappstruktur i din Google Drive för alla dina projekt?\n[Ja, skapa mappstruktur]\n[Nej tack, inte nu]"
+                    content: "Är du redo att ge mig den behörigheten?\n[Ja, ge behörighet]\n[Nej tack, inte nu]"
                 });
                 setIsExpanded(true);
             }, 1500);

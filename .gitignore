@@ -42,3 +42,5 @@ service-account-base64.txt
 
 # Local Netlify folder
 .netlify
+
+serviceAccountKey.json

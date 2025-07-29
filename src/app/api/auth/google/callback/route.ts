@@ -1,88 +1,81 @@
 // src/app/api/auth/google/callback/route.ts
 import { NextResponse } from 'next/server';
 import { google } from 'googleapis';
-import admin from 'firebase-admin';
-import { cookies } from 'next/headers';
+import admin from '@/lib/firebaseAdmin'; // Använd alias
 
-// --- Firebase Admin Init ---
-// Säkerställ att denna konfiguration finns i dina miljövariabler
-try {
-  if (!admin.apps.length) {
-    const serviceAccount = JSON.parse(
-      process.env.FIREBASE_SERVICE_ACCOUNT_KEY_JSON as string
-    );
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-    });
-  }
-} catch (error) {
-  console.error('Firebase Admin initialization error:', error);
-}
+const firestore = admin.firestore();
 
-export async function GET(req: Request) {
-  const url = new URL(req.url);
+export async function GET(request: Request) {
+  const url = new URL(request.url);
   const code = url.searchParams.get('code');
 
   if (!code) {
-    return NextResponse.json({ error: 'Authorization code not found.' }, { status: 400 });
+    return NextResponse.json({ error: 'Authorization code not found' }, { status: 400 });
+  }
+
+  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET || !process.env.NEXT_PUBLIC_URL) {
+    console.error("Missing Google OAuth environment variables");
+    return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
   }
 
   try {
-    // 1. Initiera OAuth2Client
     const oauth2Client = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET,
-      process.env.GOOGLE_REDIRECT_URI
+      `${process.env.NEXT_PUBLIC_URL}/api/auth/google/callback`
     );
 
-    // 2. Byt ut koden mot tokens
     const { tokens } = await oauth2Client.getToken(code);
-    const { access_token, refresh_token, scope } = tokens;
+    oauth2Client.setCredentials(tokens);
 
-    console.log('Successfully exchanged code for tokens.');
-    console.log('Access Token:', access_token);
-    console.log('Refresh Token:', refresh_token); // Kan vara undefined om användaren redan gett samtycke
-    console.log('Scopes:', scope);
+    const oauth2 = google.oauth2({ version: 'v2', auth: oauth2Client });
+    const { data: userInfo } = await oauth2.userinfo.get();
 
-    if (!refresh_token) {
-        // Detta händer om användaren redan har godkänt appen tidigare.
-        // I en produktionsapp skulle du här kunna meddela användaren att anslutningen redan finns.
-        console.warn('No refresh token received. User might have already authorized the app.');
-        // Omdirigera ändå, eftersom vi troligtvis har en giltig anslutning.
-        return NextResponse.redirect(new URL('/dashboard', req.url));
+    if (!userInfo.id || !userInfo.email) {
+      throw new Error('Failed to retrieve user information from Google.');
     }
 
-    // 3. Verifiera Firebase-sessionen och hämta användar-ID
-    const sessionCookie = cookies().get('__session')?.value || '';
-    if (!sessionCookie) {
-        return NextResponse.json({ error: 'User session not found. Please log in.' }, { status: 401 });
+    let userRecord;
+    try {
+      userRecord = await admin.auth().getUserByEmail(userInfo.email);
+      await admin.auth().updateUser(userRecord.uid, {
+        displayName: userInfo.name,
+        photoURL: userInfo.picture,
+      });
+    } catch (error: any) {
+      if (error.code === 'auth/user-not-found') {
+        userRecord = await admin.auth().createUser({
+          email: userInfo.email,
+          emailVerified: !!userInfo.verified_email, // Fix: Garantera boolean
+          displayName: userInfo.name,
+          photoURL: userInfo.picture,
+        });
+      } else {
+        throw error;
+      }
     }
 
-    const decodedToken = await admin.auth().verifySessionCookie(sessionCookie, true);
-    const userId = decodedToken.uid;
+    if (tokens.refresh_token) {
+      const userDocRef = firestore.collection('users').doc(userRecord.uid);
+      await userDocRef.set({
+        refreshToken: tokens.refresh_token,
+        googleId: userInfo.id,
+      }, { merge: true });
+    }
 
-    // 4. Spara refresh_token i Firestore
-    const userDocRef = admin.firestore().collection('users').doc(userId);
+    // Skapa en anpassad token för att logga in användaren på klienten
+    const customToken = await admin.auth().createCustomToken(userRecord.uid);
+
+    // Omdirigera till en specifik callback-sida på klienten som kan hantera inloggningen
+    const redirectUrl = new URL('/auth/callback', process.env.NEXT_PUBLIC_URL);
+    redirectUrl.searchParams.set('token', customToken);
     
-    await userDocRef.set({
-        googleRefreshToken: refresh_token,
-        googleScopes: scope,
-        googleIntegrationActive: true,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    }, { merge: true });
+    return NextResponse.redirect(redirectUrl);
 
-    console.log(`Successfully saved refresh token for user: ${userId}`);
-
-    // 5. Omdirigera till dashboard
-    return NextResponse.redirect(new URL('/dashboard', req.url));
-
-  } catch (error) {
-    console.error('Error during Google OAuth callback:', error);
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-    // Omdirigera till en felsida eller dashboard med ett felmeddelande
-    const errorUrl = new URL('/dashboard', req.url);
-    errorUrl.searchParams.set('error', 'google_auth_failed');
-    errorUrl.searchParams.set('error_details', errorMessage);
-    return NextResponse.redirect(errorUrl);
+  } catch (error: any) {
+    console.error('Callback error:', error);
+    const errorRedirect = new URL('/', process.env.NEXT_PUBLIC_URL);
+    errorRedirect.searchParams.set('error', 'auth_failed');
+    return NextResponse.redirect(errorRedirect);
   }
 }

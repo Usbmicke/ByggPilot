@@ -1,28 +1,51 @@
 'use client';
-import { useEffect } from 'react';
-import { useAuth } from '../../AuthContext'; // Korrekt sökväg
-import { useRouter } from 'next/navigation';
 
-export default function AuthCallbackPage() {
-  const { user, loading } = useAuth();
+import { useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { signInWithCustomToken } from 'firebase/auth';
+import { auth } from '../../../firebase/init';
+
+function CallbackComponent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const token = searchParams.get('token');
 
   useEffect(() => {
-    // Vänta tills vi har ett definitivt svar från Firebase
-    if (!loading) {
-      if (user) {
-        // Användaren är nu bekräftat inloggad, skicka till dashboarden
-        router.push('/dashboard');
-      } else {
-        // Något gick fel, skicka tillbaka till landningssidan för att försöka igen
-        router.push('/');
-      }
+    if (token) {
+      signInWithCustomToken(auth, token)
+        .then(() => {
+          // Omdirigera till dashboarden efter lyckad inloggning.
+          // Session-cookien kommer att sättas automatiskt av onAuthStateChanged-lyssnaren.
+          router.push('/dashboard');
+        })
+        .catch((error) => {
+          console.error('Error signing in with custom token:', error);
+          // Omdirigera till startsidan med ett felmeddelande om något går fel.
+          router.push('/?error=signin_failed');
+        });
+    } else {
+      // Om ingen token finns, skicka tillbaka till startsidan.
+      console.error('No custom token found in URL.');
+      router.push('/?error=no_token');
     }
-  }, [user, loading, router]);
+  }, [token, router]);
 
   return (
-    <div className="h-screen w-full flex items-center justify-center bg-background-color text-text-color">
-      <p>Slutför inloggning, vänligen vänta...</p>
+    <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white">
+      <div className="text-center">
+        <p className="text-xl">Loggar in och ansluter till Google...</p>
+        {/* Här kan du lägga till en snyggare laddningsspinner */}
+        <div className="mt-4 w-16 h-16 border-4 border-dashed rounded-full animate-spin border-cyan-400 mx-auto"></div>
+      </div>
     </div>
+  );
+}
+
+// Använd Suspense för att säkerställa att useSearchParams fungerar korrekt
+export default function Page() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <CallbackComponent />
+    </Suspense>
   );
 }

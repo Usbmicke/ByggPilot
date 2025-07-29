@@ -1,17 +1,10 @@
 // src/app/page.tsx
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from './AuthContext';
 
-// --- Ikoner (Inline SVG för den nya designen ---
-
-const HelmetIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-    <path strokeLinecap="round" strokeLinejoin="round" d="M12 15.75a7.5 7.5 0 01-7.5-7.5h15a7.5 7.5 0 01-7.5 7.5z" />
-  </svg>
-);
+// --- Ikoner (Inline SVG för den nya designen) ---
 
 const GoogleIcon = () => (
   <svg className="w-6 h-6 mr-3" viewBox="0 0 48 48">
@@ -29,12 +22,55 @@ const WalletMinusIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className=
 
 // --- Sidkomponenter ---
 
-const AnimatedBackground = () => (
-  <div className="absolute top-0 left-0 w-full h-full -z-10 overflow-hidden">
-    <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]"></div>
-    <div className="absolute top-0 left-0 w-full h-full" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%2322d3ee\' fill-opacity=\'0.1\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")' }}></div>
-  </div>
-);
+const AnimatedBackground = () => {
+  const [particles, setParticles] = useState<Array<{id: number, x: number, y: number, duration: number, delay: number}>>([]);
+
+  useEffect(() => {
+    const newParticles = Array.from({ length: 50 }).map((_, i) => ({
+      id: i,
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      duration: Math.random() * 10 + 10, // 10s to 20s
+      delay: Math.random() * -20, // Start at different times
+    }));
+    setParticles(newParticles);
+  }, []);
+
+  return (
+    <div className="absolute top-0 left-0 w-full h-full -z-10 overflow-hidden">
+      <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]"></div>
+      <div className="absolute top-0 left-0 w-full h-full" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%2322d3ee\' fill-opacity=\'0.1\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")' }}></div>
+      <style jsx>{`
+        @keyframes float {
+          0% { transform: translateY(0); opacity: 1; }
+          100% { transform: translateY(-100vh); opacity: 0; }
+        }
+        .particle {
+          position: absolute;
+          width: 2px;
+          height: 2px;
+          background-color: rgba(255, 255, 255, 0.5);
+          border-radius: 50%;
+          animation-name: float;
+          animation-timing-function: linear;
+          animation-iteration-count: infinite;
+        }
+      `}</style>
+      {particles.map(p => (
+        <div
+          key={p.id}
+          className="particle"
+          style={{
+            left: `${p.x}%`,
+            bottom: `-${p.y}%`, // Start from below the screen
+            animationDuration: `${p.duration}s`,
+            animationDelay: `${p.delay}s`,
+          }}
+        />
+      ))}
+    </div>
+  );
+};
 
 const Header = () => {
   const { login } = useAuth();
@@ -42,7 +78,7 @@ const Header = () => {
     <header className="sticky top-0 z-50 bg-gray-900/80 backdrop-blur-sm border-b border-gray-500/20">
       <div className="container mx-auto px-6 py-3 flex justify-between items-center">
         <div className="flex items-center gap-3 cursor-pointer">
-          <HelmetIcon />
+          <img src="/byggpilot-logga-vit.png" alt="ByggPilot Logotyp" className="h-8 w-auto" />
           <span className="font-bold text-xl text-white">ByggPilot</span>
         </div>
         <nav className="flex items-center gap-4">
@@ -65,7 +101,7 @@ const Hero = () => {
   const { login } = useAuth();
   return (
     <section className="relative text-center py-24 md:py-40 container mx-auto px-6">
-      <h1 className="text-5xl md:text-7xl font-extrabold text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400">
+      <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-300 pb-4">
         Mindre papperskaos. Mer tid att bygga.
       </h1>
       <p className="text-lg md:text-xl text-gray-300 max-w-3xl mx-auto mt-6">
