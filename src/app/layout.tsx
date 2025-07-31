@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-// import "./globals.css"; // Tillfälligt bortkommenterad för att felsöka byggfel
+// import "@/globals.css"; // Tillfälligt bortkommenterad för att lösa byggfel
 import { Providers } from "./providers";
-// Ta bort import av Chat härifrån
-// import { Chat } from '../components/Chat';
 
 const inter = Inter({ subsets: ["latin"] });
 
