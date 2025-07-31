@@ -206,7 +206,7 @@ const TrustSection = () => (
                 <img src="/michael-fogelstrom-ekengren.jpg" alt="Michael Fogelström Ekengren, grundare av ByggPilot" className="rounded-full w-48 h-48 md:w-64 md:h-64 object-cover border-4 border-gray-700" />
             </div>
             <div className="md:col-span-3 text-center md:text-left">
-                <h2 className="text-3xl md:text-4xl font-bold text-white">Byggd av en byggledare, för hantverkare.</h2>
+                <h2 className="text-3xl md:text-4xl font-bold text-white">Byggd av en hantverkare, för hantverkare.</h2>
                 <p className="text-gray-300 mt-4 text-lg">
                     "Jag har spenderat över 15 år i branschen – från snickare och arbetsledare till egenföretagare. Jag skapade ByggPilot för att lösa den frustration jag delar med så många andra: pappersarbetet som stjäl vår tid, energi och lönsamhet. Det här är verktyget jag själv alltid önskat att jag hade."
                 </p>

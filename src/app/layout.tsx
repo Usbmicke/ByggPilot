@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import "./globals.css";
+// import "./globals.css"; // Tillfälligt bortkommenterad för att felsöka byggfel
 import { Providers } from "./providers";
 // Ta bort import av Chat härifrån
 // import { Chat } from '../components/Chat';
