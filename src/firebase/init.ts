@@ -15,18 +15,19 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
+// SÄKERHETSKORRIGERING: Initiera bara Firebase på klient-sidan (i webbläsaren)
 let app: FirebaseApp;
 let auth: Auth;
 let db: Firestore;
 
-// Säkerställ att vi bara initialiserar en gång
-if (getApps().length) {
-  app = getApp();
-} else {
+if (typeof window !== 'undefined' && !getApps().length) {
   app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
+} else if (getApps().length) {
+  app = getApp();
+  auth = getAuth(app);
+  db = getFirestore(app);
 }
-
-auth = getAuth(app);
-db = getFirestore(app);
 
 export { app, auth, db };
