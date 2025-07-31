@@ -161,12 +161,6 @@ export const Chat = () => {
         handleSubmit(e);
     };
 
-    const positionClass = pathname === '/' ? 'fixed' : 'sticky';
-
-    if (!user && !isExpanded) {
-        // return null; 
-    }
-
     return (
         <div id="chat-drawer" className={`${pathname === '/' ? 'fixed' : 'sticky'} bottom-0 left-0 right-0 bg-secondary-bg border-t border-border-color z-10 flex flex-col transition-height duration-300 ease-in-out ${isExpanded ? 'h-full' : 'h-[95px]'}`}>
             <div className="flex-grow overflow-hidden flex flex-col">
