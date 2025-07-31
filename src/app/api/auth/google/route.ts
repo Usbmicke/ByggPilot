@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 import { google } from 'googleapis';
 
-export const dynamic = 'force-dynamic'; // Tvinga dynamisk rendering
+export const dynamic = 'force-dynamic'; // Tvinga dynamisk rendering för denna route
 
 export async function GET() {
   if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
