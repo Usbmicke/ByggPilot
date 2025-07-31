@@ -1,7 +1,8 @@
 // src/components/Chat.tsx
 'use client';
+// Korrigerad för att lösa Netlify byggfel
 import React, { useState, useEffect, useRef } from 'react';
-import { usePathname } from 'next/navigation'; // Korrekt import för Next.js
+import { usePathname } from 'next/navigation';
 import { useAuth } from '../app/AuthContext';
 import { useChat as useVercelChat, Message } from 'ai/react';
 import { nanoid } from 'nanoid';
