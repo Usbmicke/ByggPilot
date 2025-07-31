@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { signInWithCustomToken } from 'firebase/auth';
 import { auth } from '../../../firebase/init';
 
+export const dynamic = 'force-dynamic'; // Tvinga dynamisk rendering
+
 function CallbackComponent() {
   const router = useRouter();
   const searchParams = useSearchParams();

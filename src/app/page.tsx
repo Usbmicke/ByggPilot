@@ -4,6 +4,8 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from './AuthContext';
 
+export const dynamic = 'force-dynamic'; // Tvinga dynamisk rendering
+
 // --- Ikoner (Inline SVG för den nya designen) ---
 
 const GoogleIcon = () => (

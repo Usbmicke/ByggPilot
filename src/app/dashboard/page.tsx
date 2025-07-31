@@ -3,6 +3,8 @@
 
 import { Widgets } from '../../components/Widgets'; // Assuming Widgets was imported
 
+export const dynamic = 'force-dynamic'; // Tvinga dynamisk rendering
+
 const DashboardPage = () => {
   return (
     <div className="flex-1 p-6 md:p-10">
