@@ -1,8 +1,8 @@
 // src/app/dashboard/layout.tsx
 'use client';
-import { Sidebar } from '../../components/Sidebar';
-import { Header } from '../../components/Header';
-import { Chat } from '../../components/Chat'; // Lägg tillbaka import av Chat
+import { Sidebar } from './_components/Sidebar';
+import { Header } from './_components/Header';
+import { Chat } from './_components/Chat'; // Korrigerad sökväg
 import React from 'react';
 
 export default function DashboardLayout({
