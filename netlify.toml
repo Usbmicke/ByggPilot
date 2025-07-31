@@ -2,7 +2,7 @@
 # The Netlify build system will automatically detect and use the Next.js runtime.
 [build]
   # The command to build the Next.js site.
-  command = "npm run build"
+  command = "bash scripts/create-gcp-credentials.sh && npm run build"
   # The directory where the built site is located. For Next.js, this is .next.
   publish = ".next"
 

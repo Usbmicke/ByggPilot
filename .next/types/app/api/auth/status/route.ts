@@ -1,8 +1,8 @@
-// File: /workspaces/ByggPilot/src/app/api/auth/google/callback/route.ts
-import * as entry from '../../../../../../../src/app/api/auth/google/callback/route.js'
+// File: /workspaces/ByggPilot/src/app/api/auth/status/route.ts
+import * as entry from '../../../../../../src/app/api/auth/status/route.js'
 import type { NextRequest } from 'next/server.js'
 
-type TEntry = typeof import('../../../../../../../src/app/api/auth/google/callback/route.js')
+type TEntry = typeof import('../../../../../../src/app/api/auth/status/route.js')
 
 // Check that the entry is a valid entry
 checkFields<Diff<{
