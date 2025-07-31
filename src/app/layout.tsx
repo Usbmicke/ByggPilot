@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import "../globals.css"; // Återaktiverad med korrekt relativ sökväg
+import "./globals.css"; // Återställd till den korrekta, lokala sökvägen
 import { Providers } from "./providers";
 
 const inter = Inter({ subsets: ["latin"] });
