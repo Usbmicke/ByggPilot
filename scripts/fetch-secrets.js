@@ -6,6 +6,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Lista över ALLA hemligheter som behövs för bygget
+// Uppdaterad för att matcha namnen i Google Secret Manager
 const secretsToFetch = [
   'FIREBASE_SERVICE_ACCOUNT_KEY_JSON',
   'NEXT_PUBLIC_FIREBASE_API_KEY',
@@ -14,11 +15,9 @@ const secretsToFetch = [
   'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET',
   'NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID',
   'NEXT_PUBLIC_FIREBASE_APP_ID',
-  'NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID',
   'GOOGLE_CLIENT_ID',
   'GOOGLE_CLIENT_SECRET',
   'GEMINI_API_KEY',
-  'GOOGLE_GENERATIVE_AI_API_KEY'
 ];
 
 async function fetchSecretsAndCreateEnvFile() {
