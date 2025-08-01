@@ -1,1 +1,3 @@
+# Denna regel fångar alla inkommande anrop och skickar dem till 
+# Next.js-serverfunktionen som Netlify skapar.
 /*    /.netlify/functions/server    200
