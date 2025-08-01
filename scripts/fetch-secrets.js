@@ -5,19 +5,29 @@ const { SecretManagerServiceClient } = require('@google-cloud/secret-manager');
 const fs = require('fs');
 const path = require('path');
 
-// Lista över ALLA hemligheter som behövs för bygget
-// Uppdaterad för att matcha namnen i Google Secret Manager
+// Lista över hemligheter att hämta från Google Secret Manager
+// Notera: Dessa är namnen som de har i Secret Manager
 const secretsToFetch = [
   'FIREBASE_SERVICE_ACCOUNT_KEY_JSON',
-  'NEXT_PUBLIC_FIREBASE_API_KEY',
-  'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN',
-  'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
-  'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET',
-  'NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID',
-  'NEXT_PUBLIC_FIREBASE_APP_ID',
+  'FIREBASE_API_KEY',
+  'FIREBASE_AUTH_DOMAIN',
+  'FIREBASE_PROJECT_ID',
+  'FIREBASE_STORAGE_BUCKET',
+  'FIREBASE_MESSAGING_SENDER_ID',
+  'FIREBASE_APP_ID',
   'GOOGLE_CLIENT_ID',
   'GOOGLE_CLIENT_SECRET',
   'GEMINI_API_KEY',
+];
+
+// Lista över de hemligheter som ska ha NEXT_PUBLIC_ prefixet i .env-filen
+const publicSecrets = [
+  'FIREBASE_API_KEY',
+  'FIREBASE_AUTH_DOMAIN',
+  'FIREBASE_PROJECT_ID',
+  'FIREBASE_STORAGE_BUCKET',
+  'FIREBASE_MESSAGING_SENDER_ID',
+  'FIREBASE_APP_ID',
 ];
 
 async function fetchSecretsAndCreateEnvFile() {
@@ -46,19 +56,17 @@ async function fetchSecretsAndCreateEnvFile() {
       const payload = version.payload.data.toString('utf8');
 
       if (secretId === 'FIREBASE_SERVICE_ACCOUNT_KEY_JSON') {
-        // Skriv denna specifika hemlighet till sin egen fil för Firebase Admin SDK
         const outputPath = path.join(process.cwd(), 'serviceAccountKey.json');
         fs.writeFileSync(outputPath, payload);
         console.log(`  ✓ Wrote ${secretId} to serviceAccountKey.json`);
-        // Lägg till pekaren i .env-filen
         envFileContent += `GOOGLE_APPLICATION_CREDENTIALS="./serviceAccountKey.json"\n`;
       } else {
-        // Lägg till andra hemligheter i .env-filen
-        envFileContent += `${secretId}="${payload}"\n`;
+        // Lägg till NEXT_PUBLIC_ prefixet om det behövs
+        const envVarName = publicSecrets.includes(secretId) ? `NEXT_PUBLIC_${secretId}` : secretId;
+        envFileContent += `${envVarName}="${payload}"\n`;
       }
     }
 
-    // Skriv den samlade .env-filen som Next.js kommer att använda
     const envOutputPath = path.join(process.cwd(), '.env.production');
     fs.writeFileSync(envOutputPath, envFileContent);
     console.log(`\nSuccessfully created .env.production file with all secrets.`);
