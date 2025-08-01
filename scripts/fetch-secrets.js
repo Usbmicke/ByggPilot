@@ -5,46 +5,71 @@ const { SecretManagerServiceClient } = require('@google-cloud/secret-manager');
 const fs = require('fs');
 const path = require('path');
 
-async function fetchSecretAndWriteFile() {
-  // 1. Läs inloggningsuppgifterna från Netlifys miljövariabel
+// Lista över ALLA hemligheter som behövs för bygget
+const secretsToFetch = [
+  'FIREBASE_SERVICE_ACCOUNT_KEY_JSON',
+  'NEXT_PUBLIC_FIREBASE_API_KEY',
+  'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN',
+  'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
+  'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET',
+  'NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID',
+  'NEXT_PUBLIC_FIREBASE_APP_ID',
+  'NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID',
+  'GOOGLE_CLIENT_ID',
+  'GOOGLE_CLIENT_SECRET',
+  'GEMINI_API_KEY',
+  'GOOGLE_GENERATIVE_AI_API_KEY'
+];
+
+async function fetchSecretsAndCreateEnvFile() {
   const gcpCredentials = process.env.GOOGLE_CREDENTIALS;
   if (!gcpCredentials) {
     console.log('GOOGLE_CREDENTIALS not set. Skipping secret fetch.');
     return;
   }
 
-  // 2. Skapa en temporär fil för att autentisera Secret Manager-klienten
   const tempCredentialsPath = path.join(__dirname, 'temp-gcp-creds.json');
   fs.writeFileSync(tempCredentialsPath, gcpCredentials);
 
-  // 3. Initiera Secret Manager-klienten med dessa temporära uppgifter
   const secretManagerClient = new SecretManagerServiceClient({
     keyFilename: tempCredentialsPath,
   });
 
-  // 4. Hämta den riktiga servicekontonyckeln från Secret Manager
-  const secretName = 'projects/digi-dan/secrets/FIREBASE_SERVICE_ACCOUNT_KEY_JSON/versions/latest';
-  
   try {
-    console.log(`Fetching secret: ${secretName}`);
-    const [version] = await secretManagerClient.accessSecretVersion({
-      name: secretName,
-    });
+    console.log('Fetching secrets from Google Secret Manager...');
+    let envFileContent = '';
 
-    const payload = version.payload.data.toString('utf8');
-    
-    // 5. Skriv den hämtade hemligheten till serviceAccountKey.json
-    const outputPath = path.join(process.cwd(), 'serviceAccountKey.json');
-    fs.writeFileSync(outputPath, payload);
-    console.log(`Successfully wrote secret to ${outputPath}`);
+    for (const secretId of secretsToFetch) {
+      const secretName = `projects/digi-dan/secrets/${secretId}/versions/latest`;
+      console.log(`- Fetching ${secretId}...`);
+      
+      const [version] = await secretManagerClient.accessSecretVersion({ name: secretName });
+      const payload = version.payload.data.toString('utf8');
+
+      if (secretId === 'FIREBASE_SERVICE_ACCOUNT_KEY_JSON') {
+        // Skriv denna specifika hemlighet till sin egen fil för Firebase Admin SDK
+        const outputPath = path.join(process.cwd(), 'serviceAccountKey.json');
+        fs.writeFileSync(outputPath, payload);
+        console.log(`  ✓ Wrote ${secretId} to serviceAccountKey.json`);
+        // Lägg till pekaren i .env-filen
+        envFileContent += `GOOGLE_APPLICATION_CREDENTIALS="./serviceAccountKey.json"\n`;
+      } else {
+        // Lägg till andra hemligheter i .env-filen
+        envFileContent += `${secretId}="${payload}"\n`;
+      }
+    }
+
+    // Skriv den samlade .env-filen som Next.js kommer att använda
+    const envOutputPath = path.join(process.cwd(), '.env.production');
+    fs.writeFileSync(envOutputPath, envFileContent);
+    console.log(`\nSuccessfully created .env.production file with all secrets.`);
 
   } catch (error) {
-    console.error('Failed to fetch secret from Google Secret Manager:', error);
-    process.exit(1); // Avsluta med felkod för att stoppa bygget
+    console.error('Failed to fetch secrets from Google Secret Manager:', error);
+    process.exit(1);
   } finally {
-    // 6. Städa upp den temporära filen
     fs.unlinkSync(tempCredentialsPath);
   }
 }
 
-fetchSecretAndWriteFile();
+fetchSecretsAndCreateEnvFile();
