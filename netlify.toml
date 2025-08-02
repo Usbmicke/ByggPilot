@@ -6,6 +6,9 @@
   # The directory where the built site is located. For Next.js, this is .next.
   publish = ".next"
 
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
 [build.environment]
   NODE_VERSION = "18"
 
